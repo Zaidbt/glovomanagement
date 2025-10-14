@@ -1,0 +1,14 @@
+/* CSS pour bloquer le scroll vertical de la page */
+html,
+body {
+  overflow-y: hidden !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+}
+
+/* S'assurer que la page de messagerie prend tout l'espace */
+.messaging-page {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}

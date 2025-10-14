@@ -1,0 +1,303 @@
+export interface ApiTestResult {
+  success: boolean;
+  message: string;
+  statusCode?: number;
+  responseTime?: number;
+  error?: string;
+}
+
+export interface ApiCredentials {
+  apiKey?: string;
+  apiSecret?: string;
+  webhookUrl?: string;
+  customField1?: string;
+  customField2?: string;
+}
+
+export class ApiTester {
+  /**
+   * Test Twilio API credentials
+   */
+  static async testTwilio(credentials: ApiCredentials): Promise<ApiTestResult> {
+    const startTime = Date.now();
+
+    try {
+      // Test Twilio API with Account SID and Auth Token
+      const response = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${credentials.apiKey}.json`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Basic ${btoa(
+              `${credentials.apiKey}:${credentials.apiSecret}`
+            )}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const responseTime = Date.now() - startTime;
+
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          success: true,
+          message: `Connexion Twilio WhatsApp réussie - Compte: ${data.friendly_name} (${data.status})`,
+          statusCode: response.status,
+          responseTime,
+        };
+      } else {
+        return {
+          success: false,
+          message: `Erreur Twilio - ${response.status}: ${response.statusText}`,
+          statusCode: response.status,
+          responseTime,
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: `Erreur de connexion Twilio: ${
+          error instanceof Error ? error.message : "Erreur inconnue"
+        }`,
+        error: error instanceof Error ? error.message : "Erreur inconnue",
+        responseTime: Date.now() - startTime,
+      };
+    }
+  }
+
+  /**
+   * Test Glovo API credentials
+   */
+  static async testGlovo(credentials: ApiCredentials): Promise<ApiTestResult> {
+    const startTime = Date.now();
+
+    try {
+      // Test direct de l'API OAuth Glovo (sans Prisma côté client)
+      const response = await fetch(
+        "https://stageapi.glovoapp.com/oauth/token",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            grantType: "client_credentials",
+            clientId: credentials.apiKey,
+            clientSecret: credentials.apiSecret,
+          }),
+        }
+      );
+
+      const responseTime = Date.now() - startTime;
+
+      if (response.ok) {
+        const tokenData = await response.json();
+        return {
+          success: true,
+          message: `Connexion Glovo réussie - Token OAuth obtenu (${tokenData.tokenType})`,
+          statusCode: response.status,
+          responseTime,
+        };
+      } else {
+        return {
+          success: false,
+          message: `Erreur d'authentification Glovo - ${response.status}: ${response.statusText}`,
+          statusCode: response.status,
+          responseTime,
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: `Erreur de connexion Glovo: ${
+          error instanceof Error ? error.message : "Erreur inconnue"
+        }`,
+        error: error instanceof Error ? error.message : "Erreur inconnue",
+        responseTime: Date.now() - startTime,
+      };
+    }
+  }
+
+  /**
+   * Test Gmail SMTP credentials
+   */
+  static async testGmail(credentials: ApiCredentials): Promise<ApiTestResult> {
+    const startTime = Date.now();
+
+    try {
+      // Test Gmail SMTP connection (simulation)
+      // In real implementation, you would use nodemailer or similar
+      const response = await fetch("/api/test-smtp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: credentials.apiKey,
+          password: credentials.apiSecret,
+          host: credentials.customField1 || "smtp.gmail.com",
+          port: credentials.customField2 || "587",
+        }),
+      });
+
+      const responseTime = Date.now() - startTime;
+
+      if (response.ok) {
+        return {
+          success: true,
+          message: `Connexion Gmail SMTP réussie - ${credentials.apiKey}`,
+          statusCode: response.status,
+          responseTime,
+        };
+      } else {
+        return {
+          success: false,
+          message: `Erreur Gmail SMTP - ${response.status}: ${response.statusText}`,
+          statusCode: response.status,
+          responseTime,
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: `Erreur de connexion Gmail: ${
+          error instanceof Error ? error.message : "Erreur inconnue"
+        }`,
+        error: error instanceof Error ? error.message : "Erreur inconnue",
+        responseTime: Date.now() - startTime,
+      };
+    }
+  }
+
+  /**
+   * Test N8N Webhook
+   */
+  static async testN8n(credentials: ApiCredentials): Promise<ApiTestResult> {
+    const startTime = Date.now();
+
+    try {
+      // Test N8N webhook with a test payload
+      const testPayload = {
+        test: true,
+        timestamp: new Date().toISOString(),
+        source: "natura-beldi-test",
+      };
+
+      const response = await fetch(credentials.webhookUrl || "", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(credentials.apiKey && {
+            Authorization: `Bearer ${credentials.apiKey}`,
+          }),
+        },
+        body: JSON.stringify(testPayload),
+      });
+
+      const responseTime = Date.now() - startTime;
+
+      if (response.ok) {
+        return {
+          success: true,
+          message: `Webhook N8N accessible - ${response.status}`,
+          statusCode: response.status,
+          responseTime,
+        };
+      } else {
+        return {
+          success: false,
+          message: `Erreur N8N Webhook - ${response.status}: ${response.statusText}`,
+          statusCode: response.status,
+          responseTime,
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: `Erreur de connexion N8N: ${
+          error instanceof Error ? error.message : "Erreur inconnue"
+        }`,
+        error: error instanceof Error ? error.message : "Erreur inconnue",
+        responseTime: Date.now() - startTime,
+      };
+    }
+  }
+
+  /**
+   * Test Custom API
+   */
+  static async testCustom(credentials: ApiCredentials): Promise<ApiTestResult> {
+    const startTime = Date.now();
+
+    try {
+      // Test custom API endpoint
+      const response = await fetch(credentials.webhookUrl || "", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(credentials.apiKey && {
+            Authorization: `Bearer ${credentials.apiKey}`,
+          }),
+          ...(credentials.apiSecret && {
+            "X-API-Secret": credentials.apiSecret,
+          }),
+        },
+      });
+
+      const responseTime = Date.now() - startTime;
+
+      if (response.ok) {
+        return {
+          success: true,
+          message: `API personnalisée accessible - ${response.status}`,
+          statusCode: response.status,
+          responseTime,
+        };
+      } else {
+        return {
+          success: false,
+          message: `Erreur API personnalisée - ${response.status}: ${response.statusText}`,
+          statusCode: response.status,
+          responseTime,
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: `Erreur de connexion API personnalisée: ${
+          error instanceof Error ? error.message : "Erreur inconnue"
+        }`,
+        error: error instanceof Error ? error.message : "Erreur inconnue",
+        responseTime: Date.now() - startTime,
+      };
+    }
+  }
+
+  /**
+   * Test API based on type
+   */
+  static async testApi(
+    type: string,
+    credentials: ApiCredentials
+  ): Promise<ApiTestResult> {
+    switch (type) {
+      case "TWILIO":
+        return this.testTwilio(credentials);
+      case "GLOVO":
+        return this.testGlovo(credentials);
+      case "GMAIL":
+        return this.testGmail(credentials);
+      case "N8N":
+        return this.testN8n(credentials);
+      case "CUSTOM":
+        return this.testCustom(credentials);
+      default:
+        return {
+          success: false,
+          message: `Type d'API non supporté: ${type}`,
+          error: "Unsupported API type",
+        };
+    }
+  }
+}

@@ -1,0 +1,26 @@
+Subject: Request for Partners API Credentials - Natura Beldi
+
+Dear Glovo Integration Team,
+
+We are Natura Beldi, a grocery store chain in Morocco, and we would like to integrate with the Glovo Partners API to receive order notifications.
+
+Please provide us with the following credentials:
+
+1. Webhook ID
+2. Shared token for authentication
+3. Store ID for our locations
+
+Our webhook endpoints are:
+- Dispatched order notification: https://yourdomain.com/api/webhooks/glovo/orders/dispatched
+- Canceled order notification: https://yourdomain.com/api/webhooks/glovo/orders/cancelled
+
+Store Information:
+- Store Name: Natura Beldi
+- Store ID: 68243580 (if this is correct)
+- Location: Casablanca, Morocco
+- Address: AGADIR STORE NATURA BELDI
+
+Please let us know if you need any additional information.
+
+Best regards,
+Natura Beldi Team

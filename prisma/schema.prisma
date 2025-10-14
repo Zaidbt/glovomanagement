@@ -1,0 +1,283 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// User model with role-based authentication
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  role      UserRole
+  name      String
+  email     String   @unique
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  collaborateurStores CollaborateurStore[]
+  fournisseurStores   FournisseurStore[]
+  userPermissions     UserPermission[]
+  events              Event[]
+  credentials         Credential[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  COLLABORATEUR
+  FOURNISSEUR
+}
+
+// Store model
+model Store {
+  id           String   @id @default(cuid())
+  name         String
+  address      String
+  phone        String
+  twilioNumber String?
+  glovoStoreId String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Twilio Integration
+  twilioCredentialId String?
+  twilioCredential   Credential? @relation(fields: [twilioCredentialId], references: [id], onDelete: SetNull)
+
+  // Relations
+  collaborateurStores CollaborateurStore[]
+  fournisseurStores   FournisseurStore[]
+  orders              Order[]
+  events              Event[]
+  conversations       Conversation[]
+
+  @@map("stores")
+}
+
+// Many-to-many relationship between Collaborateurs and Stores
+model CollaborateurStore {
+  id             String @id @default(cuid())
+  collaborateurId String
+  storeId        String
+
+  collaborateur User  @relation(fields: [collaborateurId], references: [id], onDelete: Cascade)
+  store         Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([collaborateurId, storeId])
+  @@map("collaborateur_stores")
+}
+
+// Many-to-many relationship between Fournisseurs and Stores
+model FournisseurStore {
+  id           String @id @default(cuid())
+  fournisseurId String
+  storeId      String
+
+  fournisseur User  @relation(fields: [fournisseurId], references: [id], onDelete: Cascade)
+  store       Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([fournisseurId, storeId])
+  @@map("fournisseur_stores")
+}
+
+// Order model - Basé sur la documentation Glovo
+model Order {
+  id          String   @id @default(cuid())
+  
+  // Identifiants Glovo
+  orderId     String   // order_id de Glovo
+  storeId     String   // store_id de Glovo  
+  orderCode   String?  // order_code de Glovo (ex: BA7DWBUL)
+  
+  // Source et statut
+  source      String   // GLOVO, TWILIO, CUSTOM, etc.
+  status      String   // ACCEPTED, READY_FOR_PICKUP, OUT_FOR_DELIVERY, PICKED_UP_BY_CUSTOMER, CANCELLED
+  
+  // Horaires (format Glovo: yyyy-MM-dd HH:mm:ss)
+  orderTime   String?  // order_time de Glovo
+  estimatedPickupTime String? // estimated_pickup_time de Glovo
+  utcOffsetMinutes String? // utc_offset_minutes de Glovo
+  
+  // Paiement
+  paymentMethod String? // CASH, DELAYED
+  currency     String? // EUR, MAD, etc.
+  
+  // Prix (en centimes)
+  estimatedTotalPrice Int? // estimated_total_price en centimes
+  deliveryFee        Int? // delivery_fee en centimes
+  minimumBasketSurcharge Int? // minimum_basket_surcharge en centimes
+  customerCashPaymentAmount Int? // customer_cash_payment_amount en centimes
+  totalAmount        Int? // total amount en centimes
+  
+  // Informations client
+  customerName String?
+  customerPhone String?
+  customerHash String? // customer.hash de Glovo
+  customerInvoicingDetails Json? // customer.invoicing_details de Glovo
+  
+  // Informations courier
+  courierName String?
+  courierPhone String?
+  
+  // Produits (format Glovo)
+  products Json? // Liste des produits selon le format Glovo
+  
+  // Informations spéciales
+  allergyInfo String? // allergy_info de Glovo
+  specialRequirements String? // special_requirements de Glovo
+  
+  // Métadonnées
+  metadata Json? // Données supplémentaires de l'API
+  notes    String? // Notes internes
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  receivedAt DateTime @default(now()) // Quand la commande a été reçue
+  
+  // Relations
+  credentialId String?
+  credential   Credential? @relation(fields: [credentialId], references: [id], onDelete: SetNull)
+  store        Store       @relation(fields: [storeId], references: [id])
+  events       Event[]
+
+  @@map("orders")
+}
+
+
+// Permission system
+model Permission {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String
+  createdAt   DateTime @default(now())
+
+  // Relations
+  userPermissions UserPermission[]
+
+  @@map("permissions")
+}
+
+// User permissions (many-to-many)
+model UserPermission {
+  id           String @id @default(cuid())
+  userId       String
+  permissionId String
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permissionId])
+  @@map("user_permissions")
+}
+
+// Event tracking system
+model Event {
+  id          String   @id @default(cuid())
+  type        String   // STORE_CREATED, COLLABORATEUR_ADDED, etc.
+  title       String
+  description String
+  metadata    Json?    // Store additional data as JSON
+  createdAt   DateTime @default(now())
+
+  // Relations
+  userId  String?
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  storeId String?
+  store   Store?  @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@map("events")
+}
+
+// Credentials management system
+model Credential {
+  id           String   @id @default(cuid())
+  name         String   // Twilio WhatsApp, Glovo API, etc.
+  type         String   // TWILIO, GLOVO, GMAIL, N8N, CUSTOM
+  description  String
+  values       Json     // Encrypted credentials as JSON
+  isConfigured Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  instanceName String? // Nom de l'instance pour les APIs multiples
+  
+  // API Credentials
+  apiKey       String? // Client ID, Account SID, Email, etc.
+  apiSecret    String? // Client Secret, Auth Token, Password, etc.
+  webhookUrl   String? // URL du webhook
+  customField1 String? // Numéro WhatsApp, SMTP Host, etc.
+  customField2 String? // SMTP Port, Custom Field 2, etc.
+  
+  // OAuth Tokens (pour Glovo et autres APIs OAuth)
+  accessToken  String? // Token d'accès OAuth
+  refreshToken String? // Token de rafraîchissement OAuth
+  expiresAt    DateTime? // Date d'expiration du token
+  
+  // Timestamps
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastUpdated  DateTime? // Dernière mise à jour des credentials
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[] // Commandes reçues via cette credential
+  stores Store[] // Stores utilisant cette credential Twilio
+
+  @@map("credentials")
+}
+
+// Conversations WhatsApp
+model Conversation {
+  id           String   @id @default(cuid())
+  storeId      String
+  store        Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  contactNumber String  // Numéro du contact (format: +212XXXXXXXXX)
+  contactName   String? // Nom du contact (optionnel)
+  lastMessage   String? // Dernier message
+  lastMessageAt DateTime? // Date du dernier message
+  unreadCount   Int     @default(0) // Nombre de messages non lus
+  isActive      Boolean @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  messages Message[]
+
+  @@unique([storeId, contactNumber])
+  @@map("conversations")
+}
+
+// Messages WhatsApp
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  twilioSid      String   // SID du message Twilio
+  direction      String   // "inbound" ou "outbound"
+  fromNumber     String   // Numéro expéditeur
+  toNumber       String   // Numéro destinataire
+  body           String   // Contenu du message
+  status         String?  // Status du message (sent, delivered, read, etc.)
+  sentAt         DateTime // Date d'envoi
+  receivedAt     DateTime? // Date de réception
+  isRead         Boolean  @default(false)
+  metadata       Json?    // Métadonnées supplémentaires
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([twilioSid])
+  @@map("messages")
+}
