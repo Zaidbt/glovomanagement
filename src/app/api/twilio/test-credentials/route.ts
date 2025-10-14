@@ -5,6 +5,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { accountSid, authToken } = body;
 
+    console.log("🔍 Testing Twilio credentials:", {
+      accountSid: accountSid ? `${accountSid.substring(0, 6)}...` : "missing",
+      authTokenLength: authToken ? authToken.length : 0,
+    });
+
     if (!accountSid || !authToken) {
       return NextResponse.json(
         { success: false, error: "Account SID et Auth Token requis" },
@@ -17,6 +22,8 @@ export async function POST(request: NextRequest) {
       "base64"
     );
 
+    console.log("📡 Calling Twilio API...");
+
     const response = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${accountSid}.json`,
       {
@@ -28,14 +35,21 @@ export async function POST(request: NextRequest) {
       }
     );
 
+    console.log("📥 Twilio response status:", response.status);
+
     if (response.ok) {
       const data = await response.json();
+      console.log("✅ Twilio test successful:", data.friendly_name);
       return NextResponse.json({
         success: true,
         message: `Connexion Twilio WhatsApp réussie - Compte: ${data.friendly_name} (${data.status})`,
       });
     } else {
       const errorData = await response.json().catch(() => ({}));
+      console.error("❌ Twilio test failed:", {
+        status: response.status,
+        error: errorData,
+      });
       return NextResponse.json(
         {
           success: false,
@@ -46,7 +60,7 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    console.error("Erreur test Twilio:", error);
+    console.error("💥 Erreur test Twilio:", error);
     return NextResponse.json(
       {
         success: false,
