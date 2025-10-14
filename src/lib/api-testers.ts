@@ -22,36 +22,35 @@ export class ApiTester {
     const startTime = Date.now();
 
     try {
-      // Test Twilio API with Account SID and Auth Token
-      const response = await fetch(
-        `https://api.twilio.com/2010-04-01/Accounts/${credentials.apiKey}.json`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Basic ${btoa(
-              `${credentials.apiKey}:${credentials.apiSecret}`
-            )}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // Use server-side proxy to avoid CORS issues
+      const response = await fetch("/api/twilio/test-credentials", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          accountSid: credentials.apiKey,
+          authToken: credentials.apiSecret,
+        }),
+      });
 
       const responseTime = Date.now() - startTime;
+      const data = await response.json();
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.ok && data.success) {
         return {
           success: true,
-          message: `Connexion Twilio WhatsApp réussie - Compte: ${data.friendly_name} (${data.status})`,
+          message: data.message || "Connexion Twilio WhatsApp réussie",
           statusCode: response.status,
           responseTime,
         };
       } else {
         return {
           success: false,
-          message: `Erreur Twilio - ${response.status}: ${response.statusText}`,
+          message: data.message || `Erreur Twilio - ${response.status}: ${response.statusText}`,
           statusCode: response.status,
           responseTime,
+          error: data.error,
         };
       }
     } catch (error) {
