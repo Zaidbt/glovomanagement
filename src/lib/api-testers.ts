@@ -72,38 +72,35 @@ export class ApiTester {
     const startTime = Date.now();
 
     try {
-      // Test direct de l'API OAuth Glovo (sans Prisma côté client)
-      const response = await fetch(
-        "https://stageapi.glovoapp.com/oauth/token",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            grantType: "client_credentials",
-            clientId: credentials.apiKey,
-            clientSecret: credentials.apiSecret,
-          }),
-        }
-      );
+      // Use server-side proxy to avoid CORS issues
+      const response = await fetch("/api/glovo/test-credentials", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clientId: credentials.apiKey,
+          clientSecret: credentials.apiSecret,
+        }),
+      });
 
       const responseTime = Date.now() - startTime;
+      const data = await response.json();
 
-      if (response.ok) {
-        const tokenData = await response.json();
+      if (response.ok && data.success) {
         return {
           success: true,
-          message: `Connexion Glovo réussie - Token OAuth obtenu (${tokenData.tokenType})`,
+          message: data.message || "Connexion Glovo réussie",
           statusCode: response.status,
           responseTime,
         };
       } else {
         return {
           success: false,
-          message: `Erreur d'authentification Glovo - ${response.status}: ${response.statusText}`,
+          message: data.message || `Erreur Glovo - ${response.status}: ${response.statusText}`,
           statusCode: response.status,
           responseTime,
+          error: data.error,
         };
       }
     } catch (error) {
