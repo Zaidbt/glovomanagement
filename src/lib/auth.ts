@@ -2,6 +2,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import type { Session } from "next-auth";
+import { eventTracker } from "@/lib/event-tracker";
 
 // Extended session type
 export interface ExtendedSession extends Session {
@@ -46,18 +47,9 @@ export const authOptions = {
           return null;
         }
 
-        // Track user login via API
+        // Track user login
         try {
-          await fetch("/api/events/login", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              userName: user.name,
-              role: user.role,
-            }),
-          });
+          await eventTracker.trackUserLogin(user.name, user.role);
         } catch (error) {
           console.error("Error tracking user login:", error);
         }
