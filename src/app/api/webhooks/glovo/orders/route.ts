@@ -78,6 +78,18 @@ export async function POST(request: NextRequest) {
           // Récupérer les détails complets de la commande via l'API Glovo
           console.log("🔍 Récupération des détails de la commande...");
 
+          // Récupérer les credentials Glovo depuis la base de données
+          const glovoCredential = await prisma.credential.findFirst({
+            where: {
+              type: "GLOVO",
+              isActive: true,
+            },
+          });
+
+          if (!glovoCredential) {
+            throw new Error("Aucun credential Glovo configuré");
+          }
+
           // Récupérer le token OAuth
           const tokenResponse = await fetch(
             "https://stageapi.glovoapp.com/oauth/token",
@@ -88,8 +100,8 @@ export async function POST(request: NextRequest) {
               },
               body: JSON.stringify({
                 grantType: "client_credentials",
-                clientId: "175973780382196",
-                clientSecret: "695d97b554ca4ee7a199c59a7a58ec95",
+                clientId: glovoCredential.apiKey,
+                clientSecret: glovoCredential.apiSecret,
               }),
             }
           );

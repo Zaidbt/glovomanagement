@@ -160,12 +160,6 @@ export default function LoginPage() {
                 )}
               </Button>
             </form>
-
-            <div className="mt-8 p-4 bg-green-50 rounded-lg border border-green-200">
-              <p className="text-sm text-green-800 text-center">
-                <strong>Compte admin:</strong> Natura.beldi / Natura5600
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>
