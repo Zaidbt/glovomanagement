@@ -118,6 +118,25 @@ export async function POST() {
       },
     ];
 
+    // Créer ou récupérer le store d'abord
+    let store = await prisma.store.findUnique({
+      where: { id: "store_12345" },
+    });
+
+    if (!store) {
+      console.log("🏪 Création du store de test...");
+      store = await prisma.store.create({
+        data: {
+          id: "store_12345",
+          name: "Natura Beldi - Store Test",
+          address: "123 Avenue Mohammed V, Casablanca",
+          phone: "+212600000000",
+          isActive: true,
+        },
+      });
+      console.log("✅ Store créé:", store.id);
+    }
+
     // Créer les commandes en base de données
     const createdOrders = [];
     for (const orderData of realGlovoOrders) {
@@ -134,7 +153,7 @@ export async function POST() {
       const order = await prisma.order.create({
         data: {
           orderId: orderData.order_id,
-          storeId: orderData.store_id,
+          storeId: store.id,
           orderCode: orderData.order_code,
           source: "GLOVO",
           status: "ACCEPTED",
