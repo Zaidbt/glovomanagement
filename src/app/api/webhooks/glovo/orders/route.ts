@@ -242,12 +242,89 @@ export async function POST(request: NextRequest) {
         customer_name: body.customer?.name,
       });
 
-      console.log("✅ Commande traitée avec succès");
-      return NextResponse.json({
-        success: true,
-        message: "Commande reçue avec succès",
-        orderId: body.order_id,
-      });
+      try {
+        // Vérifier si le store existe, sinon le créer
+        let store = await prisma.store.findFirst({
+          where: {
+            OR: [{ glovoStoreId: body.store_id }, { id: body.store_id }],
+          },
+        });
+
+        if (!store) {
+          // Créer un store par défaut
+          store = await prisma.store.create({
+            data: {
+              name: `Store ${body.store_id}`,
+              address: "Adresse par défaut",
+              phone: "+212600000000",
+              glovoStoreId: body.store_id,
+            },
+          });
+          console.log("✅ Store créé:", store.id);
+        }
+
+        // Créer la commande en base de données
+        const order = await prisma.order.create({
+          data: {
+            orderId: body.order_id,
+            storeId: store.id, // Utiliser l'ID du store de la base
+            orderCode: body.order_code || body.order_id,
+            source: "GLOVO",
+            status: "CREATED",
+            orderTime: body.order_time
+              ? new Date(body.order_time).toISOString()
+              : new Date().toISOString(),
+            estimatedPickupTime: body.estimated_pickup_time
+              ? new Date(body.estimated_pickup_time).toISOString()
+              : null,
+            paymentMethod: body.payment_method || "CASH",
+            currency: body.currency || "MAD",
+            estimatedTotalPrice: Math.round(
+              (body.estimated_total_price || 0) * 100
+            ), // Convertir en centimes
+            deliveryFee: Math.round((body.delivery_fee || 0) * 100),
+            totalAmount: Math.round((body.estimated_total_price || 0) * 100),
+            customerName: body.customer?.name || "Client Test",
+            customerPhone: body.customer?.phone_number || "+212600000000",
+            products: body.products || [],
+            metadata: {
+              allergy_info: body.allergy_info,
+              special_requirements: body.special_requirements,
+              customer_cash_payment_amount: body.customer_cash_payment_amount,
+              courier: body.courier,
+              customer: body.customer,
+              products: body.products,
+              bundled_orders: body.bundled_orders,
+              is_picked_up_by_customer: body.is_picked_up_by_customer,
+              partner_discounts_products: body.partner_discounts_products,
+              partner_discounted_products_total:
+                body.partner_discounted_products_total,
+              service_fee: body.service_fee,
+            },
+            credentialId: null,
+          },
+        });
+
+        console.log("✅ Commande stockée en base de données:", order.id);
+        return NextResponse.json({
+          success: true,
+          message: "Commande reçue et stockée avec succès",
+          orderId: body.order_id,
+          databaseId: order.id,
+        });
+      } catch (error) {
+        console.error("❌ Erreur lors de la sauvegarde:", error);
+        console.error(
+          "❌ Stack trace:",
+          error instanceof Error ? error.stack : "Unknown error"
+        );
+        return NextResponse.json({
+          success: false,
+          message: "Erreur lors de la sauvegarde de la commande",
+          error: error instanceof Error ? error.message : "Erreur inconnue",
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+      }
     }
 
     // Si ce n'est ni un status update ni une commande
