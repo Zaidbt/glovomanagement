@@ -234,19 +234,21 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Vérifier si c'est une commande (ancien format)
-    if (body.order_id && body.store_id) {
+    // Vérifier si c'est une commande (format Glovo réel ou ancien format)
+    if (body.order_id && (body.store_id || body.client?.store_id)) {
+      const storeId = body.store_id || body.client?.store_id;
       console.log("📋 Commande reçue:", {
         order_id: body.order_id,
-        store_id: body.store_id,
-        customer_name: body.customer?.name,
+        store_id: storeId,
+        customer_name: body.customer?.first_name || body.customer?.name,
+        order_code: body.order_code,
       });
 
       try {
         // Vérifier si le store existe, sinon le créer
         let store = await prisma.store.findFirst({
           where: {
-            OR: [{ glovoStoreId: body.store_id }, { id: body.store_id }],
+            OR: [{ glovoStoreId: storeId }, { id: storeId }],
           },
         });
 
@@ -254,10 +256,10 @@ export async function POST(request: NextRequest) {
           // Créer un store par défaut
           store = await prisma.store.create({
             data: {
-              name: `Store ${body.store_id}`,
+              name: `Store ${storeId}`,
               address: "Adresse par défaut",
               phone: "+212600000000",
-              glovoStoreId: body.store_id,
+              glovoStoreId: storeId,
             },
           });
           console.log("✅ Store créé:", store.id);
@@ -271,34 +273,50 @@ export async function POST(request: NextRequest) {
             orderCode: body.order_code || body.order_id,
             source: "GLOVO",
             status: "CREATED",
-            orderTime: body.order_time
-              ? new Date(body.order_time).toISOString()
+            orderTime: body.sys?.created_at
+              ? new Date(body.sys.created_at).toISOString()
               : new Date().toISOString(),
-            estimatedPickupTime: body.estimated_pickup_time
-              ? new Date(body.estimated_pickup_time).toISOString()
+            estimatedPickupTime: body.promised_for
+              ? new Date(body.promised_for).toISOString()
               : null,
-            paymentMethod: body.payment_method || "CASH",
-            currency: body.currency || "MAD",
+            paymentMethod: body.payment?.type === "PAID" ? "DELAYED" : "CASH",
+            currency: "MAD", // Par défaut pour le Maroc
             estimatedTotalPrice: Math.round(
-              (body.estimated_total_price || 0) * 100
+              (body.payment?.order_total || 0) * 100
             ), // Convertir en centimes
-            deliveryFee: Math.round((body.delivery_fee || 0) * 100),
-            totalAmount: Math.round((body.estimated_total_price || 0) * 100),
-            customerName: body.customer?.name || "Client Test",
+            deliveryFee: Math.round((body.payment?.delivery_fee || 0) * 100),
+            totalAmount: Math.round((body.payment?.order_total || 0) * 100),
+            customerName: body.customer?.first_name 
+              ? `${body.customer.first_name} ${body.customer.last_name || ""}`.trim()
+              : "Client Test",
             customerPhone: body.customer?.phone_number || "+212600000000",
-            products: body.products || [],
+            products: body.items || [],
             metadata: {
+              // Format Glovo réel
+              accepted_for: body.accepted_for,
+              promised_for: body.promised_for,
+              comment: body.comment,
+              external_order_id: body.external_order_id,
+              isPreorder: body.isPreorder,
+              order_type: body.order_type,
+              cancellation: body.cancellation,
+              client: body.client,
+              customer: body.customer,
+              items: body.items,
+              payment: body.payment,
+              status: body.status,
+              sys: body.sys,
+              transport_type: body.transport_type,
+              // Ancien format (pour compatibilité)
               allergy_info: body.allergy_info,
               special_requirements: body.special_requirements,
               customer_cash_payment_amount: body.customer_cash_payment_amount,
               courier: body.courier,
-              customer: body.customer,
               products: body.products,
               bundled_orders: body.bundled_orders,
               is_picked_up_by_customer: body.is_picked_up_by_customer,
               partner_discounts_products: body.partner_discounts_products,
-              partner_discounted_products_total:
-                body.partner_discounted_products_total,
+              partner_discounted_products_total: body.partner_discounted_products_total,
               service_fee: body.service_fee,
             },
             credentialId: null,
