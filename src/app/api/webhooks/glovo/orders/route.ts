@@ -245,24 +245,30 @@ export async function POST(request: NextRequest) {
       });
 
       try {
-        // Vérifier si le store existe, sinon le créer
+        // Trouver le store correspondant à ce store_id Glovo
         let store = await prisma.store.findFirst({
           where: {
-            OR: [{ glovoStoreId: storeId }, { id: storeId }],
+            OR: [
+              { glovoStoreId: storeId },
+              { id: storeId }
+            ],
           },
         });
 
+        // Si aucun store n'est trouvé, utiliser le premier store actif disponible
+        // (car on suppose qu'il n'y a qu'un seul magasin pour l'instant)
         if (!store) {
-          // Créer un store par défaut
-          store = await prisma.store.create({
-            data: {
-              name: `Store ${storeId}`,
-              address: "Adresse par défaut",
-              phone: "+212600000000",
-              glovoStoreId: storeId,
-            },
+          console.warn(`⚠️ Aucun store trouvé pour store_id: ${storeId}`);
+          store = await prisma.store.findFirst({
+            where: { isActive: true },
+            orderBy: { createdAt: 'asc' }
           });
-          console.log("✅ Store créé:", store.id);
+
+          if (!store) {
+            throw new Error(`Aucun store actif trouvé. Veuillez créer un store et configurer son glovoStoreId à "${storeId}"`);
+          }
+
+          console.log(`📍 Utilisation du store par défaut: ${store.name} (${store.id})`);
         }
 
         // Créer la commande en base de données
@@ -273,24 +279,30 @@ export async function POST(request: NextRequest) {
             orderCode: body.order_code || body.order_id,
             source: "GLOVO",
             status: "CREATED",
-            orderTime: body.sys?.created_at
-              ? new Date(body.sys.created_at).toISOString()
-              : new Date().toISOString(),
-            estimatedPickupTime: body.promised_for
-              ? new Date(body.promised_for).toISOString()
-              : null,
-            paymentMethod: body.payment?.type === "PAID" ? "DELAYED" : "CASH",
-            currency: "MAD", // Par défaut pour le Maroc
-            estimatedTotalPrice: Math.round(
-              (body.payment?.order_total || 0) * 100
-            ), // Convertir en centimes
-            deliveryFee: Math.round((body.payment?.delivery_fee || 0) * 100),
-            totalAmount: Math.round((body.payment?.order_total || 0) * 100),
-            customerName: body.customer?.first_name 
-              ? `${body.customer.first_name} ${body.customer.last_name || ""}`.trim()
-              : "Client Test",
+            orderTime: body.order_time ||
+              (body.sys?.created_at ? new Date(body.sys.created_at).toISOString() : new Date().toISOString()),
+            estimatedPickupTime: body.estimated_pickup_time ||
+              (body.promised_for ? new Date(body.promised_for).toISOString() : null),
+            utcOffsetMinutes: body.utc_offset_minutes,
+            paymentMethod: body.payment_method || (body.payment?.type === "PAID" ? "DELAYED" : "CASH"),
+            currency: body.currency || "MAD",
+            // Glovo prices are ALREADY in cents, don't multiply by 100!
+            estimatedTotalPrice: body.estimated_total_price || Math.round((body.payment?.order_total || 0) * 100),
+            deliveryFee: body.delivery_fee || Math.round((body.payment?.delivery_fee || 0) * 100),
+            totalAmount: body.estimated_total_price || Math.round((body.payment?.order_total || 0) * 100),
+            customerName: body.customer?.name ||
+              (body.customer?.first_name
+                ? `${body.customer.first_name} ${body.customer.last_name || ""}`.trim()
+                : "Client Test"),
             customerPhone: body.customer?.phone_number || "+212600000000",
-            products: body.items || [],
+            customerHash: body.customer?.hash,
+            customerCashPaymentAmount: body.customer_cash_payment_amount,
+            customerInvoicingDetails: body.customer?.invoicing_details,
+            courierName: body.courier?.name,
+            courierPhone: body.courier?.phone_number,
+            allergyInfo: body.allergy_info,
+            specialRequirements: body.special_requirements,
+            products: body.products || body.items || [],
             metadata: {
               // Format Glovo réel
               accepted_for: body.accepted_for,
@@ -316,7 +328,8 @@ export async function POST(request: NextRequest) {
               bundled_orders: body.bundled_orders,
               is_picked_up_by_customer: body.is_picked_up_by_customer,
               partner_discounts_products: body.partner_discounts_products,
-              partner_discounted_products_total: body.partner_discounted_products_total,
+              partner_discounted_products_total:
+                body.partner_discounted_products_total,
               service_fee: body.service_fee,
             },
             credentialId: null,
