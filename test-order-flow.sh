@@ -37,7 +37,7 @@ ORDER_PAYLOAD=$(cat <<EOF
     "external_partner_config_id": "natura-beldi",
     "id": "5ae6a211-ba40-4c38-96af-aa04797da3a0",
     "name": "Natura Beldi Store",
-    "store_id": "store_01"
+    "store_id": "store-01"
   },
   "customer": {
     "_id": "cust-flow-001",

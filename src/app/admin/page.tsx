@@ -305,37 +305,41 @@ export default function AdminDashboard() {
                         switch (type) {
                           case "STORE_CREATED":
                           case "STORE_UPDATED":
-                            return "green";
+                            return "bg-green-500";
                           case "COLLABORATEUR_ADDED":
                           case "COLLABORATEUR_UPDATED":
-                            return "blue";
+                            return "bg-blue-500";
                           case "FOURNISSEUR_ADDED":
                           case "FOURNISSEUR_UPDATED":
-                            return "orange";
+                            return "bg-orange-500";
                           case "ORDER_CREATED":
                           case "ORDER_UPDATED":
-                            return "yellow";
+                          case "ORDER_DISPATCHED":
+                            return "bg-yellow-500";
+                          case "ORDER_CANCELLED":
+                          case "ORDER_DELETED":
+                            return "bg-red-500";
                           case "USER_LOGIN":
-                            return "emerald";
+                            return "bg-emerald-500";
                           case "USER_LOGOUT":
-                            return "red";
+                            return "bg-red-500";
                           case "CREDENTIAL_ADDED":
                           case "CREDENTIAL_UPDATED":
                           case "CREDENTIAL_TESTED":
-                            return "purple";
+                            return "bg-purple-500";
                           case "CREDENTIAL_DELETED":
-                            return "red";
+                            return "bg-red-500";
                           case "MESSAGE_SENT":
                           case "MESSAGING_MESSAGE_SENT":
-                            return "green";
+                            return "bg-green-500";
                           case "MESSAGING_MESSAGE_RECEIVED":
-                            return "blue";
+                            return "bg-blue-500";
                           case "MESSAGING_MESSAGE_ERROR":
-                            return "red";
+                            return "bg-red-500";
                           case "ORDER_SYNC":
-                            return "blue";
+                            return "bg-blue-500";
                           default:
-                            return "gray";
+                            return "bg-gray-500";
                         }
                       };
 
@@ -349,18 +353,16 @@ export default function AdminDashboard() {
                         >
                           <div className="relative">
                             <div
-                              className={`w-3 h-3 bg-${color}-500 rounded-full`}
+                              className={`w-3 h-3 ${color} rounded-full`}
                             ></div>
                             {!isLast && (
                               <div
-                                className={`absolute top-0 left-1/2 w-0.5 h-6 bg-gradient-to-b from-${color}-500 to-transparent transform -translate-x-1/2`}
+                                className={`absolute top-0 left-1/2 w-0.5 h-6 ${color} opacity-30 transform -translate-x-1/2`}
                               ></div>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p
-                              className={`text-sm font-semibold text-gray-900 group-hover/item:text-${color}-600 transition-colors`}
-                            >
+                            <p className="text-sm font-semibold text-gray-900 group-hover/item:text-gray-700 transition-colors">
                               {activity.title}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">

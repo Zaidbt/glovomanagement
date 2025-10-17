@@ -1,18 +1,109 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eventTracker } from "@/lib/event-tracker";
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const eventData = await request.json();
+    await getServerSession(authOptions);
 
-    const result = await eventTracker.trackEvent(eventData);
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const type = searchParams.get("type") || "all";
+    const dateRange = searchParams.get("dateRange") || "all";
+    const search = searchParams.get("search") || "";
 
-    return NextResponse.json({ success: true, event: result });
+    const skip = (page - 1) * limit;
+
+    // Build where clause
+    const where: Record<string, unknown> = {};
+
+    // Filter by type
+    if (type !== "all") {
+      where.type = {
+        contains: type,
+        mode: "insensitive",
+      };
+    }
+
+    // Filter by date range
+    if (dateRange !== "all") {
+      const now = new Date();
+      let startDate: Date;
+
+      switch (dateRange) {
+        case "today":
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case "week":
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case "month":
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case "year":
+          startDate = new Date(now.getFullYear(), 0, 1);
+          break;
+        default:
+          startDate = new Date(0);
+      }
+
+      where.createdAt = {
+        gte: startDate,
+      };
+    }
+
+    // Filter by search
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    // Get events with pagination
+    const [events, totalEvents] = await Promise.all([
+      prisma.event.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+          store: {
+            select: {
+              name: true,
+            },
+          },
+          order: {
+            select: {
+              orderId: true,
+              orderCode: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.event.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(totalEvents / limit);
+
+    return NextResponse.json({
+      events,
+      totalEvents,
+      totalPages,
+      currentPage: page,
+    });
   } catch (error) {
-    console.error("Error tracking event:", error);
-    return NextResponse.json(
-      { success: false, error: "Failed to track event" },
-      { status: 500 }
-    );
+    console.error("Error fetching events:", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

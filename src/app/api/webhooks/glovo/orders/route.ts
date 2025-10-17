@@ -271,11 +271,46 @@ export async function POST(request: NextRequest) {
           console.log(`📍 Utilisation du store par défaut: ${store.name} (${store.id})`);
         }
 
+        // Créer ou récupérer le client
+        const customerPhone = body.customer?.phone_number || "+212600000000";
+        const customerName = body.customer?.name ||
+          (body.customer?.first_name
+            ? `${body.customer.first_name} ${body.customer.last_name || ""}`.trim()
+            : "Client Test");
+
+        let customer = await prisma.customer.findUnique({
+          where: { phoneNumber: customerPhone },
+        });
+
+        if (!customer) {
+          console.log("👤 Création d'un nouveau client:", customerName, customerPhone);
+          customer = await prisma.customer.create({
+            data: {
+              phoneNumber: customerPhone,
+              name: customerName,
+              email: body.customer?.email,
+              address: body.customer?.delivery_address?.street,
+              city: body.customer?.delivery_address?.city,
+              postalCode: body.customer?.delivery_address?.postal_code,
+              loyaltyTier: "NEW",
+              churnRiskScore: 0.0,
+              isActive: true,
+              whatsappOptIn: true,
+              smsOptIn: false,
+              emailOptIn: false,
+            },
+          });
+          console.log("✅ Nouveau client créé:", customer.id);
+        } else {
+          console.log("👤 Client existant trouvé:", customer.name, customer.id);
+        }
+
         // Créer la commande en base de données
         const order = await prisma.order.create({
           data: {
             orderId: body.order_id,
             storeId: store.id, // Utiliser l'ID du store de la base
+            customerId: customer.id, // Lier la commande au client
             orderCode: body.order_code || body.order_id,
             source: "GLOVO",
             status: "CREATED",
@@ -338,10 +373,26 @@ export async function POST(request: NextRequest) {
 
         console.log("✅ Commande stockée en base de données:", order.id);
 
-        return NextResponse.json({
-          success: true,
+        // Mettre à jour les statistiques du client
+        const orderTotal = order.estimatedTotalPrice || 0;
+        await prisma.customer.update({
+          where: { id: customer.id },
+          data: {
+            totalOrders: { increment: 1 },
+            totalSpent: { increment: orderTotal },
+            lastOrderDate: new Date(),
+            firstOrderDate: customer.firstOrderDate || new Date(),
+            averageOrderValue: Math.round((customer.totalSpent + orderTotal) / (customer.totalOrders + 1)),
+            customerLifetimeValue: { increment: orderTotal },
+          },
+        });
+
+        console.log("📊 Statistiques client mises à jour:", customer.name);
+
+      return NextResponse.json({
+        success: true,
           message: "Commande reçue et stockée avec succès",
-          orderId: body.order_id,
+        orderId: body.order_id,
           databaseId: order.id,
         });
       } catch (error) {

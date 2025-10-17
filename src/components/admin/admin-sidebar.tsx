@@ -20,6 +20,7 @@ import {
   MessageSquare,
   Trash2,
   UserCheck,
+  Activity,
 } from "lucide-react";
 
 const navigation = [
@@ -32,6 +33,7 @@ const navigation = [
   { name: "Credentials", href: "/admin/credentials", icon: Key },
   { name: "Messagerie", href: "/admin/messaging", icon: MessageSquare },
   { name: "Commandes", href: "/admin/orders", icon: ShoppingCart },
+  { name: "Événements", href: "/admin/events", icon: Activity },
   { name: "Cleanup", href: "/admin/cleanup", icon: Trash2 },
 ];
 
