@@ -468,10 +468,10 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        return NextResponse.json({
-          success: true,
+      return NextResponse.json({
+        success: true,
           message: "Commande reçue et stockée avec succès",
-          orderId: body.order_id,
+        orderId: body.order_id,
           databaseId: order.id,
         });
       } catch (error) {

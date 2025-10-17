@@ -10,7 +10,7 @@ export function useLogout() {
 
   const handleLogout = async () => {
     console.log("🚪 Logout initiated for user:", session?.user?.name);
-    
+
     // Track logout before signing out
     if (session?.user) {
       try {
@@ -18,14 +18,14 @@ export function useLogout() {
         console.log("📊 User details:", {
           name: session.user?.name,
           role: (session as unknown as ExtendedSession).user?.role,
-          id: session.user?.id
+          id: (session as unknown as ExtendedSession).user?.id,
         });
-        
+
         const result = await clientEventTracker.trackUserLogout(
           session.user?.name || "Unknown",
           (session as unknown as ExtendedSession).user?.role || "Unknown"
         );
-        
+
         console.log("✅ Logout event tracked successfully:", result);
       } catch (error) {
         console.error("❌ Error tracking user logout:", error);

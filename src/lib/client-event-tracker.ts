@@ -55,7 +55,7 @@ class ClientEventTracker {
   ): Promise<void> {
     try {
       console.log("📡 Sending event to API:", eventData);
-      
+
       const response = await fetch("/api/events", {
         method: "POST",
         headers: {
@@ -70,7 +70,9 @@ class ClientEventTracker {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("❌ API error response:", errorText);
-        throw new Error(`Failed to track event: ${response.status} - ${errorText}`);
+        throw new Error(
+          `Failed to track event: ${response.status} - ${errorText}`
+        );
       }
 
       const result = await response.json();
