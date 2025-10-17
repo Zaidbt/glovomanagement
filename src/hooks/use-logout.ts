@@ -15,13 +15,21 @@ export function useLogout() {
     if (session?.user) {
       try {
         console.log("📊 Tracking logout event...");
-        await clientEventTracker.trackUserLogout(
+        console.log("📊 User details:", {
+          name: session.user?.name,
+          role: (session as unknown as ExtendedSession).user?.role,
+          id: session.user?.id
+        });
+        
+        const result = await clientEventTracker.trackUserLogout(
           session.user?.name || "Unknown",
           (session as unknown as ExtendedSession).user?.role || "Unknown"
         );
-        console.log("✅ Logout event tracked successfully");
+        
+        console.log("✅ Logout event tracked successfully:", result);
       } catch (error) {
         console.error("❌ Error tracking user logout:", error);
+        console.error("❌ Error details:", error);
       }
     } else {
       console.log("⚠️ No session found, skipping logout tracking");

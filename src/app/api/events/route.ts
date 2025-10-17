@@ -35,7 +35,11 @@ export async function GET(request: NextRequest) {
 
       switch (dateRange) {
         case "today":
-          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          startDate = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate()
+          );
           break;
         case "week":
           startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -112,13 +116,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const body = await request.json();
-    const { type, title, description, metadata, userId, storeId, orderId } = body;
+    const { type, title, description, metadata, userId, storeId, orderId } =
+      body;
 
     // Validate required fields
     if (!type || !title || !description) {
