@@ -48,6 +48,9 @@ export async function GET(request: NextRequest) {
       whereConditions.customerPhone = phone;
     }
 
+    // Debug: Log the search conditions
+    console.log("🔍 AI Agent Order Lookup - Search conditions:", whereConditions);
+    
     // Fetch comprehensive order data
     const order = await prisma.order.findFirst({
       where: whereConditions,
