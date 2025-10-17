@@ -37,7 +37,10 @@ export async function sendAutomaticMessageOnDispatch(
       order.customerPhone === "N/A" ||
       order.customerPhone === "+212600000000"
     ) {
-      console.log("ℹ️ No valid phone number for customer:", order.customerName || "Unknown");
+      console.log(
+        "ℹ️ No valid phone number for customer:",
+        order.customerName || "Unknown"
+      );
       return false;
     }
 
