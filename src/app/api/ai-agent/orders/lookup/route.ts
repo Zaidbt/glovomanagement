@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     const whereConditions: {
       orderCode?: string;
       orderId?: string;
-      customer?: { phoneNumber: string };
+      customerPhone?: string;
     } = {};
 
     if (orderCode) {
