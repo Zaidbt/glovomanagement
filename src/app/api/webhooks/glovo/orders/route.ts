@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { eventTracker } from "@/lib/event-tracker";
 
 const prisma = new PrismaClient();
 
@@ -290,8 +291,10 @@ export async function POST(request: NextRequest) {
           where: {
             OR: [
               { phoneNumber: customerPhone },
-              ...(glovoCustomerId ? [{ glovoCustomerId: glovoCustomerId }] : [])
-            ]
+              ...(glovoCustomerId
+                ? [{ glovoCustomerId: glovoCustomerId }]
+                : []),
+            ],
           },
         });
 
@@ -321,18 +324,21 @@ export async function POST(request: NextRequest) {
           console.log("✅ Nouveau client créé:", customer.id);
         } else {
           console.log("👤 Client existant trouvé:", customer.name, customer.id);
-          
+
           // Update existing customer with missing identifiers
           const updateData: Record<string, unknown> = {};
           if (glovoCustomerId && !customer.glovoCustomerId) {
             updateData.glovoCustomerId = glovoCustomerId;
-            console.log("🔗 Ajout Glovo ID au client existant:", glovoCustomerId);
+            console.log(
+              "🔗 Ajout Glovo ID au client existant:",
+              glovoCustomerId
+            );
           }
           if (customerPhone !== customer.phoneNumber) {
             updateData.phoneNumber = customerPhone;
             console.log("📱 Mise à jour numéro de téléphone:", customerPhone);
           }
-          
+
           if (Object.keys(updateData).length > 0) {
             customer = await prisma.customer.update({
               where: { id: customer.id },
@@ -445,10 +451,27 @@ export async function POST(request: NextRequest) {
 
         console.log("📊 Statistiques client mises à jour:", customer.name);
 
-      return NextResponse.json({
-        success: true,
+        // Track order creation event
+        await eventTracker.trackEvent({
+          type: "ORDER_CREATED",
+          title: "Commande reçue",
+          description: `Commande ${order.orderCode || order.orderId} reçue pour ${customer.name}`,
+          storeId: store.id,
+          orderId: order.id,
+          metadata: {
+            orderId: order.orderId,
+            orderCode: order.orderCode,
+            customerName: customer.name,
+            customerPhone: customer.phoneNumber,
+            totalAmount: order.estimatedTotalPrice,
+            currency: order.currency,
+          },
+        });
+
+        return NextResponse.json({
+          success: true,
           message: "Commande reçue et stockée avec succès",
-        orderId: body.order_id,
+          orderId: body.order_id,
           databaseId: order.id,
         });
       } catch (error) {

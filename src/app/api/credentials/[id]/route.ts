@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { eventTracker } from "@/lib/event-tracker";
 
 export async function PUT(
   request: NextRequest,
@@ -42,6 +43,19 @@ export async function PUT(
       },
     });
 
+    // Track credential update event
+    await eventTracker.trackEvent({
+      type: "CREDENTIAL_UPDATED",
+      title: "Credential mise à jour",
+      description: `Credential ${credential.name || credential.type} mise à jour`,
+      userId: adminUser.id,
+      metadata: {
+        credentialId: credential.id,
+        credentialType: credential.type,
+        credentialName: credential.name,
+      },
+    });
+
     return NextResponse.json(credential);
   } catch (error) {
     console.error("Erreur mise à jour credential:", error);
@@ -69,12 +83,32 @@ export async function DELETE(
 
     const { id } = await params;
 
+    // Get credential info before deletion for event tracking
+    const credential = await prisma.credential.findUnique({
+      where: { id },
+    });
+
     await prisma.credential.delete({
       where: {
         id,
         userId, // Sécurité : seul le propriétaire peut supprimer
       },
     });
+
+    // Track credential deletion event
+    if (credential) {
+      await eventTracker.trackEvent({
+        type: "CREDENTIAL_DELETED",
+        title: "Credential supprimée",
+        description: `Credential ${credential.name || credential.type} supprimée`,
+        userId: adminUser.id,
+        metadata: {
+          credentialId: credential.id,
+          credentialType: credential.type,
+          credentialName: credential.name,
+        },
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

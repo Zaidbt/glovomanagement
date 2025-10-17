@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions, type ExtendedSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { eventTracker } from "@/lib/event-tracker";
 
 export async function PUT(
   request: NextRequest,
@@ -45,6 +46,9 @@ export async function PUT(
         isActive: isActive !== undefined ? isActive : true,
       },
     });
+
+    // Track store update event
+    await eventTracker.trackStoreUpdated(store.name, session.user.id);
 
     return NextResponse.json(store);
   } catch (error) {

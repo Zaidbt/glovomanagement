@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { eventTracker } from "@/lib/event-tracker";
 
 export async function GET() {
   try {
@@ -89,6 +90,20 @@ export async function POST(request: NextRequest) {
         userId,
         lastUpdated: new Date(),
         values: {}, // Pour compatibilité avec l'ancien système
+      },
+    });
+
+    // Track credential creation event
+    await eventTracker.trackEvent({
+      type: "CREDENTIAL_ADDED",
+      title: "Credential ajoutée",
+      description: `Credential ${type} ajoutée: ${description || instanceName || 'Nouvelle credential'}`,
+      userId: adminUser.id,
+      metadata: {
+        credentialType: type,
+        credentialId: credential.id,
+        description: description,
+        instanceName: instanceName,
       },
     });
 

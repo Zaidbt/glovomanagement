@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions, type ExtendedSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { eventTracker } from "@/lib/event-tracker";
 
 export async function GET() {
   try {
@@ -101,6 +102,10 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    // Track fournisseur creation event
+    const storeName = fournisseur.fournisseurStores[0]?.store?.name || "Store inconnu";
+    await eventTracker.trackFournisseurAdded(name, storeName, session.user.id);
 
     return NextResponse.json(fournisseur, { status: 201 });
   } catch (error) {
