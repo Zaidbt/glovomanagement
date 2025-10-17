@@ -75,16 +75,7 @@ export default function MessagingPage() {
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Bloquer le scroll vertical de la page
-  useEffect(() => {
-    document.body.style.overflowY = "hidden";
-    document.documentElement.style.overflowY = "hidden";
-
-    return () => {
-      document.body.style.overflowY = "unset";
-      document.documentElement.style.overflowY = "unset";
-    };
-  }, []);
+  // No need to block global scroll - let the page handle its own scrolling
 
   const fetchStores = useCallback(async () => {
     try {
@@ -569,7 +560,7 @@ export default function MessagingPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden">
+    <div className="h-screen overflow-hidden messaging-page">
       <div className="container mx-auto p-6 h-full flex flex-col">
         {/* Header */}
         <div className="flex-shrink-0 mb-6">

@@ -7,7 +7,9 @@ import { eventTracker } from "@/lib/event-tracker";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions) as ExtendedSession | null;
+    const session = (await getServerSession(
+      authOptions
+    )) as ExtendedSession | null;
 
     if (!session || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -37,7 +39,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions) as ExtendedSession | null;
+    const session = (await getServerSession(
+      authOptions
+    )) as ExtendedSession | null;
 
     if (!session || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -104,7 +108,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Track fournisseur creation event
-    const storeName = fournisseur.fournisseurStores[0]?.store?.name || "Store inconnu";
+    const storeName =
+      fournisseur.fournisseurStores[0]?.store?.name || "Store inconnu";
     await eventTracker.trackFournisseurAdded(name, storeName, session.user.id);
 
     return NextResponse.json(fournisseur, { status: 201 });
