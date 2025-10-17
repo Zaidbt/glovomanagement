@@ -22,13 +22,22 @@ export interface OrderData {
 /**
  * Automatically send WhatsApp message when order is dispatched
  */
-export async function sendAutomaticMessageOnDispatch(order: OrderData): Promise<boolean> {
+export async function sendAutomaticMessageOnDispatch(
+  order: OrderData
+): Promise<boolean> {
   try {
-    console.log("📱 Sending automatic message for dispatched order:", order.orderId);
+    console.log(
+      "📱 Sending automatic message for dispatched order:",
+      order.orderId
+    );
 
     // Check if customer has valid phone number
-    if (!order.customerPhone || order.customerPhone === "N/A" || order.customerPhone === "+212600000000") {
-      console.log("ℹ️ No valid phone number for customer:", order.customerName);
+    if (
+      !order.customerPhone ||
+      order.customerPhone === "N/A" ||
+      order.customerPhone === "+212600000000"
+    ) {
+      console.log("ℹ️ No valid phone number for customer:", order.customerName || "Unknown");
       return false;
     }
 
@@ -37,7 +46,7 @@ export async function sendAutomaticMessageOnDispatch(order: OrderData): Promise<
       "1": order.customerName || "Client", // Nom du client
       "2": order.orderCode || order.orderId, // Code/N° de commande
       "3": "Natura Beldi", // Nom de l'établissement
-      "4": formatPrice(order.estimatedTotalPrice, order.currency), // Total
+      "4": formatPrice(order.estimatedTotalPrice || 0, order.currency || "MAD"), // Total
       "5": formatDate(order.estimatedPickupTime) || "En cours", // Heure de collecte
     };
 
@@ -47,7 +56,7 @@ export async function sendAutomaticMessageOnDispatch(order: OrderData): Promise<
     // 1. Try to use store-specific credential
     const store = await prisma.store.findUnique({
       where: { id: order.storeId },
-      include: { twilioCredential: true }
+      include: { twilioCredential: true },
     });
 
     if (store?.twilioCredential) {
@@ -85,8 +94,11 @@ export async function sendAutomaticMessageOnDispatch(order: OrderData): Promise<
     });
 
     if (response.ok) {
-      console.log("✅ Automatic message sent successfully to:", order.customerPhone);
-      
+      console.log(
+        "✅ Automatic message sent successfully to:",
+        order.customerPhone
+      );
+
       // Track the event
       await prisma.event.create({
         data: {
@@ -130,7 +142,7 @@ function formatPrice(price?: number, currency?: string): string {
 function formatDate(dateString?: string): string | null {
   if (!dateString) return null;
   try {
-    return new Date(dateString).toLocaleString('fr-FR');
+    return new Date(dateString).toLocaleString("fr-FR");
   } catch {
     return null;
   }

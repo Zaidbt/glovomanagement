@@ -61,12 +61,12 @@ export async function POST(request: NextRequest) {
         const messageSent = await sendAutomaticMessageOnDispatch({
           id: order.id,
           orderId: order.orderId,
-          orderCode: order.orderCode,
-          customerName: order.customerName,
-          customerPhone: order.customerPhone,
-          estimatedTotalPrice: order.estimatedTotalPrice,
-          currency: order.currency,
-          estimatedPickupTime: order.estimatedPickupTime,
+          orderCode: order.orderCode || undefined,
+          customerName: order.customerName || undefined,
+          customerPhone: order.customerPhone || undefined,
+          estimatedTotalPrice: order.estimatedTotalPrice || undefined,
+          currency: order.currency || undefined,
+          estimatedPickupTime: order.estimatedPickupTime || undefined,
           storeId: order.storeId,
         });
 
