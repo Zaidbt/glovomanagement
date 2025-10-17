@@ -42,3 +42,10 @@ next-env.d.ts
 
 /src/generated/prisma
 test-order-flow.sh
+
+# Sensitive scripts with tokens/credentials
+call-cleanup-production.sh
+send-test-order-production.sh
+setup-database.sh
+scripts/test-glovo-with-store-id.sh
+scripts/test-webhook-manual.sh
