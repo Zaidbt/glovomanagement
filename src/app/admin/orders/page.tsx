@@ -204,108 +204,6 @@ export default function OrdersPage() {
     }
   };
 
-  // Envoyer un message au client
-  const sendMessageToCustomer = async (order: Order) => {
-    try {
-      // Vérifier que le client a un numéro de téléphone
-      if (!order.customerPhone || order.customerPhone === "N/A") {
-        toast({
-          title: "Impossible d&apos;envoyer",
-          description: "Aucun numéro de téléphone disponible pour ce client",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Préparer les variables du template
-      const templateVariables = {
-        "1": order.customerName || "Client", // Nom du client
-        "2": order.orderCode || order.orderId, // Code/N° de commande
-        "3": "Natura Beldi", // Nom de l'établissement
-        "4": formatPrice(order.estimatedTotalPrice, order.currency), // Total
-        "5": formatDate(order.estimatedPickupTime) || "En cours", // Heure de collecte
-      };
-
-      // Récupérer la credential Twilio spécifique au store ou fallback
-      let twilioCredential = null;
-
-      // 1. Essayer d&apos;utiliser la credential spécifique du store
-      if (order.store?.twilioCredentialId) {
-        const credentialsResponse = await fetch("/api/credentials");
-        const credentials = await credentialsResponse.json();
-        const twilioCredentialId = order.store.twilioCredentialId;
-        twilioCredential = credentials.find(
-          (c: Record<string, unknown>) =>
-            c.id === twilioCredentialId && c.type === "TWILIO"
-        );
-      }
-
-      // 2. Fallback: utiliser la première credential Twilio disponible
-      if (!twilioCredential) {
-        const credentialsResponse = await fetch("/api/credentials");
-        const credentials = await credentialsResponse.json();
-        twilioCredential = credentials.find(
-          (c: Record<string, unknown>) => c.type === "TWILIO" && c.isActive
-        );
-      }
-
-      if (!twilioCredential) {
-        toast({
-          title: "Erreur",
-          description: "Aucune credential Twilio configurée",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const response = await fetch("/api/twilio/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          credentialId: twilioCredential.id,
-          to: order.customerPhone,
-          type: "whatsapp",
-          templateSid: "HX22e0cbee729d0f6a6d038640573b4d2d",
-          templateParams: templateVariables,
-        }),
-      });
-
-      if (response.ok) {
-        await response.json();
-        toast({
-          title: "Message envoyé",
-          description: `Message WhatsApp envoyé à ${order.customerName}`,
-        });
-
-        // Tracker l'événement
-        await clientEventTracker.trackEvent({
-          type: "MESSAGING_MESSAGE_SENT",
-          title: "Message client envoyé",
-          description: `Message WhatsApp envoyé au client ${order.customerName} pour la commande ${order.orderCode}`,
-          metadata: {
-            orderId: order.id,
-            customerPhone: order.customerPhone,
-            templateSid: "HX22e0cbee729d0f6a6d038640573b4d2d",
-          },
-        });
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erreur lors de l'envoi");
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      toast({
-        title: "Erreur d&apos;envoi",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Erreur lors de l'envoi du message",
-        variant: "destructive",
-      });
-    }
-  };
 
   // Supprimer une commande
   const deleteOrder = async (orderId: string) => {
@@ -930,15 +828,6 @@ export default function OrdersPage() {
                       <TableCell>
                         <div className="flex space-x-2">
                           <OrderDetailsModal order={order} />
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => sendMessageToCustomer(order)}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            <Phone className="w-4 h-4 mr-1" />
-                            Envoyer message
-                          </Button>
                           <Button
                             variant="destructive"
                             size="sm"
