@@ -337,6 +337,7 @@ export async function POST(request: NextRequest) {
         });
 
         console.log("✅ Commande stockée en base de données:", order.id);
+
         return NextResponse.json({
           success: true,
           message: "Commande reçue et stockée avec succès",

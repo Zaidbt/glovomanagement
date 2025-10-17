@@ -1,0 +1,6 @@
+Product ID,Product Name,Description,Price,Category,Availability,Image URL
+PROD001,Poulet Bio 1kg,Poulet biologique frais,75.00,Viande,Available,https://example.com/poulet.jpg
+PROD002,Tomates Bio 500g,Tomates biologiques,15.00,Légumes,Available,https://example.com/tomates.jpg
+PROD003,Salade Bio,Salade biologique fraîche,12.00,Légumes,Available,https://example.com/salade.jpg
+PROD004,Fromage Bio 250g,Fromage biologique,25.00,Laitage,Available,https://example.com/fromage.jpg
+PROD005,Pain Bio,Pain biologique artisanal,8.00,Boulangerie,Available,https://example.com/pain.jpg

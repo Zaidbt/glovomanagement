@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { sendAutomaticMessageOnDispatch } from "@/lib/automatic-messaging";
 
 const prisma = new PrismaClient();
 
@@ -49,6 +50,37 @@ export async function POST(request: NextRequest) {
       });
 
       console.log("✅ Commande mise à jour (dispatched):", trackingNumber);
+
+      // 🚀 AUTOMATIC MESSAGE SENDING WHEN DISPATCHED
+      try {
+        console.log(
+          "📱 Envoi automatique du message WhatsApp pour commande dispatchée..."
+        );
+
+        // Use the automatic messaging utility
+        const messageSent = await sendAutomaticMessageOnDispatch({
+          id: order.id,
+          orderId: order.orderId,
+          orderCode: order.orderCode,
+          customerName: order.customerName,
+          customerPhone: order.customerPhone,
+          estimatedTotalPrice: order.estimatedTotalPrice,
+          currency: order.currency,
+          estimatedPickupTime: order.estimatedPickupTime,
+          storeId: order.storeId,
+        });
+
+        if (messageSent) {
+          console.log("✅ Message automatique envoyé avec succès");
+        } else {
+          console.log(
+            "ℹ️ Message automatique non envoyé (pas de numéro valide ou credential manquante)"
+          );
+        }
+      } catch (messageError) {
+        console.error("❌ Erreur envoi automatique message:", messageError);
+        // Ne pas faire échouer la commande si l'envoi de message échoue
+      }
 
       // Track event
       await prisma.event.create({
