@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
       orderCode?: string;
       orderId?: string;
       customerPhone?: string;
+      OR?: Array<{ customerPhone: string }>;
     } = {};
 
     if (orderCode) {
@@ -45,12 +46,20 @@ export async function GET(request: NextRequest) {
     }
 
     if (phone) {
-      whereConditions.customerPhone = phone;
+      // Try both formats of phone number
+      whereConditions.OR = [
+        { customerPhone: phone },
+        { customerPhone: phone.replace('+', '') },
+        { customerPhone: phone.replace('+212', '0') }
+      ];
     }
 
     // Debug: Log the search conditions
-    console.log("🔍 AI Agent Order Lookup - Search conditions:", whereConditions);
-    
+    console.log(
+      "🔍 AI Agent Order Lookup - Search conditions:",
+      whereConditions
+    );
+
     // Fetch comprehensive order data
     const order = await prisma.order.findFirst({
       where: whereConditions,
