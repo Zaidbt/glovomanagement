@@ -248,10 +248,7 @@ export async function POST(request: NextRequest) {
         // Trouver le store correspondant à ce store_id Glovo
         let store = await prisma.store.findFirst({
           where: {
-            OR: [
-              { glovoStoreId: storeId },
-              { id: storeId }
-            ],
+            OR: [{ glovoStoreId: storeId }, { id: storeId }],
           },
         });
 
@@ -261,32 +258,53 @@ export async function POST(request: NextRequest) {
           console.warn(`⚠️ Aucun store trouvé pour store_id: ${storeId}`);
           store = await prisma.store.findFirst({
             where: { isActive: true },
-            orderBy: { createdAt: 'asc' }
+            orderBy: { createdAt: "asc" },
           });
 
           if (!store) {
-            throw new Error(`Aucun store actif trouvé. Veuillez créer un store et configurer son glovoStoreId à "${storeId}"`);
+            throw new Error(
+              `Aucun store actif trouvé. Veuillez créer un store et configurer son glovoStoreId à "${storeId}"`
+            );
           }
 
-          console.log(`📍 Utilisation du store par défaut: ${store.name} (${store.id})`);
+          console.log(
+            `📍 Utilisation du store par défaut: ${store.name} (${store.id})`
+          );
         }
 
-        // Créer ou récupérer le client
+        // Créer ou récupérer le client (Hybrid approach: phone + Glovo ID)
         const customerPhone = body.customer?.phone_number || "+212600000000";
-        const customerName = body.customer?.name ||
+        const glovoCustomerId = body.customer?._id || body.customer?.id;
+        const customerName =
+          body.customer?.name ||
           (body.customer?.first_name
-            ? `${body.customer.first_name} ${body.customer.last_name || ""}`.trim()
+            ? `${body.customer.first_name} ${
+                body.customer.last_name || ""
+              }`.trim()
             : "Client Test");
 
-        let customer = await prisma.customer.findUnique({
-          where: { phoneNumber: customerPhone },
+        console.log("🔍 Recherche client:", { customerPhone, glovoCustomerId });
+
+        // Find customer by phone OR Glovo ID (hybrid approach)
+        let customer = await prisma.customer.findFirst({
+          where: {
+            OR: [
+              { phoneNumber: customerPhone },
+              ...(glovoCustomerId ? [{ glovoCustomerId: glovoCustomerId }] : [])
+            ]
+          },
         });
 
         if (!customer) {
-          console.log("👤 Création d'un nouveau client:", customerName, customerPhone);
+          console.log(
+            "👤 Création d'un nouveau client:",
+            customerName,
+            customerPhone
+          );
           customer = await prisma.customer.create({
             data: {
               phoneNumber: customerPhone,
+              glovoCustomerId: glovoCustomerId,
               name: customerName,
               email: body.customer?.email,
               address: body.customer?.delivery_address?.street,
@@ -303,6 +321,25 @@ export async function POST(request: NextRequest) {
           console.log("✅ Nouveau client créé:", customer.id);
         } else {
           console.log("👤 Client existant trouvé:", customer.name, customer.id);
+          
+          // Update existing customer with missing identifiers
+          const updateData: Record<string, unknown> = {};
+          if (glovoCustomerId && !customer.glovoCustomerId) {
+            updateData.glovoCustomerId = glovoCustomerId;
+            console.log("🔗 Ajout Glovo ID au client existant:", glovoCustomerId);
+          }
+          if (customerPhone !== customer.phoneNumber) {
+            updateData.phoneNumber = customerPhone;
+            console.log("📱 Mise à jour numéro de téléphone:", customerPhone);
+          }
+          
+          if (Object.keys(updateData).length > 0) {
+            customer = await prisma.customer.update({
+              where: { id: customer.id },
+              data: updateData,
+            });
+            console.log("✅ Client mis à jour avec nouveaux identifiants");
+          }
         }
 
         // Créer la commande en base de données
@@ -314,20 +351,37 @@ export async function POST(request: NextRequest) {
             orderCode: body.order_code || body.order_id,
             source: "GLOVO",
             status: "CREATED",
-            orderTime: body.order_time ||
-              (body.sys?.created_at ? new Date(body.sys.created_at).toISOString() : new Date().toISOString()),
-            estimatedPickupTime: body.estimated_pickup_time ||
-              (body.promised_for ? new Date(body.promised_for).toISOString() : null),
+            orderTime:
+              body.order_time ||
+              (body.sys?.created_at
+                ? new Date(body.sys.created_at).toISOString()
+                : new Date().toISOString()),
+            estimatedPickupTime:
+              body.estimated_pickup_time ||
+              (body.promised_for
+                ? new Date(body.promised_for).toISOString()
+                : null),
             utcOffsetMinutes: body.utc_offset_minutes,
-            paymentMethod: body.payment_method || (body.payment?.type === "PAID" ? "DELAYED" : "CASH"),
+            paymentMethod:
+              body.payment_method ||
+              (body.payment?.type === "PAID" ? "DELAYED" : "CASH"),
             currency: body.currency || "MAD",
             // Glovo prices are ALREADY in cents, don't multiply by 100!
-            estimatedTotalPrice: body.estimated_total_price || Math.round((body.payment?.order_total || 0) * 100),
-            deliveryFee: body.delivery_fee || Math.round((body.payment?.delivery_fee || 0) * 100),
-            totalAmount: body.estimated_total_price || Math.round((body.payment?.order_total || 0) * 100),
-            customerName: body.customer?.name ||
+            estimatedTotalPrice:
+              body.estimated_total_price ||
+              Math.round((body.payment?.order_total || 0) * 100),
+            deliveryFee:
+              body.delivery_fee ||
+              Math.round((body.payment?.delivery_fee || 0) * 100),
+            totalAmount:
+              body.estimated_total_price ||
+              Math.round((body.payment?.order_total || 0) * 100),
+            customerName:
+              body.customer?.name ||
               (body.customer?.first_name
-                ? `${body.customer.first_name} ${body.customer.last_name || ""}`.trim()
+                ? `${body.customer.first_name} ${
+                    body.customer.last_name || ""
+                  }`.trim()
                 : "Client Test"),
             customerPhone: body.customer?.phone_number || "+212600000000",
             customerHash: body.customer?.hash,
@@ -382,7 +436,9 @@ export async function POST(request: NextRequest) {
             totalSpent: { increment: orderTotal },
             lastOrderDate: new Date(),
             firstOrderDate: customer.firstOrderDate || new Date(),
-            averageOrderValue: Math.round((customer.totalSpent + orderTotal) / (customer.totalOrders + 1)),
+            averageOrderValue: Math.round(
+              (customer.totalSpent + orderTotal) / (customer.totalOrders + 1)
+            ),
             customerLifetimeValue: { increment: orderTotal },
           },
         });

@@ -290,6 +290,7 @@ model Message {
 model Customer {
   id                    String   @id @default(cuid())
   phoneNumber          String   @unique // Primary identifier
+  glovoCustomerId      String?  @unique // Glovo customer ID
   name                 String?  // Customer name
   email                String?  // Customer email
   address              String?  // Delivery address

@@ -40,14 +40,14 @@ ORDER_PAYLOAD=$(cat <<EOF
     "store_id": "store-01"
   },
   "customer": {
-    "_id": "cust-flow-001",
+    "_id": "cust-flow-002",
     "delivery_address": {
       "street": "Avenue Mohammed V",
       "city": "Casablanca",
       "postal_code": "20000"
     },
     "first_name": "Zaid",
-    "last_name": "Bourghit",
+    "last_name": "Bourghiti hamdouchi",
     "phone_number": "+212642310581"
   },
   "items": [
@@ -64,7 +64,7 @@ ORDER_PAYLOAD=$(cat <<EOF
       "name": "Tomates Bio 500g",
       "quantity": 3,
       "price": 15.00,
-      "total": 45.00,
+      "total": 477.00,
       "attributes": []
     }
   ],
