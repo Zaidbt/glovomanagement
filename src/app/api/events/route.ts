@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { eventTracker } from "@/lib/event-tracker";
 
 export async function GET(request: NextRequest) {
   try {
@@ -104,6 +105,43 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching events:", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { type, title, description, metadata, userId, storeId, orderId } = body;
+
+    // Validate required fields
+    if (!type || !title || !description) {
+      return NextResponse.json(
+        { error: "Type, title et description requis" },
+        { status: 400 }
+      );
+    }
+
+    // Track the event
+    const event = await eventTracker.trackEvent({
+      type,
+      title,
+      description,
+      metadata,
+      userId: userId || session.user.id,
+      storeId,
+      orderId,
+    });
+
+    return NextResponse.json({ success: true, event });
+  } catch (error) {
+    console.error("Error creating event:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
