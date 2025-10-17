@@ -47,8 +47,9 @@ export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 export type UserRole = keyof typeof ROLE_PERMISSIONS;
 
 // Fonction pour vérifier les permissions
-export function hasPermission(_permission: Permission): boolean {
+export function hasPermission(permission: Permission): boolean {
   // Pour l'instant, retourner true (à implémenter avec la session utilisateur)
   // TODO: Implémenter avec la session utilisateur réelle
+  console.log("Checking permission:", permission);
   return true;
 }

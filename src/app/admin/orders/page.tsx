@@ -36,6 +36,7 @@ import {
   Eye,
   Package,
   Info,
+  Trash2,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { clientEventTracker } from "@/lib/client-event-tracker";
@@ -301,6 +302,41 @@ export default function OrdersPage() {
           error instanceof Error
             ? error.message
             : "Erreur lors de l'envoi du message",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Supprimer une commande
+  const deleteOrder = async (orderId: string) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Commande supprimée",
+          description: "La commande a été supprimée avec succès",
+        });
+        // Recharger les commandes
+        await loadOrders();
+
+        // Tracker l'événement
+        await clientEventTracker.trackEvent({
+          type: "ORDER_CANCELLED",
+          title: "Commande supprimée",
+          description: `Commande ${orderId} supprimée`,
+          metadata: { orderId },
+        });
+      } else {
+        throw new Error("Erreur lors de la suppression");
+      }
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la suppression de la commande",
         variant: "destructive",
       });
     }
@@ -902,6 +938,15 @@ export default function OrdersPage() {
                           >
                             <Phone className="w-4 h-4 mr-1" />
                             Envoyer message
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => deleteOrder(order.id)}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Supprimer
                           </Button>
                         </div>
                       </TableCell>

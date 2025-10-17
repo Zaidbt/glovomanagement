@@ -149,11 +149,12 @@ export class GlovoBusinessService {
   /**
    * Récupérer une commande spécifique
    */
-  async getOrderById(_orderId: string): Promise<GlovoOrder | null> {
+  async getOrderById(orderId: string): Promise<GlovoOrder | null> {
     console.log(
       "⚠️ L'API Business Glovo ne fournit pas d'endpoint pour récupérer les commandes"
     );
     console.log("📋 Les commandes sont reçues uniquement via webhooks");
+    console.log("🔍 Order ID requested:", orderId);
     return null;
   }
 
@@ -361,7 +362,9 @@ export class GlovoBusinessService {
       currency: (apiOrder.currency as string) || "EUR",
       paymentMethod: (apiOrder.payment_method as string) || "CASH",
       estimatedPickupTime: apiOrder.estimated_pickup_time as string | undefined,
-      estimatedDeliveryTime: apiOrder.estimated_delivery_time as string | undefined,
+      estimatedDeliveryTime: apiOrder.estimated_delivery_time as
+        | string
+        | undefined,
       address: {
         street: address?.street || "",
         city: address?.city || "",

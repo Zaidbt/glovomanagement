@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 
 /**
@@ -12,7 +12,7 @@ import { authOptions } from "@/lib/auth";
  * 2. Delete test/duplicate stores
  * 3. Update main store with correct glovoStoreId
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
@@ -102,9 +102,7 @@ export async function POST(request: NextRequest) {
       console.log(`  ✅ Deleted "${testStore.name}"`);
 
       // Add to removed list if not already there
-      if (
-        !operations.testStoresRemoved.find((s) => s.id === testStore.id)
-      ) {
+      if (!operations.testStoresRemoved.find((s) => s.id === testStore.id)) {
         operations.testStoresRemoved.push({
           id: testStore.id,
           name: testStore.name,

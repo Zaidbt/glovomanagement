@@ -175,7 +175,7 @@ export class WhatsAppConversationService {
    */
   private async fetchConversationsFromTwilio(
     storeId: string,
-    _forceRefresh: boolean = false
+    forceRefresh: boolean = false
   ): Promise<ConversationContact[]> {
     // Récupérer les credentials Twilio du store
     const store = await prisma.store.findUnique({
@@ -193,6 +193,10 @@ export class WhatsAppConversationService {
     }
 
     const waSender = `whatsapp:${phoneNumber}`;
+
+    console.log(
+      `📱 Fetching conversations for store ${storeId}, forceRefresh: ${forceRefresh}`
+    );
 
     // Récupérer les messages envoyés (sans limite de temps pour la pagination)
     const sentMessages = await this.twilioService.getMessages({
@@ -236,7 +240,8 @@ export class WhatsAppConversationService {
         )
         .sort(
           (a, b) =>
-            new Date(b.dateSent as string).getTime() - new Date(a.dateSent as string).getTime()
+            new Date(b.dateSent as string).getTime() -
+            new Date(a.dateSent as string).getTime()
         );
 
       if (allMessages.length > 0) {
@@ -355,7 +360,9 @@ export class WhatsAppConversationService {
           status: msg.status as string,
           sentAt: new Date(msg.dateSent as string),
           receivedAt:
-            msg.direction === "inbound" ? new Date(msg.dateSent as string) : undefined,
+            msg.direction === "inbound"
+              ? new Date(msg.dateSent as string)
+              : undefined,
           mediaUrl: mediaInfo.mediaUrl,
           mediaType: mediaInfo.mediaType,
           mediaSid: mediaInfo.mediaSid,

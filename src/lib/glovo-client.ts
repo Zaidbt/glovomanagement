@@ -95,7 +95,7 @@ export class GlovoClient {
   /**
    * Get stores information
    */
-  async getStores(): Promise<any> {
+  async getStores(): Promise<{ stores: Array<{ id: string; name: string; address: string }> }> {
     const response = await this.request('/webhook/stores');
 
     if (!response.ok) {
@@ -109,7 +109,7 @@ export class GlovoClient {
   /**
    * Get specific store information
    */
-  async getStore(storeId: string): Promise<any> {
+  async getStore(storeId: string): Promise<{ id: string; name: string; address: string; status: string }> {
     const response = await this.request(`/webhook/stores/${storeId}`);
 
     if (!response.ok) {
@@ -127,7 +127,7 @@ export class GlovoClient {
     storeId: string,
     orderId: string,
     status: 'ACCEPTED' | 'REJECTED'
-  ): Promise<any> {
+  ): Promise<{ success: boolean; message: string }> {
     const response = await this.request(
       `/webhook/stores/${storeId}/orders/${orderId}/${status.toLowerCase()}`,
       {
@@ -146,21 +146,21 @@ export class GlovoClient {
   /**
    * Accept an order
    */
-  async acceptOrder(storeId: string, orderId: string): Promise<any> {
+  async acceptOrder(storeId: string, orderId: string): Promise<{ success: boolean; message: string }> {
     return this.updateOrderStatus(storeId, orderId, 'ACCEPTED');
   }
 
   /**
    * Reject an order
    */
-  async rejectOrder(storeId: string, orderId: string): Promise<any> {
+  async rejectOrder(storeId: string, orderId: string): Promise<{ success: boolean; message: string }> {
     return this.updateOrderStatus(storeId, orderId, 'REJECTED');
   }
 
   /**
    * Mark order as ready for pickup
    */
-  async markOrderReady(storeId: string, orderId: string): Promise<any> {
+  async markOrderReady(storeId: string, orderId: string): Promise<{ success: boolean; message: string }> {
     const response = await this.request(
       `/webhook/stores/${storeId}/orders/${orderId}/ready`,
       {

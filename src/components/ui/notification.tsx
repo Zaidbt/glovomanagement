@@ -92,7 +92,7 @@ interface NotificationProviderProps {
 }
 
 export function NotificationProvider({ children }: NotificationProviderProps) {
-  const [notifications, setNotifications] = useState<NotificationProps[]>([]);
+  const [notifications] = useState<NotificationProps[]>([]);
 
   return (
     <div>

@@ -1,19 +1,19 @@
 import { prisma } from "./prisma";
 
-interface PrismaEvent {
-  id: string;
-  type: string;
-  title: string;
-  description: string;
-  userId: string | null;
-  storeId: string | null;
-  orderId: string | null;
-  metadata: Record<string, unknown> | null;
-  createdAt: Date;
-  user?: { name: string; role: string } | null;
-  store?: { name: string } | null;
-  order?: { id: string; status: string } | null;
-}
+// interface PrismaEvent {
+//   id: string;
+//   type: string;
+//   title: string;
+//   description: string;
+//   userId: string | null;
+//   storeId: string | null;
+//   orderId: string | null;
+//   metadata: Record<string, unknown> | null;
+//   createdAt: Date;
+//   user?: { name: string; role: string } | null;
+//   store?: { name: string } | null;
+//   order?: { id: string; status: string } | null;
+// }
 
 interface PrismaStore {
   id: string;

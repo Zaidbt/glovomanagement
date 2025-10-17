@@ -18,6 +18,7 @@ import {
   Key,
   ShoppingCart,
   MessageSquare,
+  Trash2,
 } from "lucide-react";
 
 const navigation = [
@@ -29,6 +30,7 @@ const navigation = [
   { name: "Credentials", href: "/admin/credentials", icon: Key },
   { name: "Messagerie", href: "/admin/messaging", icon: MessageSquare },
   { name: "Commandes", href: "/admin/orders", icon: ShoppingCart },
+  { name: "Cleanup", href: "/admin/cleanup", icon: Trash2 },
 ];
 
 export function AdminSidebar() {
