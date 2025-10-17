@@ -204,7 +204,6 @@ export default function OrdersPage() {
     }
   };
 
-
   // Supprimer une commande
   const deleteOrder = async (orderId: string) => {
     try {

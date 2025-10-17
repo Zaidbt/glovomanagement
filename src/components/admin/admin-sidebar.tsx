@@ -19,6 +19,7 @@ import {
   ShoppingCart,
   MessageSquare,
   Trash2,
+  UserCheck,
 } from "lucide-react";
 
 const navigation = [
@@ -26,6 +27,7 @@ const navigation = [
   { name: "Stores", href: "/admin/stores", icon: Store },
   { name: "Collaborateurs", href: "/admin/collaborateurs", icon: Users },
   { name: "Fournisseurs", href: "/admin/fournisseurs", icon: Truck },
+  { name: "Clients", href: "/admin/customers", icon: UserCheck },
   { name: "Attributions", href: "/admin/attributions", icon: LinkIcon },
   { name: "Credentials", href: "/admin/credentials", icon: Key },
   { name: "Messagerie", href: "/admin/messaging", icon: MessageSquare },

@@ -37,7 +37,7 @@ ORDER_PAYLOAD=$(cat <<EOF
     "external_partner_config_id": "natura-beldi",
     "id": "5ae6a211-ba40-4c38-96af-aa04797da3a0",
     "name": "Natura Beldi Store",
-    "store_id": "store_12345"
+    "store_id": "store_01"
   },
   "customer": {
     "_id": "cust-flow-001",
@@ -53,7 +53,7 @@ ORDER_PAYLOAD=$(cat <<EOF
   "items": [
     {
       "id": "item-flow-001",
-      "name": "Poulet Bio 1kg",
+      "name": "Poulet Bio 1kg hihihi",
       "quantity": 2,
       "price": 75.00,
       "total": 150.00,

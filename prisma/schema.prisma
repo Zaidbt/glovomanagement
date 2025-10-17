@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // User model with role-based authentication
@@ -150,6 +150,8 @@ model Order {
   credentialId String?
   credential   Credential? @relation(fields: [credentialId], references: [id], onDelete: SetNull)
   store        Store       @relation(fields: [storeId], references: [id])
+  customerId   String?
+  customer     Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
   events       Event[]
 
   @@map("orders")
@@ -244,6 +246,8 @@ model Conversation {
   id           String   @id @default(cuid())
   storeId      String
   store        Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customerId   String?
+  customer     Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
   contactNumber String  // Numéro du contact (format: +212XXXXXXXXX)
   contactName   String? // Nom du contact (optionnel)
   lastMessage   String? // Dernier message
@@ -280,4 +284,48 @@ model Message {
 
   @@unique([twilioSid])
   @@map("messages")
+}
+
+// Customer Analytics and Management
+model Customer {
+  id                    String   @id @default(cuid())
+  phoneNumber          String   @unique // Primary identifier
+  name                 String?  // Customer name
+  email                String?  // Customer email
+  address              String?  // Delivery address
+  city                 String?  // City
+  postalCode           String?  // Postal code
+  
+  // Analytics Fields
+  totalOrders          Int      @default(0)
+  totalSpent           Int      @default(0) // In centimes
+  averageOrderValue    Int      @default(0) // In centimes
+  lastOrderDate        DateTime?
+  firstOrderDate       DateTime?
+  customerLifetimeValue Int     @default(0) // In centimes
+  
+  // Customer Segmentation
+  loyaltyTier          String   @default("BRONZE") // VIP, GOLD, SILVER, BRONZE, NEW
+  churnRiskScore       Float    @default(0.0) // 0.0 to 1.0
+  isActive             Boolean  @default(true)
+  
+  // Preferences
+  preferredDeliveryTime String? // "morning", "afternoon", "evening"
+  favoriteProducts     Json?    // Array of favorite product IDs
+  deliveryNotes        String? // Special delivery instructions
+  
+  // Communication
+  whatsappOptIn        Boolean  @default(true)
+  smsOptIn             Boolean  @default(false)
+  emailOptIn           Boolean  @default(false)
+  
+  // Timestamps
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  // Relations
+  orders               Order[]
+  conversations        Conversation[]
+  
+  @@map("customers")
 }
