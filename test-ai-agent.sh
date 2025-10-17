@@ -13,12 +13,18 @@ CUSTOMER_PHONE="+212642310581"
 CUSTOMER_NAME="Zaid"
 
 echo ""
+echo "⚠️  NOTE: These APIs require authentication!"
+echo "    You need to be logged in to your admin panel first."
+echo "    The APIs are designed for internal use with session authentication."
+echo ""
+
 echo "🔍 1. Testing Order Lookup API..."
 echo "GET /api/ai-agent/orders/lookup?orderCode=$ORDER_CODE&phone=$CUSTOMER_PHONE"
 echo ""
 
 curl -s -X GET "$API_BASE/api/ai-agent/orders/lookup?orderCode=$ORDER_CODE&phone=$CUSTOMER_PHONE" \
-  -H "Content-Type: application/json" | jq '.'
+  -H "Content-Type: application/json" \
+  -H "Cookie: next-auth.session-token=YOUR_SESSION_TOKEN" | jq '.'
 
 echo ""
 echo "👤 2. Testing Customer Search API..."
@@ -26,7 +32,8 @@ echo "GET /api/ai-agent/customers/search?phone=$CUSTOMER_PHONE&name=$CUSTOMER_NA
 echo ""
 
 curl -s -X GET "$API_BASE/api/ai-agent/customers/search?phone=$CUSTOMER_PHONE&name=$CUSTOMER_NAME" \
-  -H "Content-Type: application/json" | jq '.'
+  -H "Content-Type: application/json" \
+  -H "Cookie: next-auth.session-token=YOUR_SESSION_TOKEN" | jq '.'
 
 echo ""
 echo "📊 3. Testing Analytics API..."
@@ -34,7 +41,8 @@ echo "GET /api/ai-agent/analytics?period=7d&predictions=true"
 echo ""
 
 curl -s -X GET "$API_BASE/api/ai-agent/analytics?period=7d&predictions=true" \
-  -H "Content-Type: application/json" | jq '.'
+  -H "Content-Type: application/json" \
+  -H "Cookie: next-auth.session-token=YOUR_SESSION_TOKEN" | jq '.'
 
 echo ""
 echo "🛠️ 4. Testing Support Actions API..."

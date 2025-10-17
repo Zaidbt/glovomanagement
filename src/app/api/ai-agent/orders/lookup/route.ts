@@ -45,9 +45,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (phone) {
-      whereConditions.customer = {
-        phoneNumber: phone,
-      };
+      whereConditions.customerPhone = phone;
     }
 
     // Fetch comprehensive order data
@@ -199,7 +197,7 @@ export async function GET(request: NextRequest) {
       },
 
       // Suggested Actions
-        suggestedActions: generateSuggestedActions(currentStatus),
+      suggestedActions: generateSuggestedActions(currentStatus),
 
       // Support Context
       supportContext: {

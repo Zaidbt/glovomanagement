@@ -270,7 +270,11 @@ function generateCustomerActions(
 /**
  * Determine preferred contact method
  */
-function getPreferredContactMethod(customer: { whatsappOptIn?: boolean; smsOptIn?: boolean; emailOptIn?: boolean }): string {
+function getPreferredContactMethod(customer: {
+  whatsappOptIn?: boolean;
+  smsOptIn?: boolean;
+  emailOptIn?: boolean;
+}): string {
   if (customer.whatsappOptIn) return "WhatsApp";
   if (customer.smsOptIn) return "SMS";
   if (customer.emailOptIn) return "Email";

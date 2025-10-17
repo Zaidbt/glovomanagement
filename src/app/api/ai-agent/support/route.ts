@@ -253,14 +253,18 @@ async function getCustomerDetails(customerId: string) {
 /**
  * Create support ticket
  */
-async function createSupportTicket(data: Record<string, unknown>, user: { id: string }) {
+async function createSupportTicket(
+  data: Record<string, unknown>,
+  user: { id: string }
+) {
   try {
     // This would integrate with your support system
     // For now, we'll create an event
     await eventTracker.trackEvent({
       type: "ORDER_UPDATED",
       title: "Support Ticket Created by AI Agent",
-      description: (data.description as string) || "AI agent created support ticket",
+      description:
+        (data.description as string) || "AI agent created support ticket",
       userId: user.id,
       metadata: {
         priority: data.priority || "MEDIUM",
