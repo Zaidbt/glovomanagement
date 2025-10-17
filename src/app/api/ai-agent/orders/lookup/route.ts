@@ -30,7 +30,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Build search conditions
-    const whereConditions: any = {};
+    const whereConditions: {
+      orderCode?: string;
+      orderId?: string;
+      customer?: { phoneNumber: string };
+    } = {};
 
     if (orderCode) {
       whereConditions.orderCode = orderCode;
@@ -101,13 +105,16 @@ export async function GET(request: NextRequest) {
 
     // Format products for AI understanding
     const products = Array.isArray(order.products) ? order.products : [];
-    const formattedProducts = products.map((product: any) => ({
-      name: product.name || "Unknown Product",
-      quantity: product.quantity || 1,
-      price: product.price || 0,
-      total: product.total || 0,
-      category: product.category || "General",
-    }));
+    const formattedProducts = products.map((product: unknown) => {
+      const productObj = product as Record<string, unknown>;
+      return {
+        name: (productObj.name as string) || "Unknown Product",
+        quantity: (productObj.quantity as number) || 1,
+        price: (productObj.price as number) || 0,
+        total: (productObj.total as number) || 0,
+        category: (productObj.category as string) || "General",
+      };
+    });
 
     // Calculate order timeline
     const orderEvents = order.events || [];
@@ -176,7 +183,6 @@ export async function GET(request: NextRequest) {
         estimatedPickupTime: order.estimatedPickupTime,
         orderTime: order.orderTime,
         deliveryFee: order.deliveryFee || 0,
-        specialInstructions: order.specialInstructions,
       },
 
       // AI Context
@@ -186,7 +192,6 @@ export async function GET(request: NextRequest) {
         orderAge: Math.floor(
           (Date.now() - new Date(order.createdAt).getTime()) / (1000 * 60 * 60)
         ), // hours
-        hasSpecialInstructions: !!order.specialInstructions,
         productCategories: [
           ...new Set(formattedProducts.map((p) => p.category)),
         ],
@@ -194,7 +199,7 @@ export async function GET(request: NextRequest) {
       },
 
       // Suggested Actions
-      suggestedActions: generateSuggestedActions(currentStatus, order),
+        suggestedActions: generateSuggestedActions(currentStatus),
 
       // Support Context
       supportContext: {
@@ -225,7 +230,7 @@ export async function GET(request: NextRequest) {
 /**
  * Generate suggested actions based on order status
  */
-function generateSuggestedActions(status: string, order: any): string[] {
+function generateSuggestedActions(status: string): string[] {
   const actions: string[] = [];
 
   switch (status) {

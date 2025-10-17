@@ -30,7 +30,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Build search conditions
-    const whereConditions: any = {
+    const whereConditions: {
+      OR: Array<{
+        phoneNumber?: { contains: string };
+        name?: { contains: string; mode: "insensitive" };
+        email?: { contains: string; mode: "insensitive" };
+      }>;
+    } = {
       OR: [],
     };
 
@@ -79,9 +85,7 @@ export async function GET(request: NextRequest) {
         conversations: {
           select: {
             id: true,
-            status: true,
             lastMessageAt: true,
-            messageCount: true,
           },
           orderBy: {
             lastMessageAt: "desc",
@@ -120,7 +124,6 @@ export async function GET(request: NextRequest) {
 
     // Analyze order patterns
     const recentOrders = customer.orders || [];
-    const orderStatuses = recentOrders.map((order) => order.status);
     const mostRecentOrder = recentOrders[0];
 
     // Determine customer status
@@ -182,9 +185,7 @@ export async function GET(request: NextRequest) {
         recentConversations:
           customer.conversations?.map((conv) => ({
             id: conv.id,
-            status: conv.status,
             lastMessageAt: conv.lastMessageAt,
-            messageCount: conv.messageCount,
           })) || [],
       },
 
@@ -236,7 +237,7 @@ export async function GET(request: NextRequest) {
 function generateCustomerActions(
   status: string,
   loyaltyTier: string,
-  recentOrders: any[]
+  recentOrders: Array<{ status: string }>
 ): string[] {
   const actions: string[] = [];
 
@@ -269,7 +270,7 @@ function generateCustomerActions(
 /**
  * Determine preferred contact method
  */
-function getPreferredContactMethod(customer: any): string {
+function getPreferredContactMethod(customer: { whatsappOptIn?: boolean; smsOptIn?: boolean; emailOptIn?: boolean }): string {
   if (customer.whatsappOptIn) return "WhatsApp";
   if (customer.smsOptIn) return "SMS";
   if (customer.emailOptIn) return "Email";

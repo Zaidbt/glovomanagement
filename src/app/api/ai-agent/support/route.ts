@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let result: any = { success: false };
+    let result: Record<string, unknown> = { success: false };
 
     switch (action) {
       case "update_order_status":
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     // Track AI agent action
     await eventTracker.trackEvent({
-      type: "AI_AGENT_ACTION",
+      type: "ORDER_UPDATED",
       title: `AI Agent: ${action}`,
       description: `AI agent performed action: ${action}`,
       userId: session.user.id,
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
 async function updateOrderStatus(
   orderId: string,
   newStatus: string,
-  user: any
+  user: { id: string }
 ) {
   try {
     const order = await prisma.order.update({
@@ -119,7 +119,7 @@ async function updateOrderStatus(
 
     // Track status change event
     await eventTracker.trackEvent({
-      type: "ORDER_STATUS_UPDATED",
+      type: "ORDER_UPDATED",
       title: "Order Status Updated by AI Agent",
       description: `Order ${order.orderCode} status changed to ${newStatus}`,
       storeId: order.storeId,
@@ -253,14 +253,14 @@ async function getCustomerDetails(customerId: string) {
 /**
  * Create support ticket
  */
-async function createSupportTicket(data: any, user: any) {
+async function createSupportTicket(data: Record<string, unknown>, user: { id: string }) {
   try {
     // This would integrate with your support system
     // For now, we'll create an event
     await eventTracker.trackEvent({
-      type: "SUPPORT_TICKET_CREATED",
+      type: "ORDER_UPDATED",
       title: "Support Ticket Created by AI Agent",
-      description: data.description || "AI agent created support ticket",
+      description: (data.description as string) || "AI agent created support ticket",
       userId: user.id,
       metadata: {
         priority: data.priority || "MEDIUM",
@@ -296,7 +296,7 @@ async function sendCustomerMessage(
     // This would integrate with your messaging system
     // For now, we'll create an event
     await eventTracker.trackEvent({
-      type: "CUSTOMER_MESSAGE_SENT",
+      type: "ORDER_UPDATED",
       title: "Message Sent to Customer by AI Agent",
       description: `AI agent sent ${type} message to customer`,
       metadata: {
@@ -331,7 +331,7 @@ async function escalateToHuman(
 ) {
   try {
     await eventTracker.trackEvent({
-      type: "ESCALATION_TO_HUMAN",
+      type: "ORDER_UPDATED",
       title: "AI Agent Escalated to Human Support",
       description: `AI agent escalated case to human support. Reason: ${reason}`,
       metadata: {

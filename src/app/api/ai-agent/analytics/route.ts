@@ -118,8 +118,9 @@ export async function GET(request: NextRequest) {
     > = {};
     orders.forEach((order) => {
       if (Array.isArray(order.products)) {
-        order.products.forEach((product: any) => {
-          const productName = product.name || "Unknown Product";
+        order.products.forEach((product: unknown) => {
+          const productObj = product as Record<string, unknown>;
+          const productName = (productObj.name as string) || "Unknown Product";
           if (!productSales[productName]) {
             productSales[productName] = {
               name: productName,
@@ -127,8 +128,8 @@ export async function GET(request: NextRequest) {
               revenue: 0,
             };
           }
-          productSales[productName].quantity += product.quantity || 0;
-          productSales[productName].revenue += product.total || 0;
+          productSales[productName].quantity += (productObj.quantity as number) || 0;
+          productSales[productName].revenue += (productObj.total as number) || 0;
         });
       }
     });
@@ -152,7 +153,7 @@ export async function GET(request: NextRequest) {
     }).length;
 
     // AI-friendly response
-    const aiResponse = {
+    const aiResponse: Record<string, unknown> = {
       success: true,
       period: {
         start: startDate,
@@ -195,11 +196,10 @@ export async function GET(request: NextRequest) {
           averageOrderValue
         ),
         customerSatisfaction: assessCustomerSatisfaction(
-          statusBreakdown,
-          events
+          statusBreakdown
         ),
-        growthTrends: assessGrowthTrends(orders, customers, period),
-        recommendations: generateRecommendations(orders, customers, events),
+        growthTrends: assessGrowthTrends(orders),
+        recommendations: generateRecommendations(orders, customers),
       },
     };
 
@@ -208,7 +208,7 @@ export async function GET(request: NextRequest) {
       aiResponse.predictions = {
         nextWeekOrders: predictNextWeekOrders(orders),
         customerChurnRisk: predictCustomerChurn(customers),
-        revenueForecast: predictRevenue(orders, period),
+        revenueForecast: predictRevenue(orders),
       };
     }
 
@@ -229,7 +229,7 @@ export async function GET(request: NextRequest) {
 /**
  * Helper functions for analytics
  */
-function getBusiestDay(orders: any[]): string {
+function getBusiestDay(orders: Array<{ createdAt: Date }>): string {
   const dayCounts: Record<string, number> = {};
   orders.forEach((order) => {
     const day = new Date(order.createdAt).toLocaleDateString("en-US", {
@@ -243,7 +243,7 @@ function getBusiestDay(orders: any[]): string {
   );
 }
 
-function getPeakHour(orders: any[]): number {
+function getPeakHour(orders: Array<{ createdAt: Date }>): number {
   const hourCounts: Record<number, number> = {};
   orders.forEach((order) => {
     const hour = new Date(order.createdAt).getHours();
@@ -255,14 +255,14 @@ function getPeakHour(orders: any[]): number {
   );
 }
 
-function calculateRetentionRate(customers: any[]): number {
+function calculateRetentionRate(customers: Array<{ totalOrders?: number }>): number {
   const repeatCustomers = customers.filter(
     (c) => (c.totalOrders || 0) > 1
   ).length;
   return customers.length > 0 ? (repeatCustomers / customers.length) * 100 : 0;
 }
 
-function calculateOrderFrequency(orders: any[], customers: any[]): number {
+function calculateOrderFrequency(orders: Array<unknown>, customers: Array<unknown>): number {
   return customers.length > 0 ? orders.length / customers.length : 0;
 }
 
@@ -283,8 +283,7 @@ function assessBusinessHealth(
 }
 
 function assessCustomerSatisfaction(
-  statusBreakdown: Record<string, number>,
-  events: any[]
+  statusBreakdown: Record<string, number>
 ): string {
   const completedOrders =
     (statusBreakdown.DELIVERED || 0) + (statusBreakdown.COMPLETED || 0);
@@ -302,9 +301,7 @@ function assessCustomerSatisfaction(
 }
 
 function assessGrowthTrends(
-  orders: any[],
-  customers: any[],
-  period: string
+  orders: Array<{ createdAt: Date }>
 ): string {
   // Simple trend analysis based on recent activity
   const recentOrders = orders.filter((o) => {
@@ -322,9 +319,8 @@ function assessGrowthTrends(
 }
 
 function generateRecommendations(
-  orders: any[],
-  customers: any[],
-  events: any[]
+  orders: Array<{ status: string }>,
+  customers: Array<{ totalOrders?: number; lastOrderDate?: Date | null }>
 ): string[] {
   const recommendations: string[] = [];
 
@@ -357,7 +353,7 @@ function generateRecommendations(
   return recommendations;
 }
 
-function predictNextWeekOrders(orders: any[]): number {
+function predictNextWeekOrders(orders: Array<{ createdAt: Date }>): number {
   // Simple prediction based on recent trend
   const recentOrders = orders.filter((o) => {
     const daysSince = Math.floor(
@@ -369,7 +365,7 @@ function predictNextWeekOrders(orders: any[]): number {
   return Math.round(recentOrders.length * 1.1); // 10% growth assumption
 }
 
-function predictCustomerChurn(customers: any[]): number {
+function predictCustomerChurn(customers: Array<{ lastOrderDate?: Date | null }>): number {
   const atRisk = customers.filter((c) => {
     if (!c.lastOrderDate) return true;
     const daysSince = Math.floor(
@@ -381,7 +377,7 @@ function predictCustomerChurn(customers: any[]): number {
   return Math.round((atRisk.length / customers.length) * 100);
 }
 
-function predictRevenue(orders: any[], period: string): number {
+function predictRevenue(orders: Array<{ estimatedTotalPrice?: number | null }>): number {
   const totalRevenue = orders.reduce(
     (sum, order) => sum + (order.estimatedTotalPrice || 0),
     0
