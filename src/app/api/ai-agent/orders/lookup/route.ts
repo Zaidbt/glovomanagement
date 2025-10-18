@@ -56,12 +56,20 @@ export async function GET(request: NextRequest) {
 
     // SIMPLE TEST: Get ALL orders to see what's actually there
     const allOrders = await prisma.order.findMany({
-      select: { id: true, orderId: true, orderCode: true, customerPhone: true, status: true }
+      select: {
+        id: true,
+        orderId: true,
+        orderCode: true,
+        customerPhone: true,
+        status: true,
+      },
     });
     console.log("🔍 ALL ORDERS IN DATABASE:", allOrders);
-    
+
     // Check if our specific order exists
-    const specificOrder = allOrders.find(o => o.orderId === 'flow-test-1760737325');
+    const specificOrder = allOrders.find(
+      (o) => o.orderId === "flow-test-1760737325"
+    );
     console.log("🔍 SPECIFIC ORDER FOUND:", specificOrder);
 
     // Fetch comprehensive order data
