@@ -19,8 +19,17 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const orderCode = searchParams.get("orderCode");
-    const phone = searchParams.get("phone");
+    let phone = searchParams.get("phone");
     const orderId = searchParams.get("orderId");
+
+    // Clean up phone number - remove extra spaces and ensure proper format
+    if (phone) {
+      phone = phone.trim(); // Remove leading/trailing spaces
+      // Ensure it has + if it's a Moroccan number
+      if (phone.startsWith('212') && !phone.startsWith('+')) {
+        phone = '+' + phone;
+      }
+    }
 
     if (!orderCode && !phone && !orderId) {
       return NextResponse.json(
@@ -68,7 +77,7 @@ export async function GET(request: NextRequest) {
 
     // Debug: Log what we're searching for
     console.log("🔍 Final search conditions:", whereConditions);
-    
+
     // Fetch comprehensive order data
     const order = await prisma.order.findFirst({
       where: whereConditions,
