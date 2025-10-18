@@ -66,6 +66,9 @@ export async function GET(request: NextRequest) {
     );
     console.log("🔍 SPECIFIC ORDER FOUND:", specificOrder);
 
+    // Debug: Log what we're searching for
+    console.log("🔍 Final search conditions:", whereConditions);
+    
     // Fetch comprehensive order data
     const order = await prisma.order.findFirst({
       where: whereConditions,
