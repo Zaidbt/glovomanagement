@@ -29,12 +29,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build search conditions
+    // Build search conditions - SIMPLE APPROACH
     const whereConditions: {
       orderCode?: string;
       orderId?: string;
       customerPhone?: string;
-      OR?: Array<{ customerPhone: string }>;
     } = {};
 
     if (orderCode) {
@@ -46,12 +45,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (phone) {
-      // Try both formats of phone number
-      whereConditions.OR = [
-        { customerPhone: phone },
-        { customerPhone: phone.replace("+", "") },
-        { customerPhone: phone.replace("+212", "0") },
-      ];
+      whereConditions.customerPhone = phone;
     }
 
     // SIMPLE TEST: Get ALL orders to see what's actually there
