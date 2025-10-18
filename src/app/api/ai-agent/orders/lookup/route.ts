@@ -11,10 +11,16 @@ import { prisma } from "@/lib/prisma";
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Check for API key first (for N8N)
+    const apiKey = request.headers.get('x-api-key');
+    if (apiKey === process.env.AI_AGENT_API_KEY) {
+      // API key authentication - skip session check
+    } else {
+      // Fallback to session authentication
+      const session = await getServerSession(authOptions);
+      if (!session?.user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
     }
 
     const { searchParams } = new URL(request.url);
@@ -26,8 +32,8 @@ export async function GET(request: NextRequest) {
     if (phone) {
       phone = phone.trim(); // Remove leading/trailing spaces
       // Ensure it has + if it's a Moroccan number
-      if (phone.startsWith('212') && !phone.startsWith('+')) {
-        phone = '+' + phone;
+      if (phone.startsWith("212") && !phone.startsWith("+")) {
+        phone = "+" + phone;
       }
     }
 
