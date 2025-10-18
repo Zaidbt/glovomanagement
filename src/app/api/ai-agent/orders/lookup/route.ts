@@ -62,8 +62,13 @@ export async function GET(request: NextRequest) {
 
     // First, let's check if ANY order exists with this orderId
     const anyOrder = await prisma.order.findFirst({
-      where: { orderId: orderId || orderCode },
-      select: { id: true, orderId: true, orderCode: true, customerPhone: true }
+      where: { 
+        OR: [
+          ...(orderId ? [{ orderId }] : []),
+          ...(orderCode ? [{ orderCode }] : [])
+        ]
+      },
+      select: { id: true, orderId: true, orderCode: true, customerPhone: true },
     });
     console.log("🔍 Found any order:", anyOrder);
 
