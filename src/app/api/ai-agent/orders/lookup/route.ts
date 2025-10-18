@@ -54,23 +54,15 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Debug: Log the search conditions
-    console.log(
-      "🔍 AI Agent Order Lookup - Search conditions:",
-      whereConditions
-    );
-
-    // First, let's check if ANY order exists with this orderId
-    const anyOrder = await prisma.order.findFirst({
-      where: { 
-        OR: [
-          ...(orderId ? [{ orderId }] : []),
-          ...(orderCode ? [{ orderCode }] : [])
-        ]
-      },
-      select: { id: true, orderId: true, orderCode: true, customerPhone: true },
+    // SIMPLE TEST: Get ALL orders to see what's actually there
+    const allOrders = await prisma.order.findMany({
+      select: { id: true, orderId: true, orderCode: true, customerPhone: true, status: true }
     });
-    console.log("🔍 Found any order:", anyOrder);
+    console.log("🔍 ALL ORDERS IN DATABASE:", allOrders);
+    
+    // Check if our specific order exists
+    const specificOrder = allOrders.find(o => o.orderId === 'flow-test-1760737325');
+    console.log("🔍 SPECIFIC ORDER FOUND:", specificOrder);
 
     // Fetch comprehensive order data
     const order = await prisma.order.findFirst({
