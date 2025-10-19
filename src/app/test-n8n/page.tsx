@@ -24,7 +24,9 @@ export default function TestN8NPage() {
       const data = await response.json();
       setResult(data);
     } catch (error) {
-      setResult({ error: error instanceof Error ? error.message : "Unknown error" });
+      setResult({
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
     }
     setLoading(false);
   };

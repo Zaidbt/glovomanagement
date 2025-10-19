@@ -3,7 +3,19 @@ import { clientEventTracker } from "@/lib/client-event-tracker";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // Parser les données Twilio (format form-urlencoded)
+    const formData = await request.formData();
+
+    const body = {
+      MessageSid: formData.get("MessageSid"),
+      From: formData.get("From"),
+      To: formData.get("To"),
+      Body: formData.get("Body"),
+      MessageStatus: formData.get("MessageStatus"),
+      NumMedia: formData.get("NumMedia"),
+      MediaUrl0: formData.get("MediaUrl0"),
+      MediaContentType0: formData.get("MediaContentType0"),
+    };
 
     console.log("📱 Webhook Twilio reçu:", body);
 
@@ -20,9 +32,9 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Déterminer le type de message
-    const messageType = From.startsWith("whatsapp:") ? "whatsapp" : "sms";
-    const cleanFrom = From.replace("whatsapp:", "");
-    const cleanTo = To.replace("whatsapp:", "");
+    const messageType = From?.startsWith("whatsapp:") ? "whatsapp" : "sms";
+    const cleanFrom = From?.replace("whatsapp:", "") || "";
+    const cleanTo = To?.replace("whatsapp:", "") || "";
 
     // Sauvegarder le message dans la base de données
     const messageData = {
@@ -32,7 +44,7 @@ export async function POST(request: NextRequest) {
       body: Body,
       status: MessageStatus,
       type: messageType,
-      hasMedia: NumMedia > 0,
+      hasMedia: Number(NumMedia) > 0,
       mediaUrl: MediaUrl0,
       mediaType: MediaContentType0,
       receivedAt: new Date(),
@@ -48,7 +60,7 @@ export async function POST(request: NextRequest) {
         from: cleanFrom,
         to: cleanTo,
         type: messageType,
-        hasMedia: NumMedia > 0,
+        hasMedia: Number(NumMedia) > 0,
         status: MessageStatus,
       },
     });
