@@ -32,9 +32,11 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Déterminer le type de message
-    const messageType = From?.startsWith("whatsapp:") ? "whatsapp" : "sms";
-    const cleanFrom = From?.replace("whatsapp:", "") || "";
-    const cleanTo = To?.replace("whatsapp:", "") || "";
+    const fromString = typeof From === 'string' ? From : '';
+    const toString = typeof To === 'string' ? To : '';
+    const messageType = fromString.startsWith("whatsapp:") ? "whatsapp" : "sms";
+    const cleanFrom = fromString.replace("whatsapp:", "") || "";
+    const cleanTo = toString.replace("whatsapp:", "") || "";
 
     // Sauvegarder le message dans la base de données
     const messageData = {
