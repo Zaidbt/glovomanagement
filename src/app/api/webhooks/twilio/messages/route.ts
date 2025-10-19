@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { clientEventTracker } from "@/lib/client-event-tracker";
+import { eventTracker } from "@/lib/event-tracker";
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,8 +32,8 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Déterminer le type de message
-    const fromString = typeof From === 'string' ? From : '';
-    const toString = typeof To === 'string' ? To : '';
+    const fromString = typeof From === "string" ? From : "";
+    const toString = typeof To === "string" ? To : "";
     const messageType = fromString.startsWith("whatsapp:") ? "whatsapp" : "sms";
     const cleanFrom = fromString.replace("whatsapp:", "") || "";
     const cleanTo = toString.replace("whatsapp:", "") || "";
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Créer un événement pour le tracking
-    await clientEventTracker.trackEvent({
+    await eventTracker.trackEvent({
       type: "MESSAGING_MESSAGE_RECEIVED",
       title: "Message reçu",
       description: `Message ${messageType} reçu de ${cleanFrom}`,
