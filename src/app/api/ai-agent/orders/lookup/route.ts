@@ -12,7 +12,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET(request: NextRequest) {
   try {
     // Check for API key first (for N8N)
-    const apiKey = request.headers.get('x-api-key');
+    const apiKey = request.headers.get("x-api-key");
     if (apiKey === process.env.AI_AGENT_API_KEY) {
       // API key authentication - skip session check
     } else {

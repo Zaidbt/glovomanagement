@@ -236,6 +236,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Vérifier si c'est une commande (format Glovo réel ou ancien format)
+    console.log("🔍 Checking if this is an order:", {
+      hasOrderId: !!body.order_id,
+      hasStoreId: !!body.store_id,
+      hasClientStoreId: !!body.client?.store_id,
+      orderId: body.order_id,
+      storeId: body.store_id
+    });
+    
     if (body.order_id && (body.store_id || body.client?.store_id)) {
       const storeId = body.store_id || body.client?.store_id;
       console.log("📋 Commande reçue:", {
