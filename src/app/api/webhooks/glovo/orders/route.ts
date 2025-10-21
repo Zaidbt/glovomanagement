@@ -61,6 +61,8 @@ export async function POST(request: NextRequest) {
       "🔍 Webhook Glovo - Données reçues:",
       JSON.stringify(body, null, 2)
     );
+    
+    console.log("🔍 Webhook processing started - checking order detection...");
 
     // Vérifier le type d'événement
     if (body.eventType === "STATUS_UPDATE") {
@@ -241,9 +243,11 @@ export async function POST(request: NextRequest) {
       hasStoreId: !!body.store_id,
       hasClientStoreId: !!body.client?.store_id,
       orderId: body.order_id,
-      storeId: body.store_id
+      storeId: body.store_id,
     });
     
+    console.log("🔍 Order detection logic - about to check conditions...");
+
     if (body.order_id && (body.store_id || body.client?.store_id)) {
       const storeId = body.store_id || body.client?.store_id;
       console.log("📋 Commande reçue:", {
@@ -463,7 +467,9 @@ export async function POST(request: NextRequest) {
         await eventTracker.trackEvent({
           type: "ORDER_CREATED",
           title: "Commande reçue",
-          description: `Commande ${order.orderCode || order.orderId} reçue pour ${customer.name}`,
+          description: `Commande ${
+            order.orderCode || order.orderId
+          } reçue pour ${customer.name}`,
           storeId: store.id,
           orderId: order.id,
           metadata: {
@@ -499,6 +505,7 @@ export async function POST(request: NextRequest) {
 
     // Si ce n'est ni un status update ni une commande
     console.log("⚠️ Type d'événement non reconnu:", body);
+    console.log("⚠️ Event not recognized - returning success but not processing");
     return NextResponse.json({
       success: true,
       message: "Événement reçu mais non traité",
