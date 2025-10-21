@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       "🔍 Webhook Glovo - Données reçues:",
       JSON.stringify(body, null, 2)
     );
-    
+
     console.log("🔍 Webhook processing started - checking order detection...");
 
     // Vérifier le type d'événement
@@ -245,7 +245,7 @@ export async function POST(request: NextRequest) {
       orderId: body.order_id,
       storeId: body.store_id,
     });
-    
+
     console.log("🔍 Order detection logic - about to check conditions...");
 
     if (body.order_id && (body.store_id || body.client?.store_id)) {
@@ -482,10 +482,10 @@ export async function POST(request: NextRequest) {
           },
         });
 
-      return NextResponse.json({
-        success: true,
+        return NextResponse.json({
+          success: true,
           message: "Commande reçue et stockée avec succès",
-        orderId: body.order_id,
+          orderId: body.order_id,
           databaseId: order.id,
         });
       } catch (error) {
@@ -505,7 +505,9 @@ export async function POST(request: NextRequest) {
 
     // Si ce n'est ni un status update ni une commande
     console.log("⚠️ Type d'événement non reconnu:", body);
-    console.log("⚠️ Event not recognized - returning success but not processing");
+    console.log(
+      "⚠️ Event not recognized - returning success but not processing"
+    );
     return NextResponse.json({
       success: true,
       message: "Événement reçu mais non traité",
