@@ -190,20 +190,31 @@ export class GlovoPartnersService {
     const { maxAttempts = 30, delayMs = 2000 } = options;
 
     for (let i = 0; i < maxAttempts; i++) {
-      const status = await this.getBulkUpdateStatus(transactionId);
+      try {
+        const status = await this.getBulkUpdateStatus(transactionId);
 
-      // Check if processing is complete
-      if (
-        status.status === "SUCCESS" ||
-        status.status === "PARTIALLY_PROCESSED" ||
-        status.status === "NOT_PROCESSED" ||
-        status.status === "GLOVO_ERROR"
-      ) {
-        return status;
+        // Check if processing is complete
+        if (
+          status.status === "SUCCESS" ||
+          status.status === "PARTIALLY_PROCESSED" ||
+          status.status === "NOT_PROCESSED" ||
+          status.status === "GLOVO_ERROR"
+        ) {
+          return status;
+        }
+
+        // Wait before next check
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      } catch (error) {
+        // If first attempt fails with 404, wait and retry (transaction might not be ready yet)
+        if (i === 0 && error instanceof Error && error.message.includes("404")) {
+          console.log(`⏳ Transaction ${transactionId} not ready yet, waiting...`);
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+          continue;
+        }
+        // For other errors or later attempts, rethrow
+        throw error;
       }
-
-      // Wait before next check
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
     throw new Error(
