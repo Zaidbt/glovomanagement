@@ -138,7 +138,10 @@ async function handleNewOrder(body: Record<string, unknown>) {
     // Find the store
     let store = await prisma.store.findFirst({
       where: {
-        OR: [{ glovoStoreId: body.store_id as string }, { id: body.store_id as string }],
+        OR: [
+          { glovoStoreId: body.store_id as string },
+          { id: body.store_id as string },
+        ],
       },
     });
 
@@ -162,7 +165,8 @@ async function handleNewOrder(body: Record<string, unknown>) {
 
     // Create or find customer
     const customerData = body.customer as Record<string, unknown>;
-    const customerPhone = (customerData?.phone_number as string) || "+212600000000";
+    const customerPhone =
+      (customerData?.phone_number as string) || "+212600000000";
     const glovoCustomerId = customerData?.hash as string;
     const customerName = (customerData?.name as string) || "Client Test";
 
@@ -178,14 +182,20 @@ async function handleNewOrder(body: Record<string, unknown>) {
     });
 
     if (!customer) {
-      console.log("👤 Création d'un nouveau client:", customerName, customerPhone);
+      console.log(
+        "👤 Création d'un nouveau client:",
+        customerName,
+        customerPhone
+      );
       customer = await prisma.customer.create({
         data: {
           phoneNumber: customerPhone,
           glovoCustomerId: glovoCustomerId,
           name: customerName,
           email: (customerData?.email as string) || undefined,
-          address: ((customerData?.invoicing_details as Record<string, unknown>)?.company_address as string) || undefined,
+          address:
+            ((customerData?.invoicing_details as Record<string, unknown>)
+              ?.company_address as string) || undefined,
           city: "Casablanca",
           loyaltyTier: "NEW",
           churnRiskScore: 0.0,
@@ -222,7 +232,8 @@ async function handleNewOrder(body: Record<string, unknown>) {
         customerHash: customerData?.hash as string,
         customerInvoicingDetails: customerData?.invoicing_details as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         courierName: (body.courier as Record<string, unknown>)?.name as string,
-        courierPhone: (body.courier as Record<string, unknown>)?.phone_number as string,
+        courierPhone: (body.courier as Record<string, unknown>)
+          ?.phone_number as string,
         allergyInfo: body.allergy_info as string,
         specialRequirements: body.special_requirements as string,
         products: (body.products as any) || [], // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -231,7 +242,8 @@ async function handleNewOrder(body: Record<string, unknown>) {
           bundled_orders: body.bundled_orders,
           is_picked_up_by_customer: body.is_picked_up_by_customer,
           partner_discounts_products: body.partner_discounts_products,
-          partner_discounted_products_total: body.partner_discounted_products_total,
+          partner_discounted_products_total:
+            body.partner_discounted_products_total,
           service_fee: body.service_fee,
           glovo_discounts_products: body.glovo_discounts_products,
           discounted_products_total: body.discounted_products_total,
