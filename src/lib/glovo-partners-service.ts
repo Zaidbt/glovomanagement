@@ -3,7 +3,7 @@
  * Handles menu and product updates using the Partners API with shared token
  */
 
-const GLOVO_STAGE_API = "https://stageapi.glovoapp.com";
+const GLOVO_API_BASE_URL = process.env.GLOVO_API_BASE_URL || "https://stageapi.glovoapp.com";
 const GLOVO_SHARED_TOKEN = process.env.GLOVO_SHARED_TOKEN || "8b979af6-8e38-4bdb-aa07-26408928052a";
 const GLOVO_STORE_ID = process.env.GLOVO_STORE_ID || "store-01";
 
@@ -54,7 +54,7 @@ export class GlovoPartnersService {
   private readonly storeId: string;
 
   constructor(storeId?: string, sharedToken?: string) {
-    this.apiBaseUrl = GLOVO_STAGE_API;
+    this.apiBaseUrl = GLOVO_API_BASE_URL;
     this.sharedToken = sharedToken || GLOVO_SHARED_TOKEN;
     this.storeId = storeId || GLOVO_STORE_ID;
   }
