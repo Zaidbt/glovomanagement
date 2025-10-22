@@ -1,0 +1,69 @@
+{
+  "attributes": [
+    {
+      "id": "sauce_1",
+      "name": "Ketchup",
+      "selected_by_default": false,
+      "price_impact": 0,
+      "available": true
+    },
+    {
+      "id": "sauce_2",
+      "name": "Mayo",
+      "selected_by_default": false,
+      "price_impact": 0,
+      "available": true
+    }
+  ],
+  "attribute_groups": [
+    {
+      "id": "sauces_1",
+      "name": "Choose your sauces",
+      "min": 0,
+      "max": 2,
+      "collapse": true,
+      "multiple_selection": false,
+      "attributes": [
+        "sauce_1",
+        "sauce_2"
+      ]
+    }
+  ],
+  "products": [
+    {
+      "id": "NAT001",
+      "name": "Sardine: Trésor Méditerranéen",
+      "description": "Delicious sardines",
+      "price": 25.20,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "NAT002",
+      "name": "Product 2",
+      "description": "Test product 2",
+      "price": 30.00,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "attributes_groups": ["sauces_1"],
+      "available": true
+    }
+  ],
+  "collections": [
+    {
+      "name": "Main Products",
+      "position": 0,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "All Products",
+          "position": 1,
+          "products": [
+            "NAT001",
+            "NAT002"
+          ]
+        }
+      ]
+    }
+  ]
+}
