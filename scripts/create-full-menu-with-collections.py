@@ -7,9 +7,19 @@ import json
 def create_full_menu():
     """Create menu with products and collections"""
 
-    # Load catalog
-    with open('data/complete_catalog.json', 'r', encoding='utf-8') as f:
-        catalog = json.load(f)
+    # Load catalog from the correctly downloaded data
+    # Use full_catalog_page_1.json since all pages are identical due to API bug
+    with open('data/full_catalog_page_1.json', 'r', encoding='utf-8') as f:
+        page_data = json.load(f)
+
+    # Load categories separately
+    with open('data/categories.json', 'r', encoding='utf-8') as f:
+        cat_data = json.load(f)
+
+    catalog = {
+        'products': page_data.get('products', []),
+        'categories': cat_data.get('categories', [])
+    }
 
     products_retrieved = catalog['products']
     categories_retrieved = catalog['categories']

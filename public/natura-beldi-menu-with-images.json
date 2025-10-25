@@ -3,6 +3,73 @@
   "attribute_groups": [],
   "collections": [
     {
+      "name": "Sauces",
+      "position": 0,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Sauces",
+          "position": 0,
+          "products": [
+            "81140eb1-9f4e-4748-b434-fbb647141e08",
+            "05e1b780-2d10-42cc-8c43-7c03b564e873",
+            "b72693b7-5587-4149-90ff-8af61e9cbcfe",
+            "7f04f693-8733-46b7-bfdb-905f35e79d94"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Produits de boulangerie",
+      "position": 2,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Produits de boulangerie",
+          "position": 0,
+          "products": [
+            "75a2ebdc-d32f-4d79-b24b-0d4cb7f22dc7",
+            "c3e7d6f8-6005-45b9-bd5a-409236113c9f",
+            "210a6906-e447-44be-90b4-95541056ba03"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Agrumes",
+      "position": 3,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Agrumes",
+          "position": 0,
+          "products": [
+            "e4115134-7c35-4123-a6d6-56672608b6aa"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Essentiels pour la maison",
+      "position": 4,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Essentiels pour la maison",
+          "position": 0,
+          "products": [
+            "44233443-d124-4fe6-8fee-5575b2f43980",
+            "0009adac-e5bd-4843-a34d-d7bf6a0e4646",
+            "36a89f34-ab33-4146-ae75-0a9315b02f51",
+            "8d135dc8-6891-4af6-9fd3-ccc076b8a8fa",
+            "ed3e73c6-900a-43da-8b3b-815213d8555f",
+            "6211e7a2-492f-41d4-b1e7-d8ce5a542b9d",
+            "c1ed2cba-7d94-4258-a766-a9891c2bc8c5"
+          ]
+        }
+      ]
+    },
+    {
       "name": "Herbes",
       "position": 5,
       "image_url": "https://i.imgur.com/Qj5MlEH.png",
@@ -13,7 +80,56 @@
           "products": [
             "1cf72b9c-016d-4dbc-bd52-a4a01dbcdc21",
             "f3b09603-3b28-4190-b418-f1a7de67b736",
-            "19e85303-4235-43f9-81e2-b3c23a8ebfee"
+            "19e85303-4235-43f9-81e2-b3c23a8ebfee",
+            "7b94e5a8-4085-4761-a74e-c650b0356a43",
+            "44c7d8c1-6761-4cc6-8172-7438e5612ac8",
+            "fe58f550-ac5f-4a51-ab65-2c716f7028a3",
+            "b99156c8-e13e-4216-b679-63a0e887936e",
+            "1af40da8-570f-49d2-8510-5cbea34f1fcf"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Produits laitiers",
+      "position": 11,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Produits laitiers",
+          "position": 0,
+          "products": [
+            "234952c0-8370-4447-b761-19264c5da53c",
+            "f5e2d8d0-3962-413c-84fb-5b0fb635d359"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pâtes, riz et céréales",
+      "position": 14,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Pâtes, riz et céréales",
+          "position": 0,
+          "products": [
+            "a84961ae-52a1-4fa6-8d02-fdce05832db3",
+            "342839c4-d0dc-44e0-8f97-ba6914ad58fb"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dinde",
+      "position": 15,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Dinde",
+          "position": 0,
+          "products": [
+            "49c03ae1-ad49-40da-bf97-a7a9eb962d8b"
           ]
         }
       ]
@@ -28,7 +144,54 @@
           "position": 0,
           "products": [
             "5a7290b6-a74e-47a9-8cc2-7cd5f4099250",
-            "474b48c5-b5f6-4045-9268-d18c8fbdce4f"
+            "474b48c5-b5f6-4045-9268-d18c8fbdce4f",
+            "16",
+            "5",
+            "6"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Lave-vaisselle",
+      "position": 18,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Lave-vaisselle",
+          "position": 0,
+          "products": [
+            "4e79c1fa-67f4-4507-8d1b-3417c88724f2",
+            "30b5d94a-9c58-4969-861d-06c38c2e1708",
+            "794c04f2-3f1c-4515-be38-6a62f76f9f0d"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Les Huiles",
+      "position": 19,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Les Huiles",
+          "position": 0,
+          "products": [
+            "660a3537-e6b8-4132-bc14-3ee3b0add7e8"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Boulangerie",
+      "position": 21,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/02e4dafc-b922-42c4-933c-55861bc06854.jpg",
+      "sections": [
+        {
+          "name": "Boulangerie",
+          "position": 0,
+          "products": [
+            "f450e452-9b1c-400b-80fb-5bdcf9a8111c"
           ]
         }
       ]
@@ -42,7 +205,85 @@
           "name": "Légumes bio",
           "position": 0,
           "products": [
-            "cd13dd6d-865e-43f6-bcf7-7a335a8375ce"
+            "cd13dd6d-865e-43f6-bcf7-7a335a8375ce",
+            "1f4ff26e-1c2d-4137-b173-3f4f5f809e4c",
+            "2c6118bf-3c64-4eea-b5c2-136993c8c2d7"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Boissons Chaudes",
+      "position": 28,
+      "image_url": "https://images.deliveryhero.io/image/pim-glovo/UG_SCT_SUPERMARKET/Tea___Coffee.png",
+      "sections": [
+        {
+          "name": "Boissons Chaudes",
+          "position": 0,
+          "products": [
+            "e42d7182-1e65-4d01-a4aa-cec2d2cc37c5",
+            "8d6d4314-dde1-4ac5-97a3-6cbab70e9a13"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Olives et légumes en conserve",
+      "position": 32,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Olives et légumes en conserve",
+          "position": 0,
+          "products": [
+            "2c221115-d4b3-4c18-88fd-89e79a390d97",
+            "6621aa47-d76f-4925-a462-216157146d41",
+            "74ea250a-5db5-4562-a13d-32a981ca71ad",
+            "dc4eabfc-10d3-4815-9241-312b1c81b4cd",
+            "f0ac4a3f-ec9c-4f39-a815-480e16c7d225"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Boulangerie Traditionelle",
+      "position": 33,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Boulangerie Traditionelle",
+          "position": 0,
+          "products": [
+            "dd60a7ad-81fb-451a-9735-d9a414e00509"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Noix et graines",
+      "position": 34,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Noix et graines",
+          "position": 0,
+          "products": [
+            "6d13ed03-ff37-446e-9819-c82d2ee8efad"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Produits d'hygiène",
+      "position": 35,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Produits d'hygiène",
+          "position": 0,
+          "products": [
+            "5bf51cc7-5335-4f68-acfc-3d5059dd0fba",
+            "f2e1c5a9-9e3b-4771-bdc1-df5467a3445a"
           ]
         }
       ]
@@ -84,6 +325,166 @@
       ]
     },
     {
+      "name": "Dattes & Fruits Secs",
+      "position": 39,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Dattes & Fruits Secs",
+          "position": 0,
+          "products": [
+            "4dbb3c15-b5b4-478d-bcb0-833565bd4658"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pâtisserie Traditionnelle",
+      "position": 41,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Pâtisserie Traditionnelle",
+          "position": 0,
+          "products": [
+            "b74568a7-0a08-4e96-a5bf-f122b6e135db",
+            "f41edc76-eec2-47cc-9a58-2cf1612fb7aa",
+            "f167a8f9-6d33-4ccd-8a66-bc99465a218d",
+            "414b3d6a-e711-4fbd-8836-c2c8379a1b0e",
+            "d5bc3626-eaca-4131-b267-e141fd401010",
+            "02b70318-9f3d-4dcf-bf2e-f23a82ab2b03"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Essentiels des fruits",
+      "position": 47,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Essentiels des fruits",
+          "position": 0,
+          "products": [
+            "6fc084c4-05d6-439f-93e9-9c937de711c2",
+            "e63dae20-7b16-4cad-be82-065bc9be420c"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Poulet",
+      "position": 55,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Poulet",
+          "position": 0,
+          "products": [
+            "c6dfdc3a-6ebe-4988-bab4-d5e59b5ad919"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Epices et Assaisonnement",
+      "position": 60,
+      "image_url": "https://images.deliveryhero.io/image/pim-glovo/UG_SCT_SUPERMARKET/Cooking___Condiments.png",
+      "sections": [
+        {
+          "name": "Epices et Assaisonnement",
+          "position": 0,
+          "products": [
+            "b48a7567-6705-4375-914d-2f8366321f5c"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Lessive",
+      "position": 62,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Lessive",
+          "position": 0,
+          "products": [
+            "60df1a41-5072-401b-89ca-b9a78212b563",
+            "503fe1ee-5719-47e6-94bd-3a5b0250702b",
+            "56e334f2-3e69-44ea-989c-f5b22ee93ae8"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Viennoiseries & Brioches Fraiches",
+      "position": 65,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Viennoiseries & Brioches Fraiches",
+          "position": 0,
+          "products": [
+            "8b973c67-5a49-4ff0-93f6-c43ef773cd7e",
+            "e92d106e-516f-47b6-bd52-a830fc2fb920",
+            "85ed2f65-626e-4560-b898-c28affe992b6"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "A tartiner",
+      "position": 66,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "A tartiner",
+          "position": 0,
+          "products": [
+            "abf06035-4093-49cf-a585-1db136fd3105",
+            "7ad283c1-f874-4f81-a01e-fccdd31de131"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Baies et petits fruits",
+      "position": 67,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Baies et petits fruits",
+          "position": 0,
+          "products": [
+            "a796fe41-71a4-4290-9554-386091716d60",
+            "f3d11cb6-354b-4c44-a272-da75af467bfa",
+            "0567d078-2079-48a9-b2d2-53170c7ffcf1"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Herbes aromatiques",
+      "position": 69,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Herbes aromatiques",
+          "position": 0,
+          "products": [
+            "40602b01-b870-4a90-ac53-95bd9f283621",
+            "f72d57da-1aa2-4959-b6bf-cd926f280eea",
+            "277039ae-4a30-4421-8998-a7d9fc1b419f",
+            "00275bcf-5242-4a52-9ee0-80563391c0ed",
+            "7c620a2a-1105-40b7-948d-cab14e0f1a8a",
+            "1db3e69f-2c15-4c63-ad99-2d1f351fdecc",
+            "6fe6a0cd-e894-4403-ba38-9b775590b8be",
+            "f4d6cdcc-caef-49d6-9b77-e23bb664e5c1"
+          ]
+        }
+      ]
+    },
+    {
       "name": "Poissons",
       "position": 70,
       "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/b0523385-f775-482d-a10e-1c59abb4184e.png",
@@ -96,7 +497,11 @@
             "27fa7c8d-a040-49c6-b7b1-a0c249c7f74e",
             "8474ca99-91f2-4f05-a508-d91624120293",
             "0495f9ed-8866-40bd-add3-bc41243fce98",
-            "74b7338a-556e-4311-bb19-f97e7ee1fa54"
+            "74b7338a-556e-4311-bb19-f97e7ee1fa54",
+            "1",
+            "4",
+            "10",
+            "15"
           ]
         }
       ]
@@ -116,7 +521,7 @@
       "id": "27fa7c8d-a040-49c6-b7b1-a0c249c7f74e",
       "name": "Poisson Corb corbeau de mer-1KG",
       "description": "Poisson Corb corbeau de mer-1KG",
-      "price": 140.0,
+      "price": 121.0,
       "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/7dd8452e-7c1c-4ab4-8abc-6531cf622c17.jpeg",
       "attributes_groups": [],
       "available": false
@@ -134,7 +539,7 @@
       "id": "0495f9ed-8866-40bd-add3-bc41243fce98",
       "name": "poisson farkhe-1kg",
       "description": "poisson farkhe-1kg",
-      "price": 123.0,
+      "price": 109.0,
       "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/796e4afd-bc28-41d8-a62d-a16f79b3c02d.jpeg",
       "attributes_groups": [],
       "available": false
@@ -152,7 +557,7 @@
       "id": "5a7290b6-a74e-47a9-8cc2-7cd5f4099250",
       "name": "La Crevette - 250g",
       "description": "La Crevette - 250g",
-      "price": 35.0,
+      "price": 39.0,
       "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/32fe758c-0d77-4ff0-b414-8f7810e2bcd7.jpeg",
       "attributes_groups": [],
       "available": false
@@ -161,7 +566,7 @@
       "id": "474b48c5-b5f6-4045-9268-d18c8fbdce4f",
       "name": "La Crevette - 500Gr",
       "description": "La Crevette - 500Gr",
-      "price": 70.0,
+      "price": 79.0,
       "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/a1f01f42-bcc3-456e-8bef-272e2bfe436d.jpeg",
       "attributes_groups": [],
       "available": false
@@ -280,6 +685,726 @@
       "description": "Roquette (sans résidus)",
       "price": 27.0,
       "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/56fb49c9-0bd3-43c8-a8eb-01bc6108bfa4.png",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "7b94e5a8-4085-4761-a74e-c650b0356a43",
+      "name": "Persil  (sans résidus)",
+      "description": "Persil  (sans résidus)",
+      "price": 13.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/ce12e0a9-467c-44a5-bf56-98f349e41a8a.png",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "44c7d8c1-6761-4cc6-8172-7438e5612ac8",
+      "name": "Thym (sans résidus)",
+      "description": "Thym (sans résidus)",
+      "price": 11.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/5548f91c-b288-4fdf-b6b0-9239c45fe7d7.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "fe58f550-ac5f-4a51-ab65-2c716f7028a3",
+      "name": "La ciboulette  sans résidu",
+      "description": "La ciboulette  sans résidu",
+      "price": 18.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/8f529c43-9713-4ab4-9411-c034c3c1262d.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "b99156c8-e13e-4216-b679-63a0e887936e",
+      "name": "Romarin sans résidus",
+      "description": "Romarin sans résidus",
+      "price": 14.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/1ad8d65d-3d8d-47d3-82c9-d85c74b823ab.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "1af40da8-570f-49d2-8510-5cbea34f1fcf",
+      "name": "L'Aneth sans résidus",
+      "description": "L'Aneth sans résidus",
+      "price": 18.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/527731dc-3162-496d-9d59-0f6b186929dd.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "1f4ff26e-1c2d-4137-b173-3f4f5f809e4c",
+      "name": "Navets Blancs - 500g",
+      "description": "Navets Blancs - 500g",
+      "price": 9.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/8e966557-3a1e-4c52-8b79-7b05455c8224.png",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "2c6118bf-3c64-4eea-b5c2-136993c8c2d7",
+      "name": "Navets Rouges - 500g",
+      "description": "Navets Rouges - 500g",
+      "price": 9.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/a1113c6f-20de-440e-927d-3ac0e4745a21.png",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "a796fe41-71a4-4290-9554-386091716d60",
+      "name": "La Framboise barquette",
+      "description": "La Framboise barquette",
+      "price": 12.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/233848bc-a4ec-4c76-bf8d-b840ae08dfec.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "f3d11cb6-354b-4c44-a272-da75af467bfa",
+      "name": "Les mures barquette",
+      "description": "Les mures barquette",
+      "price": 18.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/17ae9fa2-fd14-4c31-b517-45fe80b17ad9.jpeg",
+      "attributes_groups": [],
+      "available": false
+    },
+    {
+      "id": "0567d078-2079-48a9-b2d2-53170c7ffcf1",
+      "name": "Myrtilles Fraîches - Saveur Intense",
+      "description": "Myrtilles Fraîches - Saveur Intense",
+      "price": 22.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/2002eeb0-4d6c-467c-b574-904502f15f8a.jpeg",
+      "attributes_groups": [],
+      "available": false
+    },
+    {
+      "id": "6fc084c4-05d6-439f-93e9-9c937de711c2",
+      "name": "Kiwi d'Exportation - 500g",
+      "description": "Kiwi d'Exportation - 500g",
+      "price": 40.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/e63bc659-bb66-4d16-9bed-13a15443541e.png",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "e63dae20-7b16-4cad-be82-065bc9be420c",
+      "name": "Bananes d'Équateur - 500g",
+      "description": "Bananes d'Équateur - 500g",
+      "price": 20.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/52b0194c-1833-432a-ae4b-f8848e6f2b57.png",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "dd60a7ad-81fb-451a-9735-d9a414e00509",
+      "name": "Le me5mare - 4 pièces",
+      "description": "Le me5mare - 4 pièces",
+      "price": 18.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/031493d3-f218-42ec-93ec-68e9f8747c40.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "8b973c67-5a49-4ff0-93f6-c43ef773cd7e",
+      "name": "Délicieux muffins à la vanille",
+      "description": "Délicieux muffins à la vanille",
+      "price": 6.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/ab9a1f28-1ff2-4150-821d-d8e2dc54b676.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "e92d106e-516f-47b6-bd52-a830fc2fb920",
+      "name": "Succulents Muffins au Chocolat",
+      "description": "Succulents Muffins au Chocolat",
+      "price": 8.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/90133cd6-de97-4b38-9b31-deaa6561b13c.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "85ed2f65-626e-4560-b898-c28affe992b6",
+      "name": "Jalousie Dessert - 2 pièces",
+      "description": "Jalousie Dessert - 2 pièces",
+      "price": 14.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/5a3c4062-6d7e-4b70-a531-57aa1561695f.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "f450e452-9b1c-400b-80fb-5bdcf9a8111c",
+      "name": "fond de quich précuit petite - 10 pièces",
+      "description": "fond de quich précuit petite - 10 pièces",
+      "price": 18.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/2f6a7c12-86a8-4268-94f2-05f7e8f9fcc9.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "b74568a7-0a08-4e96-a5bf-f122b6e135db",
+      "name": "Sablés chocolat noir et blanc : délices croquants - 250 g",
+      "description": "Sablés chocolat noir et blanc : délices croquants - 250 g",
+      "price": 22.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/7f1aaae5-912c-4666-be55-1061e2c1862b.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "f41edc76-eec2-47cc-9a58-2cf1612fb7aa",
+      "name": "Sablés chocolat blanc zébrés : gourmandises élégantes -250 g",
+      "description": "Sablés chocolat blanc zébrés : gourmandises élégantes -250 g",
+      "price": 22.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/e76f9e9a-edce-4b1b-a689-e26b278d2717.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "f167a8f9-6d33-4ccd-8a66-bc99465a218d",
+      "name": "Sablés chocolat noir et blanc carré : délices croquants - 250 g",
+      "description": "Sablés chocolat noir et blanc carré : délices croquants - 250 g",
+      "price": 22.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/9eddfa10-2dcd-4c38-8d5c-635680729684.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "414b3d6a-e711-4fbd-8836-c2c8379a1b0e",
+      "name": "Sablés chocolat noir zébrés : gourmandises élégantes -250 g",
+      "description": "Sablés chocolat noir zébrés : gourmandises élégantes -250 g",
+      "price": 22.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/ac1f8cf2-ff53-43b7-8c0a-6781f8567d96.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "d5bc3626-eaca-4131-b267-e141fd401010",
+      "name": "chabakia fais maison sans arômes chimique - 250 g",
+      "description": "chabakia fais maison sans arômes chimique - 250 g",
+      "price": 21.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/a80b779e-f419-45f5-92dd-ced55e1a0762.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "02b70318-9f3d-4dcf-bf2e-f23a82ab2b03",
+      "name": "chabakia 100% amande fais maison sans arômes chimique - 250 g",
+      "description": "chabakia 100% amande fais maison sans arômes chimique - 250 g",
+      "price": 25.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/b689d4ea-72f8-4398-9002-ebb3d80662d8.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "49c03ae1-ad49-40da-bf97-a7a9eb962d8b",
+      "name": "Viande hachée de dinde  epice douce- 250 g",
+      "description": "Viande hachée de dinde  epice douce- 250 g",
+      "price": 25.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/fb0bb1fe-bfb2-442b-8756-93052a7b812b.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "2c221115-d4b3-4c18-88fd-89e79a390d97",
+      "name": "Harissa rouge - 200 g",
+      "description": "Harissa rouge - 200 g",
+      "price": 9.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/cbdd07ed-867e-489b-bf2e-49189e3fecec.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "6621aa47-d76f-4925-a462-216157146d41",
+      "name": "Câpres - 100g (Aromatiques)",
+      "description": "Câpres - 100g (Aromatiques)",
+      "price": 12.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/de5d4397-f312-4eb9-87e0-d926a1ed5e3c.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "e42d7182-1e65-4d01-a4aa-cec2d2cc37c5",
+      "name": "Verveine - 100g (Relaxante)(lawiza)",
+      "description": "Verveine - 100g (Relaxante)(lawiza)",
+      "price": 19.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/133c76fe-e509-4e51-a3aa-c5004d9ab27f.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "b48a7567-6705-4375-914d-2f8366321f5c",
+      "name": "Épices Kabsa - 100g",
+      "description": "Épices Kabsa - 100g",
+      "price": 24.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/e0a05721-1651-4cf7-b511-8abc3f52f9c9.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "4dbb3c15-b5b4-478d-bcb0-833565bd4658",
+      "name": "Amande beldi - 500 g",
+      "description": "Amande beldi - 500 g",
+      "price": 91.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/ce0b47b2-3b4c-4b1b-9f41-738e4b9971aa.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "6d13ed03-ff37-446e-9819-c82d2ee8efad",
+      "name": "sesame -250 g",
+      "description": "sesame -250 g",
+      "price": 25.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/034aa0ea-a6cd-481d-887d-0d6cd51ea2d9.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "75a2ebdc-d32f-4d79-b24b-0d4cb7f22dc7",
+      "name": "Eaux de rose",
+      "description": "Eaux de rose",
+      "price": 18.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/b1ad29f3-c989-453e-81d5-94e9d6398f93.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "c3e7d6f8-6005-45b9-bd5a-409236113c9f",
+      "name": "Crème fraîche gâteau  de qualité supérieure en grand format - 200 ml",
+      "description": "Crème fraîche gâteau  de qualité supérieure en grand format - 200 ml",
+      "price": 24.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/5baa958f-31a8-466b-8c1d-76eeb451a785.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "abf06035-4093-49cf-a585-1db136fd3105",
+      "name": "beurre 250 g la prairie",
+      "description": "beurre 250 g la prairie",
+      "price": 18.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/aa3c0b86-b08f-4642-a71b-b6692d688686.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "234952c0-8370-4447-b761-19264c5da53c",
+      "name": "Crème fraîche cuison de qualité supérieure en grand format - 500 ml",
+      "description": "Crème fraîche cuison de qualité supérieure en grand format - 500 ml",
+      "price": 37.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/753fc08a-b73a-4a7c-b19c-f9804edfb34e.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "81140eb1-9f4e-4748-b434-fbb647141e08",
+      "name": "La sauce poisson chinoise",
+      "description": "La sauce poisson chinoise",
+      "price": 35.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/4fa23ed3-993e-4c5f-93aa-a7ab6359608c.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "05e1b780-2d10-42cc-8c43-7c03b564e873",
+      "name": "La sauce Suya",
+      "description": "La sauce Suya",
+      "price": 24.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/e3fe3787-87ea-4c77-9d9b-1a52a4514933.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "a84961ae-52a1-4fa6-8d02-fdce05832db3",
+      "name": "Vermicelles de riz - 250 G",
+      "description": "Vermicelles de riz - 250 G",
+      "price": 18.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/f6e8848c-6d9a-417a-a033-df10668af6be.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "342839c4-d0dc-44e0-8f97-ba6914ad58fb",
+      "name": "Vermicelles de Riz - 470 G",
+      "description": "Vermicelles de Riz - 470 G",
+      "price": 30.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/8ed932ee-b06a-45d6-907a-1c3044625b92.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "74ea250a-5db5-4562-a13d-32a981ca71ad",
+      "name": "Champignons en Conserve -130G",
+      "description": "Champignons en Conserve -130G",
+      "price": 13.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/d529c6de-1704-4526-8ea2-72bd73f81bc8.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "dc4eabfc-10d3-4815-9241-312b1c81b4cd",
+      "name": "Maïs en conserve - 130 G",
+      "description": "Maïs en conserve - 130 G",
+      "price": 13.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/dd1549ee-652e-4303-9d06-769128e31eee.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "210a6906-e447-44be-90b4-95541056ba03",
+      "name": "chapelure andaloucia herbe - 250 g",
+      "description": "chapelure andaloucia herbe - 250 g",
+      "price": 24.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/6f4886ff-b4b0-4e39-ac1c-69969a37612c.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "f5e2d8d0-3962-413c-84fb-5b0fb635d359",
+      "name": "Crème fraîche cuison de qualité supérieure en  format moyen - 200 ml",
+      "description": "Crème fraîche cuison de qualité supérieure en  format moyen - 200 ml",
+      "price": 24.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/80598b8d-b5b9-4475-b8ed-8a7e8c79fa76.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "660a3537-e6b8-4132-bc14-3ee3b0add7e8",
+      "name": "Huile de Sésame Extra Vierge - Sublimez vos Plats avec Élégance\"",
+      "description": "Huile de Sésame Extra Vierge - Sublimez vos Plats avec Élégance\"",
+      "price": 49.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/89bed574-9bbd-4366-a1c0-7b825ba90ad7.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "b72693b7-5587-4149-90ff-8af61e9cbcfe",
+      "name": "Sauce Huître d'Excellence - La Subtile Signature Umami",
+      "description": "Sauce Huître d'Excellence - La Subtile Signature Umami",
+      "price": 34.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/1bce8f60-5020-403a-9f9f-8edd563ed6a8.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "7f04f693-8733-46b7-bfdb-905f35e79d94",
+      "name": "Vinaigre de Riz Fin: L'Équilibre Parfait pour Vos Saveurs",
+      "description": "Vinaigre de Riz Fin: L'Équilibre Parfait pour Vos Saveurs",
+      "price": 33.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/4d91befd-af69-433b-b89f-c2ba0e513f99.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "44233443-d124-4fe6-8fee-5575b2f43980",
+      "name": "Papier cuisson de qualité supérieure",
+      "description": "Papier cuisson de qualité supérieure",
+      "price": 29.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/4aa20e73-36fc-43b4-86d2-c902f52cdcea.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "0009adac-e5bd-4843-a34d-d7bf6a0e4646",
+      "name": "Papier aluminium de haute qualité",
+      "description": "Papier aluminium de haute qualité",
+      "price": 55.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/6a93d8b2-8e3e-4c2d-9ace-05ba7b20b52f.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "36a89f34-ab33-4146-ae75-0a9315b02f51",
+      "name": "Film alimentaire de qualité supérieure",
+      "description": "Film alimentaire de qualité supérieure",
+      "price": 43.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/6942d3d5-06d0-42c1-9411-e40d6d4f807c.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "8d135dc8-6891-4af6-9fd3-ccc076b8a8fa",
+      "name": "Boîtes de rangement qualité et la durabilité",
+      "description": "Boîtes de rangement qualité et la durabilité",
+      "price": 25.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/1b36d785-a3a3-4805-aaf9-173aa60d9340.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "ed3e73c6-900a-43da-8b3b-815213d8555f",
+      "name": "boîtes de grand format",
+      "description": "boîtes de grand format",
+      "price": 25.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/5326d3e3-2771-4073-ba8b-9179351b8957.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "6211e7a2-492f-41d4-b1e7-d8ce5a542b9d",
+      "name": "charbon VIP inodore de qualité supérieure",
+      "description": "charbon VIP inodore de qualité supérieure",
+      "price": 16.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/e1f4e3d6-e8a7-4f33-a577-e42e6c0b4373.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "40602b01-b870-4a90-ac53-95bd9f283621",
+      "name": "Pois Chiche Moulu - 100g (Énergisant)",
+      "description": "Pois Chiche Moulu - 100g (Énergisant)",
+      "price": 13.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/8a4c0738-0cf0-4568-8853-6dea6a98ef06.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "f72d57da-1aa2-4959-b6bf-cd926f280eea",
+      "name": "Feuilles de Jujubier (Sidr Moulu) - 100g (Purifiant)",
+      "description": "Feuilles de Jujubier (Sidr Moulu) - 100g (Purifiant)",
+      "price": 21.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/cc94f78a-71ab-42e4-bd6f-a41ce70623a2.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "5bf51cc7-5335-4f68-acfc-3d5059dd0fba",
+      "name": "Ghassoul Blanc moulu - 100g (Purifiant)",
+      "description": "Ghassoul Blanc moulu - 100g (Purifiant)",
+      "price": 16.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/4fc5f5dc-accd-44ee-9c24-6ed3f2dc88e1.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "277039ae-4a30-4421-8998-a7d9fc1b419f",
+      "name": "Habat Al Baraka - 100g (Nutritive)",
+      "description": "Habat Al Baraka - 100g (Nutritive)",
+      "price": 35.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/6cedf993-c6a9-441d-995f-2cd518e44012.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "00275bcf-5242-4a52-9ee0-80563391c0ed",
+      "name": "Romarin Séché - 100g (Revitalisant)",
+      "description": "Romarin Séché - 100g (Revitalisant)",
+      "price": 18.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/42d581b2-c3e0-4c9f-893a-365b4e6409e5.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "7c620a2a-1105-40b7-948d-cab14e0f1a8a",
+      "name": "Zaatar Moulu - 100g (Revitalisant)",
+      "description": "Zaatar Moulu - 100g (Revitalisant)",
+      "price": 28.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/0def4620-1c3d-4f65-ac3e-3515d4cd21b3.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "1db3e69f-2c15-4c63-ad99-2d1f351fdecc",
+      "name": "Menthe Pouliot Moulue - 100g (Digestive)(fliyo)",
+      "description": "Menthe Pouliot Moulue - 100g (Digestive)(fliyo)",
+      "price": 21.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/8b89eb0f-5180-4491-8800-d63bef7aa7ff.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "6fe6a0cd-e894-4403-ba38-9b775590b8be",
+      "name": "Jujube - 100g (Immunitaire)(nabg)",
+      "description": "Jujube - 100g (Immunitaire)(nabg)",
+      "price": 18.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/9e3ed237-104f-4e7d-bfc0-6bea3dccb358.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "f4d6cdcc-caef-49d6-9b77-e23bb664e5c1",
+      "name": "Pelures de Grenade - 100g (Antioxydantes)",
+      "description": "Pelures de Grenade - 100g (Antioxydantes)",
+      "price": 26.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/302a2331-e4f3-429f-851b-2f72458ad2ec.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "f2e1c5a9-9e3b-4771-bdc1-df5467a3445a",
+      "name": "Les savons doux Purivera - 500 ml",
+      "description": "Les savons doux Purivera - 500 ml",
+      "price": 19.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/46086dfe-94f0-43d5-a3e2-a3c65c3d1f9e.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "c1ed2cba-7d94-4258-a766-a9891c2bc8c5",
+      "name": "500 g Bicarbonate de soude en bouteille",
+      "description": "500 g Bicarbonate de soude en bouteille",
+      "price": 22.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/ad420db7-7991-49ed-99b2-0159a013c7cd.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "4e79c1fa-67f4-4507-8d1b-3417c88724f2",
+      "name": "Javel en 32 Gélules concentre  soit 160 litre de javel concentré",
+      "description": "Javel en 32 Gélules concentre  soit 160 litre de javel concentré",
+      "price": 49.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/18fa789d-4f7a-4e1e-bfbc-e6503f3713d7.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "30b5d94a-9c58-4969-861d-06c38c2e1708",
+      "name": "Prozonne pour Carrelage - 1 l",
+      "description": "Prozonne pour Carrelage - 1 l",
+      "price": 22.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/74bb8351-e363-4f1c-8708-1225ce210947.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "794c04f2-3f1c-4515-be38-6a62f76f9f0d",
+      "name": "Solution de débouchage de canalisation",
+      "description": "Solution de débouchage de canalisation",
+      "price": 37.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/390a1b23-ba5c-4120-847e-68d51d0b9138.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "60df1a41-5072-401b-89ca-b9a78212b563",
+      "name": "Prozonne XXL à base de savon de Marseille - 4 litre 65 lessive",
+      "description": "Prozonne XXL à base de savon de Marseille - 4 litre 65 lessive",
+      "price": 85.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/63021f9d-e4ad-409f-bbba-684d3fc0e89f.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "503fe1ee-5719-47e6-94bd-3a5b0250702b",
+      "name": "Prozonne XXL à base d ALOE VERA- 3 en 1 - 4 litre - 65 lessives garanties",
+      "description": "Prozonne XXL à base d ALOE VERA- 3 en 1 - 4 litre - 65 lessives garanties",
+      "price": 85.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/6ee2c16a-5234-4524-a0c6-8c968ea88b84.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "56e334f2-3e69-44ea-989c-f5b22ee93ae8",
+      "name": "Prozonne à base de - 3  fleure 1 - 4 litre - 65 lessives garanties",
+      "description": "Prozonne à base de - 3  fleure 1 - 4 litre - 65 lessives garanties",
+      "price": 85.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/cf45157a-12c7-489b-8484-5bc831327449.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "1",
+      "name": "Poisson Raya - Délice Marin Exquis - 1kg",
+      "description": "Poisson Raya - Délice Marin Exquis - 1kg",
+      "price": 70.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/106e9356-9ccf-4465-afac-533bd8fe661a.jpeg",
+      "attributes_groups": [],
+      "available": false
+    },
+    {
+      "id": "4",
+      "name": "Dorade Sauvage - 1 Kg",
+      "description": "Dorade Sauvage - 1 Kg",
+      "price": 146.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/308f3f11-c29c-422f-8501-5b7d749dd541.jpeg",
+      "attributes_groups": [],
+      "available": false
+    },
+    {
+      "id": "10",
+      "name": "Poisson Chargho - 500 Gr",
+      "description": "Poisson Chargho - 500 Gr",
+      "price": 65.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/df7d9476-2e40-431d-86fa-ab18540619f7.jpeg",
+      "attributes_groups": [],
+      "available": false
+    },
+    {
+      "id": "15",
+      "name": "Poisson Farkhe - 1 Kg",
+      "description": "Poisson Farkhe - 1 Kg",
+      "price": 109.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/ec224df3-80da-4eff-ae0b-d20a654c0d5a.jpeg",
+      "attributes_groups": [],
+      "available": false
+    },
+    {
+      "id": "16",
+      "name": "Calamars - 500 Gr",
+      "description": "Calamars - 500 Gr",
+      "price": 97.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/db31e381-1fee-45d3-b7a0-cf528c224a9e.jpeg",
+      "attributes_groups": [],
+      "available": false
+    },
+    {
+      "id": "5",
+      "name": "Crevette Décortiquée - 250g",
+      "description": "Crevette Décortiquée - 250g",
+      "price": 79.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/533a3fa7-c0b3-44fe-af72-7510e3bb85e6.jpeg",
+      "attributes_groups": [],
+      "available": false
+    },
+    {
+      "id": "6",
+      "name": "Crevette Décortiquée - 500 G",
+      "description": "Crevette Décortiquée - 500 G",
+      "price": 134.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/d4d3de30-6180-429a-b152-7df8e22e6204.jpeg",
+      "attributes_groups": [],
+      "available": false
+    },
+    {
+      "id": "c6dfdc3a-6ebe-4988-bab4-d5e59b5ad919",
+      "name": "Poulet Fermier - 1kg (Goût Authentique)",
+      "description": "Poulet Fermier - 1kg (Goût Authentique)",
+      "price": 155.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/4f145ef7-99df-431f-899b-f8cd7266f955.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "e4115134-7c35-4123-a6d6-56672608b6aa",
+      "name": "Citron Jaune - 500g",
+      "description": "Citron Jaune - 500g",
+      "price": 18.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/86fb6690-0518-4eeb-aee3-c9a6e4b1b3e8.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "f0ac4a3f-ec9c-4f39-a815-480e16c7d225",
+      "name": "Champignon Noir - 100g",
+      "description": "Champignon Noir - 100g",
+      "price": 37.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/6b91539a-6f7d-4d87-9b64-86f5a1c8c83f.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "8d6d4314-dde1-4ac5-97a3-6cbab70e9a13",
+      "name": "Thé Al Dahmis (Revitalisant)",
+      "description": "Thé Al Dahmis (Revitalisant)",
+      "price": 30.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/e28c7632-1b60-42e1-94c4-46dab8d85d87.jpeg",
+      "attributes_groups": [],
+      "available": true
+    },
+    {
+      "id": "7ad283c1-f874-4f81-a01e-fccdd31de131",
+      "name": "Confiture de Fraise - (Antioxydante)",
+      "description": "Confiture de Fraise - (Antioxydante)",
+      "price": 18.0,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/158be16a-8256-41f7-b68a-22f6b3813e6b.jpeg",
       "attributes_groups": [],
       "available": true
     }
