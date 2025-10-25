@@ -94,11 +94,19 @@ def create_full_menu():
                 # Add product id to the section's products list
                 collections[collection_idx]['sections'][0]['products'].append(product.get('sku'))
 
+    # Remove empty collections (sections with no products)
+    non_empty_collections = [
+        coll for coll in collections
+        if len(coll['sections'][0]['products']) > 0
+    ]
+
+    print(f"🧹 Removed {len(collections) - len(non_empty_collections)} empty collections")
+
     # Create complete menu format
     complete_menu = {
         "attributes": [],
         "attribute_groups": [],
-        "collections": collections,
+        "collections": non_empty_collections,
         "products": products_push
     }
 
