@@ -3,401 +3,919 @@
   "attribute_groups": [],
   "collections": [
     {
-      "id": "cat-1",
       "name": "Sauces",
-      "products": []
+      "position": 0,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Sauces",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-2",
       "name": "Boeuf",
-      "products": []
+      "position": 1,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Boeuf",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-3",
       "name": "Produits de boulangerie",
-      "products": []
+      "position": 2,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Produits de boulangerie",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-4",
       "name": "Agrumes",
-      "products": []
+      "position": 3,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Agrumes",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-5",
       "name": "Essentiels pour la maison",
-      "products": []
+      "position": 4,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Essentiels pour la maison",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-6",
       "name": "Herbes",
-      "products": [
-        "1cf72b9c-016d-4dbc-bd52-a4a01dbcdc21",
-        "f3b09603-3b28-4190-b418-f1a7de67b736",
-        "19e85303-4235-43f9-81e2-b3c23a8ebfee"
+      "position": 5,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Herbes",
+          "position": 0,
+          "products": [
+            "1cf72b9c-016d-4dbc-bd52-a4a01dbcdc21",
+            "f3b09603-3b28-4190-b418-f1a7de67b736",
+            "19e85303-4235-43f9-81e2-b3c23a8ebfee"
+          ]
+        }
       ]
     },
     {
-      "id": "cat-7",
       "name": "Agneau",
-      "products": []
+      "position": 6,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Agneau",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-8",
       "name": "Eaux Plates",
-      "products": []
+      "position": 7,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/5511fa07-05cc-48e0-9af4-25deb45d4d58.png",
+      "sections": [
+        {
+          "name": "Eaux Plates",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-9",
       "name": "Nettoyants sol Multi surface",
-      "products": []
+      "position": 8,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Nettoyants sol Multi surface",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-10",
       "name": "Abats",
-      "products": []
+      "position": 9,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Abats",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-11",
       "name": "Légumes frais",
-      "products": []
+      "position": 10,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Légumes frais",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-12",
       "name": "Produits laitiers",
-      "products": []
+      "position": 11,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Produits laitiers",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-13",
       "name": "Fruits Secs & Séchés",
-      "products": []
+      "position": 12,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Fruits Secs & Séchés",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-14",
       "name": "legumes decoupe",
-      "products": []
+      "position": 13,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "legumes decoupe",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-15",
       "name": "Pâtes, riz et céréales",
-      "products": []
+      "position": 14,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Pâtes, riz et céréales",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-16",
       "name": "Dinde",
-      "products": []
+      "position": 15,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Dinde",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-17",
       "name": "Fruit de mer",
-      "products": [
-        "5a7290b6-a74e-47a9-8cc2-7cd5f4099250",
-        "474b48c5-b5f6-4045-9268-d18c8fbdce4f"
+      "position": 16,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Fruit de mer",
+          "position": 0,
+          "products": [
+            "5a7290b6-a74e-47a9-8cc2-7cd5f4099250",
+            "474b48c5-b5f6-4045-9268-d18c8fbdce4f"
+          ]
+        }
       ]
     },
     {
-      "id": "cat-18",
       "name": "Légumineuses.",
-      "products": []
+      "position": 17,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Légumineuses.",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-19",
       "name": "Lave-vaisselle",
-      "products": []
+      "position": 18,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Lave-vaisselle",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-20",
       "name": "Les Huiles",
-      "products": []
+      "position": 19,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Les Huiles",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-21",
       "name": "Œufs",
-      "products": []
+      "position": 20,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Œufs",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-22",
       "name": "Boulangerie",
-      "products": []
+      "position": 21,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/02e4dafc-b922-42c4-933c-55861bc06854.jpg",
+      "sections": [
+        {
+          "name": "Boulangerie",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-23",
       "name": "Prêt à manger",
-      "products": []
+      "position": 22,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/aif9d4tnerlyiiefewl8.jpeg",
+      "sections": [
+        {
+          "name": "Prêt à manger",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-24",
       "name": "Légumes bio",
-      "products": [
-        "cd13dd6d-865e-43f6-bcf7-7a335a8375ce"
+      "position": 23,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Légumes bio",
+          "position": 0,
+          "products": [
+            "cd13dd6d-865e-43f6-bcf7-7a335a8375ce"
+          ]
+        }
       ]
     },
     {
-      "id": "cat-25",
       "name": "Chiens",
-      "products": []
+      "position": 24,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/004bf94a-dd81-47f5-812b-9d95fd27d5d7.png",
+      "sections": [
+        {
+          "name": "Chiens",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-26",
       "name": "Eaux Gazeuses",
-      "products": []
+      "position": 25,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/boukebowubr0sgfnbqql.jpeg",
+      "sections": [
+        {
+          "name": "Eaux Gazeuses",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-27",
       "name": "Pâtisserie",
-      "products": []
+      "position": 26,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Pâtisserie",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-28",
       "name": "Menthe",
-      "products": []
+      "position": 27,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Menthe",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-29",
       "name": "Boissons Chaudes",
-      "products": []
+      "position": 28,
+      "image_url": "https://images.deliveryhero.io/image/pim-glovo/UG_SCT_SUPERMARKET/Tea___Coffee.png",
+      "sections": [
+        {
+          "name": "Boissons Chaudes",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-30",
       "name": "Aliments préparés",
-      "products": []
+      "position": 29,
+      "image_url": "https://images.deliveryhero.io/image/pim-glovo/UG_SCT_SUPERMARKET/Ready_Meals.png",
+      "sections": [
+        {
+          "name": "Aliments préparés",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-31",
       "name": "Glaces et desserts",
-      "products": []
+      "position": 30,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Glaces et desserts",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-32",
       "name": "Boeuf et Veau",
-      "products": []
+      "position": 31,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Boeuf et Veau",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-33",
       "name": "Olives et légumes en conserve",
-      "products": []
+      "position": 32,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Olives et légumes en conserve",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-34",
       "name": "Boulangerie Traditionelle",
-      "products": []
+      "position": 33,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Boulangerie Traditionelle",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-35",
       "name": "Noix et graines",
-      "products": []
+      "position": 34,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Noix et graines",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-36",
       "name": "Produits d'hygiène",
-      "products": []
+      "position": 35,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Produits d'hygiène",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-37",
       "name": "Légumes Préparés",
-      "products": [
-        "a08edc1d-4f64-412e-97e7-6ed4bd7f8c02",
-        "f16fbcf5-c6ea-4799-a1c0-a051e6dcfbc1",
-        "4c0b435b-a384-43bc-9419-15d6e191ff34",
-        "c71a960f-3e07-452b-bdf1-cfa6e97b9a1c",
-        "cd13dd6d-865e-43f6-bcf7-7a335a8375ce",
-        "655751b5-a45f-4154-88c0-12b6e660ad01",
-        "f08a509e-961a-456d-bd04-2e4d82460d68",
-        "b424bc79-6564-46d9-b22b-0de2accd09e5"
+      "position": 36,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Légumes Préparés",
+          "position": 0,
+          "products": [
+            "a08edc1d-4f64-412e-97e7-6ed4bd7f8c02",
+            "f16fbcf5-c6ea-4799-a1c0-a051e6dcfbc1",
+            "4c0b435b-a384-43bc-9419-15d6e191ff34",
+            "c71a960f-3e07-452b-bdf1-cfa6e97b9a1c",
+            "cd13dd6d-865e-43f6-bcf7-7a335a8375ce",
+            "655751b5-a45f-4154-88c0-12b6e660ad01",
+            "f08a509e-961a-456d-bd04-2e4d82460d68",
+            "b424bc79-6564-46d9-b22b-0de2accd09e5"
+          ]
+        }
       ]
     },
     {
-      "id": "cat-38",
       "name": "Recette découpée",
-      "products": [
-        "d97494ea-4fcb-48bd-a816-6b5ae4f7af0d",
-        "fcaad0c5-c7b4-46bf-8a46-f79fc1e1cf3f"
+      "position": 37,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Recette découpée",
+          "position": 0,
+          "products": [
+            "d97494ea-4fcb-48bd-a816-6b5ae4f7af0d",
+            "fcaad0c5-c7b4-46bf-8a46-f79fc1e1cf3f"
+          ]
+        }
       ]
     },
     {
-      "id": "cat-39",
       "name": "Produits et accessoires de nettoyage",
-      "products": []
-    },
-    {
-      "id": "cat-40",
-      "name": "Dattes & Fruits Secs",
-      "products": []
-    },
-    {
-      "id": "cat-41",
-      "name": "Céréales",
-      "products": []
-    },
-    {
-      "id": "cat-42",
-      "name": "Pâtisserie Traditionnelle",
-      "products": []
-    },
-    {
-      "id": "cat-43",
-      "name": "Fruits Secs Salés & Sucrés",
-      "products": []
-    },
-    {
-      "id": "cat-44",
-      "name": "Pâtisserie Traditionnelle & Croissants",
-      "products": []
-    },
-    {
-      "id": "cat-45",
-      "name": "Boissons sans alcool",
-      "products": []
-    },
-    {
-      "id": "cat-46",
-      "name": "Boissons glacés",
-      "products": []
-    },
-    {
-      "id": "cat-47",
-      "name": "Boissons Gazeuses",
-      "products": []
-    },
-    {
-      "id": "cat-48",
-      "name": "Essentiels des fruits",
-      "products": []
-    },
-    {
-      "id": "cat-49",
-      "name": "pack et plateau.",
-      "products": []
-    },
-    {
-      "id": "cat-50",
-      "name": "Apéritifs salés",
-      "products": []
-    },
-    {
-      "id": "cat-51",
-      "name": "Bonbons & gommes",
-      "products": []
-    },
-    {
-      "id": "cat-52",
-      "name": "Autres",
-      "products": []
-    },
-    {
-      "id": "cat-53",
-      "name": "Chocolats, Nougats, Confiseries Chocolatées",
-      "products": []
-    },
-    {
-      "id": "cat-54",
-      "name": "Glaçons",
-      "products": []
-    },
-    {
-      "id": "cat-55",
-      "name": "Chats",
-      "products": []
-    },
-    {
-      "id": "cat-56",
-      "name": "Poulet",
-      "products": []
-    },
-    {
-      "id": "cat-57",
-      "name": "Volaille",
-      "products": []
-    },
-    {
-      "id": "cat-58",
-      "name": "Fruits tropicaux et exotiques",
-      "products": []
-    },
-    {
-      "id": "cat-59",
-      "name": "Conserves",
-      "products": []
-    },
-    {
-      "id": "cat-60",
-      "name": "Boissons énergisantes",
-      "products": []
-    },
-    {
-      "id": "cat-61",
-      "name": "Epices et Assaisonnement",
-      "products": []
-    },
-    {
-      "id": "cat-62",
-      "name": "Viandes rouges",
-      "products": []
-    },
-    {
-      "id": "cat-63",
-      "name": "Lessive",
-      "products": []
-    },
-    {
-      "id": "cat-64",
-      "name": "Aliments surgelés",
-      "products": []
-    },
-    {
-      "id": "cat-65",
-      "name": "Jus",
-      "products": []
-    },
-    {
-      "id": "cat-66",
-      "name": "Viennoiseries & Brioches Fraiches",
-      "products": []
-    },
-    {
-      "id": "cat-67",
-      "name": "A tartiner",
-      "products": []
-    },
-    {
-      "id": "cat-68",
-      "name": "Baies et petits fruits",
-      "products": []
-    },
-    {
-      "id": "cat-69",
-      "name": "Couche & Serviette & hygiénique",
-      "products": []
-    },
-    {
-      "id": "cat-70",
-      "name": "Herbes aromatiques",
-      "products": []
-    },
-    {
-      "id": "cat-71",
-      "name": "Poissons",
-      "products": [
-        "0d65ab45-529d-4707-97a8-8d959b6d509b",
-        "27fa7c8d-a040-49c6-b7b1-a0c249c7f74e",
-        "8474ca99-91f2-4f05-a508-d91624120293",
-        "0495f9ed-8866-40bd-add3-bc41243fce98",
-        "74b7338a-556e-4311-bb19-f97e7ee1fa54"
+      "position": 38,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Produits et accessoires de nettoyage",
+          "position": 0,
+          "products": []
+        }
       ]
     },
     {
-      "id": "cat-72",
+      "name": "Dattes & Fruits Secs",
+      "position": 39,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Dattes & Fruits Secs",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Céréales",
+      "position": 40,
+      "image_url": "https://images.deliveryhero.io/image/pim-glovo/UG_SCT_SUPERMARKET/Biscuits___Cereals.png",
+      "sections": [
+        {
+          "name": "Céréales",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Pâtisserie Traditionnelle",
+      "position": 41,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Pâtisserie Traditionnelle",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Fruits Secs Salés & Sucrés",
+      "position": 42,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Fruits Secs Salés & Sucrés",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Pâtisserie Traditionnelle & Croissants",
+      "position": 43,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Pâtisserie Traditionnelle & Croissants",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Boissons sans alcool",
+      "position": 44,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Boissons sans alcool",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Boissons glacés",
+      "position": 45,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Boissons glacés",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Boissons Gazeuses",
+      "position": 46,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/nnic78iq0fbcqumjdbfv.jpeg",
+      "sections": [
+        {
+          "name": "Boissons Gazeuses",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Essentiels des fruits",
+      "position": 47,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Essentiels des fruits",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "pack et plateau.",
+      "position": 48,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "pack et plateau.",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Apéritifs salés",
+      "position": 49,
+      "image_url": "https://images.deliveryhero.io/image/pim-glovo/UG_SCT_SUPERMARKET/Salty_Snacks.png",
+      "sections": [
+        {
+          "name": "Apéritifs salés",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Bonbons & gommes",
+      "position": 50,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Bonbons & gommes",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Autres",
+      "position": 51,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Autres",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Chocolats, Nougats, Confiseries Chocolatées",
+      "position": 52,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/02377001-f7f1-4223-b6f6-a0b84a279170.jpg",
+      "sections": [
+        {
+          "name": "Chocolats, Nougats, Confiseries Chocolatées",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Glaçons",
+      "position": 53,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/uzm5gqo1zolvyzychawn.jpeg",
+      "sections": [
+        {
+          "name": "Glaçons",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Chats",
+      "position": 54,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/2964e950-32bb-4c99-8bc3-daa843712a77.png",
+      "sections": [
+        {
+          "name": "Chats",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Poulet",
+      "position": 55,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Poulet",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Volaille",
+      "position": 56,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/J_134335.webp",
+      "sections": [
+        {
+          "name": "Volaille",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Fruits tropicaux et exotiques",
+      "position": 57,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Fruits tropicaux et exotiques",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Conserves",
+      "position": 58,
+      "image_url": "https://images.deliveryhero.io/image/pim-glovo/UG_SCT_SUPERMARKET/Canned_Food.png",
+      "sections": [
+        {
+          "name": "Conserves",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Boissons énergisantes",
+      "position": 59,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Boissons énergisantes",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Epices et Assaisonnement",
+      "position": 60,
+      "image_url": "https://images.deliveryhero.io/image/pim-glovo/UG_SCT_SUPERMARKET/Cooking___Condiments.png",
+      "sections": [
+        {
+          "name": "Epices et Assaisonnement",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Viandes rouges",
+      "position": 61,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Viandes rouges",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Lessive",
+      "position": 62,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Lessive",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Aliments surgelés",
+      "position": 63,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Aliments surgelés",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Jus",
+      "position": 64,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Jus",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Viennoiseries & Brioches Fraiches",
+      "position": 65,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Viennoiseries & Brioches Fraiches",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "A tartiner",
+      "position": 66,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "A tartiner",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Baies et petits fruits",
+      "position": 67,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Baies et petits fruits",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Couche & Serviette & hygiénique",
+      "position": 68,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Couche & Serviette & hygiénique",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Herbes aromatiques",
+      "position": 69,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Herbes aromatiques",
+          "position": 0,
+          "products": []
+        }
+      ]
+    },
+    {
+      "name": "Poissons",
+      "position": 70,
+      "image_url": "https://images.deliveryhero.io/image/global-catalog-glovo/nv-global-catalog/aa/b0523385-f775-482d-a10e-1c59abb4184e.png",
+      "sections": [
+        {
+          "name": "Poissons",
+          "position": 0,
+          "products": [
+            "0d65ab45-529d-4707-97a8-8d959b6d509b",
+            "27fa7c8d-a040-49c6-b7b1-a0c249c7f74e",
+            "8474ca99-91f2-4f05-a508-d91624120293",
+            "0495f9ed-8866-40bd-add3-bc41243fce98",
+            "74b7338a-556e-4311-bb19-f97e7ee1fa54"
+          ]
+        }
+      ]
+    },
+    {
       "name": "Salades",
-      "products": []
+      "position": 71,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Salades",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-73",
       "name": "Apéritifs sucrés",
-      "products": []
+      "position": 72,
+      "image_url": "https://images.deliveryhero.io/image/pim-glovo/UG_SCT_SUPERMARKET/Sweet_Snacks.png",
+      "sections": [
+        {
+          "name": "Apéritifs sucrés",
+          "position": 0,
+          "products": []
+        }
+      ]
     },
     {
-      "id": "cat-74",
       "name": "Salade Herbes Prête à l'Emploi",
-      "products": []
+      "position": 73,
+      "image_url": "https://i.imgur.com/Qj5MlEH.png",
+      "sections": [
+        {
+          "name": "Salade Herbes Prête à l'Emploi",
+          "position": 0,
+          "products": []
+        }
+      ]
     }
   ],
   "products": [
