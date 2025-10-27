@@ -286,6 +286,28 @@ model Message {
   @@map("messages")
 }
 
+// Product Management - Glovo Products
+model Product {
+  id          String   @id @default(cuid())
+  sku         String   @unique // Glovo SKU
+  name        String   // Product name
+  description String?  // Product description
+  price       Float    // Price in MAD
+  imageUrl    String?  // Product image URL
+  available   Boolean  @default(true) // Availability status
+  categories  String?  // Product categories (comma-separated)
+  storeId     String   // Store ID (store-01 for test, real store ID for production)
+
+  // Glovo sync
+  lastSyncedAt DateTime? // Last time synced with Glovo
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("products")
+}
+
 // Customer Analytics and Management
 model Customer {
   id                    String   @id @default(cuid())
