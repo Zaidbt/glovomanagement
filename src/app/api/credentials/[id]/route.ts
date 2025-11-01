@@ -23,7 +23,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { name, apiKey, apiSecret, webhookUrl, instanceName, isActive } =
+    const { name, apiKey, apiSecret, webhookUrl, instanceName, isActive, accessToken } =
       body;
     const { id } = await params;
 
@@ -39,6 +39,7 @@ export async function PUT(
         webhookUrl,
         instanceName,
         isActive,
+        accessToken,
         lastUpdated: new Date(),
       },
     });

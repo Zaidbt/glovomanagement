@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
       customField1,
       customField2,
       instanceName,
+      accessToken,
     } = body;
 
     const credential = await prisma.credential.create({
@@ -85,6 +86,7 @@ export async function POST(request: NextRequest) {
         customField1,
         customField2,
         instanceName,
+        accessToken,
         isConfigured: true,
         isActive: true,
         userId,
