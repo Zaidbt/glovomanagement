@@ -46,14 +46,18 @@ model Store {
   address      String
   phone        String
   twilioNumber String?
-  glovoStoreId String?
+  glovoStoreId String?  // Vendor ID Glovo
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   // Twilio Integration
   twilioCredentialId String?
-  twilioCredential   Credential? @relation(fields: [twilioCredentialId], references: [id], onDelete: SetNull)
+  twilioCredential   Credential? @relation("TwilioCredential", fields: [twilioCredentialId], references: [id], onDelete: SetNull)
+
+  // Glovo Integration
+  glovoCredentialId String?
+  glovoCredential   Credential? @relation("GlovoCredential", fields: [glovoCredentialId], references: [id], onDelete: SetNull)
 
   // Relations
   collaborateurStores CollaborateurStore[]
@@ -216,11 +220,11 @@ model Credential {
   instanceName String? // Nom de l'instance pour les APIs multiples
   
   // API Credentials
-  apiKey       String? // Client ID, Account SID, Email, etc.
+  apiKey       String? // Client ID, Account SID, Email, Chain ID (Glovo), etc.
   apiSecret    String? // Client Secret, Auth Token, Password, etc.
   webhookUrl   String? // URL du webhook
-  customField1 String? // Numéro WhatsApp, SMTP Host, etc.
-  customField2 String? // SMTP Port, Custom Field 2, etc.
+  customField1 String? // Numéro WhatsApp, SMTP Host, Vendor ID (Glovo), etc.
+  customField2 String? // SMTP Port, Store ID, etc.
   
   // OAuth Tokens (pour Glovo et autres APIs OAuth)
   accessToken  String? // Token d'accès OAuth
@@ -236,7 +240,8 @@ model Credential {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   orders Order[] // Commandes reçues via cette credential
-  stores Store[] // Stores utilisant cette credential Twilio
+  twilioStores Store[] @relation("TwilioCredential") // Stores utilisant cette credential Twilio
+  glovoStores  Store[] @relation("GlovoCredential")  // Stores utilisant cette credential Glovo
 
   @@map("credentials")
 }

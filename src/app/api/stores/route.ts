@@ -45,6 +45,17 @@ export async function GET() {
             isActive: true,
           },
         },
+        glovoCredential: {
+          select: {
+            id: true,
+            name: true,
+            instanceName: true,
+            apiKey: true,        // Chain ID
+            customField1: true,  // Vendor ID
+            accessToken: true,   // OAuth Token
+            isActive: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -75,6 +86,7 @@ export async function POST(request: NextRequest) {
       twilioNumber,
       glovoStoreId,
       twilioCredentialId,
+      glovoCredentialId,
     } = body;
 
     if (!name || !address || !phone) {
@@ -92,6 +104,7 @@ export async function POST(request: NextRequest) {
         twilioNumber: twilioNumber || null,
         glovoStoreId: glovoStoreId || null,
         twilioCredentialId: twilioCredentialId || null,
+        glovoCredentialId: glovoCredentialId || null,
       },
     });
 

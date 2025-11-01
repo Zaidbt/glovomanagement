@@ -25,6 +25,7 @@ export async function PUT(
       twilioNumber,
       glovoStoreId,
       twilioCredentialId,
+      glovoCredentialId,
       isActive,
     } = body;
     const { id } = await params;
@@ -45,6 +46,7 @@ export async function PUT(
         twilioNumber: twilioNumber || null,
         glovoStoreId: glovoStoreId || null,
         twilioCredentialId: twilioCredentialId || null,
+        glovoCredentialId: glovoCredentialId || null,
         isActive: isActive !== undefined ? isActive : true,
       },
     });

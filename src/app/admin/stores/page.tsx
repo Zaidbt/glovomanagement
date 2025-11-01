@@ -46,11 +46,20 @@ interface Store {
   twilioNumber?: string;
   glovoStoreId?: string;
   twilioCredentialId?: string;
+  glovoCredentialId?: string;
   twilioCredential?: {
     id: string;
     name: string;
     instanceName?: string;
     customField1?: string; // Phone number
+  };
+  glovoCredential?: {
+    id: string;
+    name: string;
+    instanceName?: string;
+    apiKey?: string;        // Chain ID
+    customField1?: string;  // Vendor ID
+    accessToken?: string;   // OAuth Token
   };
   isActive: boolean;
   createdAt: string;
@@ -64,11 +73,23 @@ interface TwilioCredential {
   isActive: boolean;
 }
 
+interface GlovoCredential {
+  id: string;
+  name: string;
+  instanceName?: string;
+  apiKey?: string;        // Chain ID
+  customField1?: string;  // Vendor ID
+  isActive: boolean;
+}
+
 export default function StoresPage() {
   const [stores, setStores] = useState<Store[]>([]);
   const [twilioCredentials, setTwilioCredentials] = useState<
     TwilioCredential[]
   >([]);
+  const [glovoCredentials, setGlovoCredentials] = useState<GlovoCredential[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
@@ -76,6 +97,7 @@ export default function StoresPage() {
   useEffect(() => {
     fetchStores();
     fetchTwilioCredentials();
+    fetchGlovoCredentials();
   }, []);
 
   const fetchStores = async () => {
@@ -107,6 +129,21 @@ export default function StoresPage() {
     }
   };
 
+  const fetchGlovoCredentials = async () => {
+    try {
+      const response = await fetch("/api/credentials");
+      if (response.ok) {
+        const credentials = await response.json();
+        const glovoCreds = credentials.filter(
+          (c: Record<string, unknown>) => c.type === "GLOVO" && c.isActive
+        );
+        setGlovoCredentials(glovoCreds);
+      }
+    } catch (error) {
+      console.error("Error fetching Glovo credentials:", error);
+    }
+  };
+
   const handleCreateStore = async (formData: FormData) => {
     try {
       const response = await fetch("/api/stores", {
@@ -121,6 +158,7 @@ export default function StoresPage() {
           twilioNumber: formData.get("twilioNumber"),
           glovoStoreId: formData.get("glovoStoreId"),
           twilioCredentialId: formData.get("twilioCredentialId") || null,
+          glovoCredentialId: formData.get("glovoCredentialId") || null,
         }),
       });
 
@@ -149,6 +187,7 @@ export default function StoresPage() {
           twilioNumber: formData.get("twilioNumber"),
           glovoStoreId: formData.get("glovoStoreId"),
           twilioCredentialId: formData.get("twilioCredentialId") || null,
+          glovoCredentialId: formData.get("glovoCredentialId") || null,
           isActive: formData.get("isActive") === "on",
         }),
       });
@@ -329,6 +368,32 @@ export default function StoresPage() {
                     credential disponible.
                   </p>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="glovoCredentialId">
+                    Credential Glovo (optionnel)
+                  </Label>
+                  <Select
+                    name="glovoCredentialId"
+                    defaultValue={editingStore?.glovoCredentialId || ""}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une credential Glovo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {glovoCredentials.map((cred) => (
+                        <SelectItem key={cred.id} value={cred.id}>
+                          {cred.instanceName || cred.name} - Vendor:{" "}
+                          {cred.customField1 || "(Non configuré)"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">
+                    Sélectionnez la credential Glovo pour ce store. La
+                    credential contient le Chain ID, Vendor ID et le token OAuth
+                    pour l&apos;API Glovo.
+                  </p>
+                </div>
                 {editingStore && (
                   <div className="flex items-center space-x-2">
                     <input
@@ -440,6 +505,9 @@ export default function StoresPage() {
                     Twilio
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700">
+                    Glovo
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-700">
                     Statut
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700">
@@ -477,6 +545,25 @@ export default function StoresPage() {
                               </div>
                             )}
                           </div>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">
+                          Aucune credential
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {store.glovoCredential ? (
+                        <div>
+                          <div className="text-sm font-medium">
+                            {store.glovoCredential.instanceName ||
+                              store.glovoCredential.name}
+                          </div>
+                          {store.glovoCredential.customField1 && (
+                            <div className="text-xs text-gray-500">
+                              Vendor: {store.glovoCredential.customField1}
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <span className="text-gray-400 text-sm">
