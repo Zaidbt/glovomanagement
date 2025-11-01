@@ -80,6 +80,7 @@ export default function CredentialsPage() {
     webhookUrl: "",
     customField1: "",
     customField2: "",
+    accessToken: "",
   });
   const [loading, setLoading] = useState(false);
   const [testing, setTesting] = useState<Record<string, boolean>>({});
@@ -225,17 +226,22 @@ export default function CredentialsPage() {
         return [
           {
             key: "apiKey",
-            label: "Client ID",
-            placeholder: "175937161350975",
+            label: "Chain ID",
+            placeholder: "66e35ff7a15a3a1fc1a50f77",
+          },
+          {
+            key: "customField1",
+            label: "Vendor ID (Store ID)",
+            placeholder: "588581",
           },
           {
             key: "apiSecret",
-            label: "Client Secret",
-            placeholder: "7d1c1baabf85423b888b4139fcdb66f0",
+            label: "OAuth Token",
+            placeholder: "8b979af6-8e38-4bdb-aa07-26408928052a",
           },
           {
             key: "webhookUrl",
-            label: "Webhook URL",
+            label: "Webhook URL (optionnel)",
             placeholder: "https://your-domain.com/webhook/glovo",
           },
         ];
@@ -310,6 +316,7 @@ export default function CredentialsPage() {
       webhookUrl: "",
       customField1: "",
       customField2: "",
+      accessToken: "",
     });
   };
 
@@ -328,6 +335,7 @@ export default function CredentialsPage() {
       webhookUrl: "",
       customField1: "",
       customField2: "",
+      accessToken: "",
     });
   };
 
@@ -439,6 +447,7 @@ export default function CredentialsPage() {
         webhookUrl: formData.webhookUrl,
         customField1: formData.customField1,
         customField2: formData.customField2,
+        accessToken: editingCredential.type === "GLOVO" ? formData.apiSecret : (formData.accessToken || undefined),
         instanceName:
           formData.instanceName || `${editingCredential.name} ${Date.now()}`,
       };
