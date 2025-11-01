@@ -72,16 +72,30 @@ export class ApiTester {
     const startTime = Date.now();
 
     try {
+      // Déterminer quel type d'API tester
+      // Si apiSecret est un token (commence par un UUID-like pattern), c'est un Shared Token
+      // Sinon, c'est l'OAuth API avec clientId/clientSecret
+      const isSharedToken = credentials.apiSecret && credentials.apiSecret.length === 36;
+
+      const requestBody = isSharedToken
+        ? {
+            // Partners API (ancienne API avec Shared Token)
+            sharedToken: credentials.apiSecret,
+            storeId: credentials.customField1 || "store-01",
+          }
+        : {
+            // OAuth API (nouvelle API)
+            clientId: credentials.apiKey,
+            clientSecret: credentials.apiSecret,
+          };
+
       // Use server-side proxy to avoid CORS issues
       const response = await fetch("/api/glovo/test-credentials", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          clientId: credentials.apiKey,
-          clientSecret: credentials.apiSecret,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const responseTime = Date.now() - startTime;
