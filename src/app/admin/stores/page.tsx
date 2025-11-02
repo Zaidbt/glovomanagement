@@ -36,7 +36,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Edit, Trash2, Store, MessageSquare } from "lucide-react";
+import { Plus, Edit, Trash2, Store, MessageSquare, Package } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Store {
   id: string;
@@ -83,6 +84,7 @@ interface GlovoCredential {
 }
 
 export default function StoresPage() {
+  const router = useRouter();
   const [stores, setStores] = useState<Store[]>([]);
   const [twilioCredentials, setTwilioCredentials] = useState<
     TwilioCredential[]
@@ -585,6 +587,15 @@ export default function StoresPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => router.push(`/admin/stores/${store.id}/products`)}
+                          className="hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          title="Gérer les produits"
+                        >
+                          <Package className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
