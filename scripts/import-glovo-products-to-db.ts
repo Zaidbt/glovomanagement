@@ -42,35 +42,42 @@ async function importProducts() {
 
       console.log(`  → Importing: ${name.substring(0, 40)}...`);
 
+      // NOTE: This script is deprecated - use the new product import system instead
+      // Keeping for reference only
+      /*
       await prisma.product.upsert({
-        where: { sku: product.sku },
+        where: {
+          storeId_sku: {
+            storeId: 'STORE_ID_HERE',
+            sku: product.sku
+          }
+        },
         update: {
           name,
           price,
           imageUrl,
-          available: product.active,
-          categories,
+          isActive: product.active,
           updatedAt: new Date(),
         },
         create: {
+          storeId: 'STORE_ID_HERE',
           sku: product.sku,
           name,
-          description: name,
           price,
           imageUrl,
-          available: product.active,
-          categories,
-          storeId: 'store-01', // TEST store
+          isActive: product.active,
+          storeId: 'STORE_ID_HERE',
         },
       });
+      */
     }
 
     console.log(`\n✅ Successfully imported ${products.length} products to database`);
 
     // Show stats
     const totalProducts = await prisma.product.count();
-    const availableProducts = await prisma.product.count({ where: { available: true } });
-    const unavailableProducts = await prisma.product.count({ where: { available: false } });
+    const availableProducts = await prisma.product.count({ where: { isActive: true } });
+    const unavailableProducts = await prisma.product.count({ where: { isActive: false } });
 
     console.log('\n📊 Database Statistics:');
     console.log(`  Total products: ${totalProducts}`);

@@ -29,6 +29,7 @@ model User {
   userPermissions     UserPermission[]
   events              Event[]
   credentials         Credential[]
+  supplierProducts    ProductSupplier[]    @relation("SupplierProducts")
 
   @@map("users")
 }
@@ -46,10 +47,10 @@ model Store {
   address      String
   phone        String
   twilioNumber String?
-  glovoStoreId String?  // Vendor ID Glovo
+  glovoStoreId String? // Vendor ID Glovo
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt    DateTime @updatedAt
 
   // Twilio Integration
   twilioCredentialId String?
@@ -62,6 +63,7 @@ model Store {
   // Relations
   collaborateurStores CollaborateurStore[]
   fournisseurStores   FournisseurStore[]
+  products            Product[]
   orders              Order[]
   events              Event[]
   conversations       Conversation[]
@@ -71,9 +73,9 @@ model Store {
 
 // Many-to-many relationship between Collaborateurs and Stores
 model CollaborateurStore {
-  id             String @id @default(cuid())
+  id              String @id @default(cuid())
   collaborateurId String
-  storeId        String
+  storeId         String
 
   collaborateur User  @relation(fields: [collaborateurId], references: [id], onDelete: Cascade)
   store         Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
@@ -84,9 +86,9 @@ model CollaborateurStore {
 
 // Many-to-many relationship between Fournisseurs and Stores
 model FournisseurStore {
-  id           String @id @default(cuid())
+  id            String @id @default(cuid())
   fournisseurId String
-  storeId      String
+  storeId       String
 
   fournisseur User  @relation(fields: [fournisseurId], references: [id], onDelete: Cascade)
   store       Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
@@ -95,77 +97,139 @@ model FournisseurStore {
   @@map("fournisseur_stores")
 }
 
-// Order model - Basé sur la documentation Glovo
-model Order {
-  id          String   @id @default(cuid())
-  
+// Product Catalog - Produits d'un store (catalogue Glovo importé)
+model Product {
+  id      String @id @default(cuid())
+  storeId String // FK vers Store
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
   // Identifiants Glovo
-  orderId     String   // order_id de Glovo
-  storeId     String   // store_id de Glovo  
-  orderCode   String?  // order_code de Glovo (ex: BA7DWBUL)
-  
-  // Source et statut
-  source      String   // GLOVO, TWILIO, CUSTOM, etc.
-  status      String   // ACCEPTED, READY_FOR_PICKUP, OUT_FOR_DELIVERY, PICKED_UP_BY_CUSTOMER, CANCELLED
-  
-  // Horaires (format Glovo: yyyy-MM-dd HH:mm:ss)
-  orderTime   String?  // order_time de Glovo
-  estimatedPickupTime String? // estimated_pickup_time de Glovo
-  utcOffsetMinutes String? // utc_offset_minutes de Glovo
-  
-  // Paiement
-  paymentMethod String? // CASH, DELAYED
-  currency     String? // EUR, MAD, etc.
-  
-  // Prix (en centimes)
-  estimatedTotalPrice Int? // estimated_total_price en centimes
-  deliveryFee        Int? // delivery_fee en centimes
-  minimumBasketSurcharge Int? // minimum_basket_surcharge en centimes
-  customerCashPaymentAmount Int? // customer_cash_payment_amount en centimes
-  totalAmount        Int? // total amount en centimes
-  
-  // Informations client
-  customerName String?
-  customerPhone String?
-  customerHash String? // customer.hash de Glovo
-  customerInvoicingDetails Json? // customer.invoicing_details de Glovo
-  
-  // Informations courier
-  courierName String?
-  courierPhone String?
-  
-  // Produits (format Glovo)
-  products Json? // Liste des produits selon le format Glovo
-  
-  // Informations spéciales
-  allergyInfo String? // allergy_info de Glovo
-  specialRequirements String? // special_requirements de Glovo
-  
-  // Métadonnées
-  metadata Json? // Données supplémentaires de l'API
-  notes    String? // Notes internes
-  
+  sku  String // UUID Glovo ou SKU custom
+  name String // Nom du produit
+
+  // Prix et disponibilité
+  price    Int // Prix en centimes (ex: 4500 = 45.00 DH)
+  isActive Boolean @default(true) // Actif dans ce store?
+
+  // Catégorisation
+  category1 String? // Catégorie principale (ex: "Viandes")
+  category2 String? // Sous-catégorie (ex: "Boeuf")
+
+  // Informations additionnelles
+  barcode  String? // Code barre du produit
+  imageUrl String? // URL de l'image (nullable, par défaut = catégorie)
+
+  // Sync Glovo API
+  lastSyncedAt DateTime? // Dernière synchronisation avec Glovo v2 API
+
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relations
+  suppliers ProductSupplier[] // Fournisseurs assignés à ce produit
+
+  // Contraintes
+  @@unique([storeId, sku]) // Un SKU unique par store
+  @@index([storeId])
+  @@index([category1])
+  @@index([isActive])
+  @@map("products")
+}
+
+// Product-Supplier Assignment - Qui fournit quel produit
+model ProductSupplier {
+  id         String  @id @default(cuid())
+  productId  String // FK vers Product
+  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  supplierId String // FK vers User (role=FOURNISSEUR)
+  supplier   User    @relation("SupplierProducts", fields: [supplierId], references: [id], onDelete: Cascade)
+
+  // Configuration
+  priority Int     @default(1) // Priorité: 1=principal, 2=backup, etc.
+  isActive Boolean @default(true) // Actif ou non
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Contraintes
+  @@unique([productId, supplierId])
+  @@index([supplierId])
+  @@index([priority])
+  @@map("product_suppliers")
+}
+
+// Order model - Basé sur la documentation Glovo
+model Order {
+  id String @id @default(cuid())
+
+  // Identifiants Glovo
+  orderId   String // order_id de Glovo
+  storeId   String // store_id de Glovo  
+  orderCode String? // order_code de Glovo (ex: BA7DWBUL)
+
+  // Source et statut
+  source String // GLOVO, TWILIO, CUSTOM, etc.
+  status String // ACCEPTED, READY_FOR_PICKUP, OUT_FOR_DELIVERY, PICKED_UP_BY_CUSTOMER, CANCELLED
+
+  // Horaires (format Glovo: yyyy-MM-dd HH:mm:ss)
+  orderTime           String? // order_time de Glovo
+  estimatedPickupTime String? // estimated_pickup_time de Glovo
+  utcOffsetMinutes    String? // utc_offset_minutes de Glovo
+
+  // Paiement
+  paymentMethod String? // CASH, DELAYED
+  currency      String? // EUR, MAD, etc.
+
+  // Prix (en centimes)
+  estimatedTotalPrice       Int? // estimated_total_price en centimes
+  deliveryFee               Int? // delivery_fee en centimes
+  minimumBasketSurcharge    Int? // minimum_basket_surcharge en centimes
+  customerCashPaymentAmount Int? // customer_cash_payment_amount en centimes
+  totalAmount               Int? // total amount en centimes
+
+  // Informations client
+  customerName             String?
+  customerPhone            String?
+  customerHash             String? // customer.hash de Glovo
+  customerInvoicingDetails Json? // customer.invoicing_details de Glovo
+
+  // Informations courier
+  courierName  String?
+  courierPhone String?
+
+  // Produits (format Glovo)
+  products Json? // Liste des produits selon le format Glovo
+
+  // Informations spéciales
+  allergyInfo         String? // allergy_info de Glovo
+  specialRequirements String? // special_requirements de Glovo
+
+  // Métadonnées
+  metadata Json? // Données supplémentaires de l'API
+  notes    String? // Notes internes
+
+  // Timestamps
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   receivedAt DateTime @default(now()) // Quand la commande a été reçue
-  
+
   // Relations
   credentialId String?
   credential   Credential? @relation(fields: [credentialId], references: [id], onDelete: SetNull)
   store        Store       @relation(fields: [storeId], references: [id])
   customerId   String?
-  customer     Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customer     Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
   events       Event[]
 
   @@map("orders")
 }
 
-
 // Permission system
 model Permission {
-  id          String @id @default(cuid())
-  name        String @unique
+  id          String   @id @default(cuid())
+  name        String   @unique
   description String
   createdAt   DateTime @default(now())
 
@@ -191,10 +255,10 @@ model UserPermission {
 // Event tracking system
 model Event {
   id          String   @id @default(cuid())
-  type        String   // STORE_CREATED, COLLABORATEUR_ADDED, etc.
+  type        String // STORE_CREATED, COLLABORATEUR_ADDED, etc.
   title       String
   description String
-  metadata    Json?    // Store additional data as JSON
+  metadata    Json? // Store additional data as JSON
   createdAt   DateTime @default(now())
 
   // Relations
@@ -210,57 +274,57 @@ model Event {
 
 // Credentials management system
 model Credential {
-  id           String   @id @default(cuid())
-  name         String   // Twilio WhatsApp, Glovo API, etc.
-  type         String   // TWILIO, GLOVO, GMAIL, N8N, CUSTOM
+  id           String  @id @default(cuid())
+  name         String // Twilio WhatsApp, Glovo API, etc.
+  type         String // TWILIO, GLOVO, GMAIL, N8N, CUSTOM
   description  String
-  values       Json     // Encrypted credentials as JSON
-  isConfigured Boolean  @default(false)
-  isActive     Boolean  @default(true)
+  values       Json // Encrypted credentials as JSON
+  isConfigured Boolean @default(false)
+  isActive     Boolean @default(true)
   instanceName String? // Nom de l'instance pour les APIs multiples
-  
+
   // API Credentials
   apiKey       String? // Client ID, Account SID, Email, Chain ID (Glovo), etc.
   apiSecret    String? // Client Secret, Auth Token, Password, etc.
   webhookUrl   String? // URL du webhook
   customField1 String? // Numéro WhatsApp, SMTP Host, Vendor ID (Glovo), etc.
   customField2 String? // SMTP Port, Store ID, etc.
-  
+
   // OAuth Tokens (pour Glovo et autres APIs OAuth)
   accessToken  String? // Token d'accès OAuth
   refreshToken String? // Token de rafraîchissement OAuth
   expiresAt    DateTime? // Date d'expiration du token
-  
+
   // Timestamps
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  lastUpdated  DateTime? // Dernière mise à jour des credentials
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastUpdated DateTime? // Dernière mise à jour des credentials
 
   // Relations
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orders Order[] // Commandes reçues via cette credential
+  userId       String
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders       Order[] // Commandes reçues via cette credential
   twilioStores Store[] @relation("TwilioCredential") // Stores utilisant cette credential Twilio
-  glovoStores  Store[] @relation("GlovoCredential")  // Stores utilisant cette credential Glovo
+  glovoStores  Store[] @relation("GlovoCredential") // Stores utilisant cette credential Glovo
 
   @@map("credentials")
 }
 
 // Conversations WhatsApp
 model Conversation {
-  id           String   @id @default(cuid())
-  storeId      String
-  store        Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  customerId   String?
-  customer     Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  contactNumber String  // Numéro du contact (format: +212XXXXXXXXX)
+  id            String    @id @default(cuid())
+  storeId       String
+  store         Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customerId    String?
+  customer      Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  contactNumber String // Numéro du contact (format: +212XXXXXXXXX)
   contactName   String? // Nom du contact (optionnel)
   lastMessage   String? // Dernier message
   lastMessageAt DateTime? // Date du dernier message
-  unreadCount   Int     @default(0) // Nombre de messages non lus
-  isActive      Boolean @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  unreadCount   Int       @default(0) // Nombre de messages non lus
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   // Relations
   messages Message[]
@@ -271,89 +335,67 @@ model Conversation {
 
 // Messages WhatsApp
 model Message {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  twilioSid      String   // SID du message Twilio
-  direction      String   // "inbound" ou "outbound"
-  fromNumber     String   // Numéro expéditeur
-  toNumber       String   // Numéro destinataire
-  body           String   // Contenu du message
-  status         String?  // Status du message (sent, delivered, read, etc.)
+  twilioSid      String // SID du message Twilio
+  direction      String // "inbound" ou "outbound"
+  fromNumber     String // Numéro expéditeur
+  toNumber       String // Numéro destinataire
+  body           String // Contenu du message
+  status         String? // Status du message (sent, delivered, read, etc.)
   sentAt         DateTime // Date d'envoi
   receivedAt     DateTime? // Date de réception
-  isRead         Boolean  @default(false)
-  metadata       Json?    // Métadonnées supplémentaires
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  isRead         Boolean      @default(false)
+  metadata       Json? // Métadonnées supplémentaires
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@unique([twilioSid])
   @@map("messages")
 }
 
-// Product Management - Glovo Products
-model Product {
-  id          String   @id @default(cuid())
-  sku         String   @unique // Glovo SKU
-  name        String   // Product name
-  description String?  // Product description
-  price       Float    // Price in MAD
-  imageUrl    String?  // Product image URL
-  available   Boolean  @default(true) // Availability status
-  categories  String?  // Product categories (comma-separated)
-  storeId     String   // Store ID (store-01 for test, real store ID for production)
-
-  // Glovo sync
-  lastSyncedAt DateTime? // Last time synced with Glovo
-
-  // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("products")
-}
-
 // Customer Analytics and Management
 model Customer {
-  id                    String   @id @default(cuid())
-  phoneNumber          String   @unique // Primary identifier
-  glovoCustomerId      String?  @unique // Glovo customer ID
-  name                 String?  // Customer name
-  email                String?  // Customer email
-  address              String?  // Delivery address
-  city                 String?  // City
-  postalCode           String?  // Postal code
-  
+  id              String  @id @default(cuid())
+  phoneNumber     String  @unique // Primary identifier
+  glovoCustomerId String? @unique // Glovo customer ID
+  name            String? // Customer name
+  email           String? // Customer email
+  address         String? // Delivery address
+  city            String? // City
+  postalCode      String? // Postal code
+
   // Analytics Fields
-  totalOrders          Int      @default(0)
-  totalSpent           Int      @default(0) // In centimes
-  averageOrderValue    Int      @default(0) // In centimes
-  lastOrderDate        DateTime?
-  firstOrderDate       DateTime?
-  customerLifetimeValue Int     @default(0) // In centimes
-  
+  totalOrders           Int       @default(0)
+  totalSpent            Int       @default(0) // In centimes
+  averageOrderValue     Int       @default(0) // In centimes
+  lastOrderDate         DateTime?
+  firstOrderDate        DateTime?
+  customerLifetimeValue Int       @default(0) // In centimes
+
   // Customer Segmentation
-  loyaltyTier          String   @default("BRONZE") // VIP, GOLD, SILVER, BRONZE, NEW
-  churnRiskScore       Float    @default(0.0) // 0.0 to 1.0
-  isActive             Boolean  @default(true)
-  
+  loyaltyTier    String  @default("BRONZE") // VIP, GOLD, SILVER, BRONZE, NEW
+  churnRiskScore Float   @default(0.0) // 0.0 to 1.0
+  isActive       Boolean @default(true)
+
   // Preferences
   preferredDeliveryTime String? // "morning", "afternoon", "evening"
-  favoriteProducts     Json?    // Array of favorite product IDs
-  deliveryNotes        String? // Special delivery instructions
-  
+  favoriteProducts      Json? // Array of favorite product IDs
+  deliveryNotes         String? // Special delivery instructions
+
   // Communication
-  whatsappOptIn        Boolean  @default(true)
-  smsOptIn             Boolean  @default(false)
-  emailOptIn           Boolean  @default(false)
-  
+  whatsappOptIn Boolean @default(true)
+  smsOptIn      Boolean @default(false)
+  emailOptIn    Boolean @default(false)
+
   // Timestamps
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  orders               Order[]
-  conversations        Conversation[]
-  
+  orders        Order[]
+  conversations Conversation[]
+
   @@map("customers")
 }
