@@ -28,14 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Plus, Edit, Trash2, Truck } from "lucide-react";
+import { Plus, Edit, Trash2, Truck, Tag } from "lucide-react";
 
 interface Fournisseur {
   id: string;
@@ -45,6 +38,7 @@ interface Fournisseur {
   phone?: string;
   isActive: boolean;
   createdAt: string;
+  assignedCategories: string[];
   fournisseurStores: {
     store: {
       id: string;
@@ -53,18 +47,10 @@ interface Fournisseur {
   }[];
 }
 
-const CATEGORIES = [
-  { value: "VIANDE", label: "Viande" },
-  { value: "VOLAILLE", label: "Volaille" },
-  { value: "LEGUMES", label: "Légumes" },
-  { value: "FRUITS", label: "Fruits" },
-  { value: "EPICERIE", label: "Épicerie" },
-  { value: "AUTRE", label: "Autre" },
-];
-
 export default function FournisseursPage() {
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
   const [stores, setStores] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingFournisseur, setEditingFournisseur] =
@@ -73,6 +59,7 @@ export default function FournisseursPage() {
   useEffect(() => {
     fetchFournisseurs();
     fetchStores();
+    fetchCategories();
   }, []);
 
   const fetchFournisseurs = async () => {
@@ -101,6 +88,18 @@ export default function FournisseursPage() {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("/api/categories");
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.categories || []);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
   const handleCreateFournisseur = async (formData: FormData) => {
     try {
       const response = await fetch("/api/fournisseurs", {
@@ -114,7 +113,7 @@ export default function FournisseursPage() {
           name: formData.get("name"),
           email: formData.get("email"),
           phone: formData.get("phone"),
-          category: formData.get("category"),
+          assignedCategories: formData.getAll("assignedCategories"),
           storeIds: formData.getAll("storeIds"),
         }),
       });
@@ -144,7 +143,7 @@ export default function FournisseursPage() {
             name: formData.get("name"),
             email: formData.get("email"),
             phone: formData.get("phone"),
-            category: formData.get("category"),
+            assignedCategories: formData.getAll("assignedCategories"),
             isActive: formData.get("isActive") === "on",
             storeIds: formData.getAll("storeIds"),
           }),
@@ -291,26 +290,43 @@ export default function FournisseursPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="category">Catégorie</Label>
-                <Select
-                  name="category"
-                  defaultValue={editingFournisseur?.name || ""}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une catégorie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map((category) => (
-                      <SelectItem key={category.value} value={category.value}>
-                        {category.label}
-                      </SelectItem>
+                <Label>Catégories assignées</Label>
+                {categories.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    Aucune catégorie disponible. Importez des produits pour créer
+                    des catégories.
+                  </p>
+                ) : (
+                  <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+                    {categories.map((category) => (
+                      <div
+                        key={category}
+                        className="flex items-center space-x-2"
+                      >
+                        <input
+                          type="checkbox"
+                          id={`category-${category}`}
+                          name="assignedCategories"
+                          value={category}
+                          defaultChecked={editingFournisseur?.assignedCategories?.includes(
+                            category
+                          )}
+                          className="rounded"
+                        />
+                        <Label
+                          htmlFor={`category-${category}`}
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          {category}
+                        </Label>
+                      </div>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Stores assignés</Label>
-                <div className="space-y-2 max-h-32 overflow-y-auto">
+                <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
                   {stores.map((store) => (
                     <div key={store.id} className="flex items-center space-x-2">
                       <input
@@ -323,7 +339,10 @@ export default function FournisseursPage() {
                         )}
                         className="rounded"
                       />
-                      <Label htmlFor={`store-${store.id}`} className="text-sm">
+                      <Label
+                        htmlFor={`store-${store.id}`}
+                        className="text-sm font-normal cursor-pointer"
+                      >
                         {store.name}
                       </Label>
                     </div>
@@ -415,6 +434,7 @@ export default function FournisseursPage() {
                 <TableHead>Nom d&apos;utilisateur</TableHead>
                 <TableHead>Nom commercial</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Catégories</TableHead>
                 <TableHead>Stores</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Actions</TableHead>
@@ -428,6 +448,27 @@ export default function FournisseursPage() {
                   </TableCell>
                   <TableCell>{fournisseur.name}</TableCell>
                   <TableCell>{fournisseur.email}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {fournisseur.assignedCategories &&
+                      fournisseur.assignedCategories.length > 0 ? (
+                        fournisseur.assignedCategories.map((category) => (
+                          <Badge
+                            key={category}
+                            variant="secondary"
+                            className="text-xs"
+                          >
+                            <Tag className="h-3 w-3 mr-1" />
+                            {category}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-xs text-gray-400">
+                          Aucune catégorie
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {fournisseur.fournisseurStores.map((fs) => (

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions, type ExtendedSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { autoAssignProductsByCategory } from "@/lib/supplier-assignment-service";
 
 export async function PUT(
   request: NextRequest,
@@ -15,10 +16,10 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { username, name, email, phone, category, isActive, storeIds } = body;
+    const { username, name, email, phone, assignedCategories, isActive, storeIds } = body;
     const { id } = await params;
 
-    if (!username || !name || !email || !category) {
+    if (!username || !name || !email) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -63,6 +64,7 @@ export async function PUT(
         name,
         email,
         phone: phone || null,
+        assignedCategories: assignedCategories || [],
         isActive: isActive !== undefined ? isActive : true,
       },
     });
@@ -96,6 +98,20 @@ export async function PUT(
         },
       },
     });
+
+    // Auto-assign products based on assigned categories
+    if (assignedCategories !== undefined) {
+      try {
+        const assignmentResult = await autoAssignProductsByCategory(
+          id,
+          assignedCategories
+        );
+        console.log("✅ Auto-assignment result:", assignmentResult);
+      } catch (error) {
+        console.error("⚠️ Error auto-assigning products:", error);
+        // Don't fail the request if auto-assignment fails
+      }
+    }
 
     return NextResponse.json(updatedFournisseur);
   } catch (error) {

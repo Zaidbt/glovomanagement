@@ -4,6 +4,7 @@ import { authOptions, type ExtendedSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { eventTracker } from "@/lib/event-tracker";
+import { autoAssignProductsByCategory } from "@/lib/supplier-assignment-service";
 
 export async function GET() {
   try {
@@ -48,9 +49,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { username, password, name, email, phone, category, storeIds } = body;
+    const { username, password, name, email, phone, assignedCategories, storeIds } = body;
 
-    if (!username || !password || !name || !email || !category) {
+    if (!username || !password || !name || !email) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -91,6 +92,7 @@ export async function POST(request: NextRequest) {
         name,
         email,
         phone: phone || null,
+        assignedCategories: assignedCategories || [],
         fournisseurStores: {
           create:
             storeIds?.map((storeId: string) => ({
@@ -111,6 +113,20 @@ export async function POST(request: NextRequest) {
     const storeName =
       fournisseur.fournisseurStores[0]?.store?.name || "Store inconnu";
     await eventTracker.trackFournisseurAdded(name, storeName, session.user.id);
+
+    // Auto-assign products based on assigned categories
+    if (assignedCategories && assignedCategories.length > 0) {
+      try {
+        const assignmentResult = await autoAssignProductsByCategory(
+          fournisseur.id,
+          assignedCategories
+        );
+        console.log("✅ Auto-assignment result:", assignmentResult);
+      } catch (error) {
+        console.error("⚠️ Error auto-assigning products:", error);
+        // Don't fail the request if auto-assignment fails
+      }
+    }
 
     return NextResponse.json(fournisseur, { status: 201 });
   } catch (error) {

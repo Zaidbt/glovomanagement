@@ -12,16 +12,17 @@ datasource db {
 
 // User model with role-based authentication
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  password  String
-  role      UserRole
-  name      String
-  email     String   @unique
-  phone     String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  username           String   @unique
+  password           String
+  role               UserRole
+  name               String
+  email              String   @unique
+  phone              String?
+  isActive           Boolean  @default(true)
+  assignedCategories String[] @default([]) // Categories assigned to fournisseur
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   // Relations
   collaborateurStores CollaborateurStore[]

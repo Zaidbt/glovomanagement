@@ -93,6 +93,7 @@ export async function POST(
     console.log("📊 Parsing products from file:", {
       fileName: file.name,
       rowCount: rawData.length,
+      columnNames: Object.keys(rawData[0] || {}),
       firstRow: rawData[0],
     });
 
@@ -173,16 +174,27 @@ export async function POST(
         row.category1 ||
         row.Category1 ||
         row["Category 1"] ||
+        row["category 1"] ||
         row.CATEGORY1 ||
+        row["CATEGORY 1"] ||
         null;
       const category2 =
         row.category2 ||
         row.Category2 ||
         row["Category 2"] ||
+        row["category 2"] ||
         row.CATEGORY2 ||
+        row["CATEGORY 2"] ||
         null;
       const barcode =
-        row.barcode || row.Barcode || row.BARCODE || row["Bar Code"] || null;
+        row.barcode ||
+        row.Barcode ||
+        row.BARCODE ||
+        row["Bar Code"] ||
+        row["bar code"] ||
+        row["Code Barre"] ||
+        row["code barre"] ||
+        null;
       const imageUrl =
         row.imageUrl ||
         row.ImageUrl ||
@@ -206,6 +218,7 @@ export async function POST(
       total: rawData.length,
       valid: products.length,
       errors: errors.length,
+      sampleProduct: products[0],
     });
 
     // If there are errors and no valid products, return error
