@@ -459,6 +459,7 @@ export default function StoreProductsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Image</TableHead>
                     <TableHead>SKU</TableHead>
                     <TableHead>Nom</TableHead>
                     <TableHead>Prix</TableHead>
@@ -478,6 +479,19 @@ export default function StoreProductsPage() {
                         setProductDetailOpen(true);
                       }}
                     >
+                      <TableCell>
+                        {product.imageUrl ? (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
+                            <Package className="w-6 h-6 text-gray-400" />
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="font-mono text-xs">
                         {product.sku.substring(0, 8)}...
                       </TableCell>
