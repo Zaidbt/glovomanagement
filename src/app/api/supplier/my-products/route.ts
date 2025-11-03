@@ -19,6 +19,11 @@ export async function GET(request: NextRequest) {
     // Verify user is a fournisseur
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
+      select: {
+        id: true,
+        role: true,
+        assignedCategories: true,
+      },
     });
 
     if (!user || user.role !== "FOURNISSEUR") {
@@ -57,7 +62,36 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    if (category) {
+    // Filter by assigned categories (security check)
+    // Only show products from categories assigned to this supplier
+    if (user.assignedCategories && user.assignedCategories.length > 0) {
+      // If user searched for a specific category, check if it's in their assigned list
+      if (category) {
+        if (user.assignedCategories.includes(category)) {
+          productWhere.category1 = category;
+        } else {
+          // Category not assigned to this supplier, return empty result
+          return NextResponse.json({
+            success: true,
+            assignments: [],
+            stores: [],
+            categories: [],
+            stats: {
+              totalProducts: 0,
+              activeProducts: 0,
+              inactiveProducts: 0,
+              stores: 0,
+            },
+          });
+        }
+      } else {
+        // No specific category filter, show all assigned categories
+        productWhere.category1 = {
+          in: user.assignedCategories,
+        };
+      }
+    } else if (category) {
+      // No assigned categories restriction, just filter by requested category
       productWhere.category1 = category;
     }
 
