@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { glovoProductSyncService } from "@/lib/glovo-product-sync-service";
 
 // PATCH /api/stores/[storeId]/products/[productId]
 // Update product price and/or availability (and sync to Glovo)
@@ -140,19 +139,45 @@ export async function PATCH(
     let syncResult = null;
     if (syncToGlovo) {
       try {
-        syncResult = await glovoProductSyncService.syncProduct(
-          storeId,
-          updatedProduct.sku,
-          updatedProduct.price,
-          updatedProduct.isActive
-        );
+        // Use bulk update API endpoint
+        const priceInDH = updatedProduct.price / 100; // Convert centimes to DH
 
-        if (!syncResult.success) {
-          console.warn(`⚠️ Glovo sync failed:`, syncResult.error);
-          // Don't fail the request, just warn
+        const bulkUpdateResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/glovo/menu/bulk-update`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            products: [{
+              id: updatedProduct.sku,
+              price: priceInDH,
+              available: updatedProduct.isActive,
+            }],
+            waitForCompletion: false, // Async update
+          }),
+        });
+
+        if (bulkUpdateResponse.ok) {
+          const bulkUpdateData = await bulkUpdateResponse.json();
+          syncResult = {
+            success: true,
+            transactionId: bulkUpdateData.transaction_id,
+          };
+          console.log(`✅ Glovo bulk update initiated:`, bulkUpdateData);
+        } else {
+          const errorData = await bulkUpdateResponse.json().catch(() => ({}));
+          console.warn(`⚠️ Glovo bulk update failed:`, errorData);
+          syncResult = {
+            success: false,
+            error: errorData.error || 'Bulk update failed',
+          };
         }
       } catch (error) {
         console.error(`💥 Glovo sync error:`, error);
+        syncResult = {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        };
         // Don't fail the request, just log
       }
     }
