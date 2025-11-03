@@ -106,6 +106,8 @@ export default function StoreProductsPage() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [flushDialogOpen, setFlushDialogOpen] = useState(false);
   const [flushConfirmation, setFlushConfirmation] = useState("");
+  const [productDetailOpen, setProductDetailOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   // File upload
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -118,8 +120,16 @@ export default function StoreProductsPage() {
 
   useEffect(() => {
     fetchStore();
-    fetchProducts();
   }, [storeId]);
+
+  // Live search - fetch products when filters change
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchProducts();
+    }, 300); // Debounce 300ms
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, selectedCategory, activeFilter]);
 
   const fetchStore = async () => {
     try {
@@ -420,12 +430,6 @@ export default function StoreProductsPage() {
               </Select>
             </div>
           </div>
-
-          <div className="mt-4">
-            <Button onClick={fetchProducts} variant="outline" size="sm">
-              Appliquer les filtres
-            </Button>
-          </div>
         </CardContent>
       </Card>
 
@@ -466,7 +470,14 @@ export default function StoreProductsPage() {
                 </TableHeader>
                 <TableBody>
                   {products.map((product) => (
-                    <TableRow key={product.id}>
+                    <TableRow
+                      key={product.id}
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => {
+                        setSelectedProduct(product);
+                        setProductDetailOpen(true);
+                      }}
+                    >
                       <TableCell className="font-mono text-xs">
                         {product.sku.substring(0, 8)}...
                       </TableCell>
@@ -475,18 +486,11 @@ export default function StoreProductsPage() {
                       </TableCell>
                       <TableCell>{formatPrice(product.price)}</TableCell>
                       <TableCell>
-                        <div className="flex flex-col gap-1">
-                          {product.category1 && (
-                            <Badge variant="outline" className="text-xs">
-                              {product.category1}
-                            </Badge>
-                          )}
-                          {product.category2 && (
-                            <Badge variant="secondary" className="text-xs">
-                              {product.category2}
-                            </Badge>
-                          )}
-                        </div>
+                        {product.category1 && (
+                          <Badge variant="outline" className="text-xs">
+                            {product.category1}
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -641,6 +645,121 @@ export default function StoreProductsPage() {
               disabled={flushing || flushConfirmation !== "DELETE"}
             >
               {flushing ? "Suppression..." : "Supprimer tout"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Product Detail Modal */}
+      <Dialog open={productDetailOpen} onOpenChange={setProductDetailOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Détails du produit</DialogTitle>
+            <DialogDescription>
+              {selectedProduct?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedProduct && (
+            <div className="space-y-6">
+              {/* Product Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-gray-600">SKU</Label>
+                  <p className="font-mono text-sm mt-1">{selectedProduct.sku}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-600">Prix</Label>
+                  <p className="text-lg font-bold mt-1">
+                    {formatPrice(selectedProduct.price)}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-gray-600">Catégorie</Label>
+                  <div className="mt-1">
+                    {selectedProduct.category1 && (
+                      <Badge variant="outline">{selectedProduct.category1}</Badge>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-gray-600">Statut</Label>
+                  <div className="mt-1">
+                    <Badge
+                      variant={selectedProduct.isActive ? "default" : "secondary"}
+                    >
+                      {selectedProduct.isActive ? "Actif" : "Inactif"}
+                    </Badge>
+                  </div>
+                </div>
+                {selectedProduct.barcode && (
+                  <div>
+                    <Label className="text-gray-600">Code Barre</Label>
+                    <p className="font-mono text-sm mt-1">{selectedProduct.barcode}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Suppliers */}
+              <div>
+                <Label className="text-gray-600">Fournisseurs assignés</Label>
+                {selectedProduct.suppliers.length > 0 ? (
+                  <div className="mt-2 space-y-2">
+                    {selectedProduct.suppliers.map((s) => (
+                      <div
+                        key={s.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
+                        <div>
+                          <p className="font-medium">{s.supplier.name}</p>
+                          <p className="text-sm text-gray-600">{s.supplier.email}</p>
+                        </div>
+                        <Badge variant="outline">Priorité #{s.priority}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 mt-2">
+                    Aucun fournisseur assigné
+                  </p>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    // TODO: Open supplier assignment dialog
+                    alert("Fonctionnalité d'assignation à venir");
+                  }}
+                >
+                  Assigner un fournisseur
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    // TODO: Open edit dialog
+                    alert("Fonctionnalité d'édition à venir");
+                  }}
+                >
+                  Modifier
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setProductDetailOpen(false);
+                setSelectedProduct(null);
+              }}
+            >
+              Fermer
             </Button>
           </DialogFooter>
         </DialogContent>
