@@ -29,7 +29,9 @@ import {
   Store,
   DollarSign,
   AlertCircle,
+  ShoppingCart,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -69,6 +71,7 @@ interface Store {
 }
 
 export default function SupplierDashboard() {
+  const router = useRouter();
   const [assignments, setAssignments] = useState<ProductAssignment[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -237,11 +240,21 @@ export default function SupplierDashboard() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Mes Produits</h1>
-        <p className="text-gray-600">
-          Gérez la disponibilité et les prix de vos produits
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Mes Produits</h1>
+          <p className="text-gray-600">
+            Gérez la disponibilité et les prix de vos produits
+          </p>
+        </div>
+        <Button
+          onClick={() => router.push("/fournisseur/orders")}
+          variant="default"
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          <ShoppingCart className="w-4 h-4 mr-2" />
+          Mes Commandes
+        </Button>
       </div>
 
       {/* Messages */}
