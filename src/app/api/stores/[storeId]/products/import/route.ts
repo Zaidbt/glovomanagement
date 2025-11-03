@@ -200,6 +200,9 @@ export async function POST(
         row.ImageUrl ||
         row.image_url ||
         row["Image URL"] ||
+        row.images ||
+        row.Images ||
+        row.IMAGE ||
         null;
 
       products.push({
