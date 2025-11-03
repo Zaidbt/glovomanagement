@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { eventTracker } from "@/lib/event-tracker";
+import fs from "fs";
+import path from "path";
 
 const prisma = new PrismaClient();
 
@@ -62,7 +64,40 @@ export async function POST(request: NextRequest) {
       JSON.stringify(body, null, 2)
     );
 
-    console.log("🔍 Webhook processing started - checking order detection...");
+    console.log("🔍 Webhook processing started - checking event type...");
+
+    // Check if this is a CATALOG EXPORT webhook
+    if (body.job_id || body.catalog_url || body.download_url) {
+      console.log("📦 Catalog Export webhook detected!");
+      console.log("📥 Export details:", {
+        job_id: body.job_id,
+        catalog_url: body.catalog_url || body.download_url,
+        job_status: body.job_status,
+        vendor_id: body.vendor_id,
+      });
+
+      // Save catalog export info for manual review
+      const exportData = {
+        received_at: new Date().toISOString(),
+        job_id: body.job_id,
+        catalog_url: body.catalog_url || body.download_url,
+        vendor_id: body.vendor_id,
+        full_payload: body,
+      };
+
+      const exportPath = path.join(process.cwd(), 'data', 'catalog-exports', `export-${Date.now()}.json`);
+      fs.mkdirSync(path.dirname(exportPath), { recursive: true });
+      fs.writeFileSync(exportPath, JSON.stringify(exportData, null, 2));
+
+      console.log("✅ Catalog export saved to:", exportPath);
+
+      return NextResponse.json({
+        success: true,
+        message: "Catalog export webhook received",
+        job_id: body.job_id,
+        saved_to: exportPath,
+      });
+    }
 
     // Vérifier le type d'événement
     if (body.eventType === "STATUS_UPDATE") {
