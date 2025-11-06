@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Package, ShoppingCart, CheckCircle, Search, Filter } from "lucide-react";
+import { Package, ShoppingCart, CheckCircle, Search, Filter, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface OrderProduct {
@@ -506,14 +506,35 @@ export default function CollaborateurCommandesPage() {
               {/* Unavailable Products */}
               {selectedOrder.metadata?.unavailableProducts &&
                 Object.keys(selectedOrder.metadata.unavailableProducts).length > 0 && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-red-900 mb-2">Produits Indisponibles</h3>
-                    <div className="space-y-1">
-                      {Object.keys(selectedOrder.metadata.unavailableProducts).map((sku) => (
-                        <p key={sku} className="text-sm text-red-700">
-                          • SKU: {sku}
-                        </p>
-                      ))}
+                  <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4">
+                    <h3 className="font-semibold text-red-900 mb-3 flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5" />
+                      Produits Indisponibles
+                    </h3>
+                    <div className="space-y-2">
+                      {Object.keys(selectedOrder.metadata.unavailableProducts).map((sku) => {
+                        const product = selectedOrder.products?.find(p => p.sku === sku || p.id === sku);
+                        return (
+                          <div key={sku} className="flex items-center gap-3 p-3 bg-red-100 border border-red-200 rounded-lg">
+                            {product?.imageUrl ? (
+                              <img
+                                src={product.imageUrl}
+                                alt={product.name}
+                                className="w-12 h-12 object-cover rounded opacity-50"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-red-200 rounded flex items-center justify-center">
+                                <Package className="w-6 h-6 text-red-400" />
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <p className="font-medium text-red-900">{product?.name || "Produit inconnu"}</p>
+                              <p className="text-sm text-red-700">SKU: {sku}</p>
+                            </div>
+                            <Badge variant="destructive">Indisponible</Badge>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

@@ -40,22 +40,97 @@ export async function GET() {
       },
     });
 
-    console.log(
-      "🔍 Orders with store data:",
-      orders.map((o) => ({
-        id: o.id,
-        storeId: o.storeId,
-        storeName: o.store?.name,
-        hasTwilioCredential: !!o.store?.twilioCredential,
-      }))
+    // Enrichir les commandes avec les noms des fournisseurs et les infos produits
+    const enrichedOrders = await Promise.all(
+      orders.map(async (order) => {
+        const metadata = order.metadata as Record<string, unknown> || {};
+        const supplierStatuses = metadata.supplierStatuses as Record<string, Record<string, unknown>> || {};
+
+        // Récupérer les noms des fournisseurs
+        const supplierIds = Object.keys(supplierStatuses);
+        const suppliers = supplierIds.length > 0
+          ? await prisma.user.findMany({
+              where: { id: { in: supplierIds } },
+              select: { id: true, name: true }
+            })
+          : [];
+
+        // Ajouter les noms aux supplier statuses
+        const enrichedSupplierStatuses: Record<string, unknown> = {};
+        for (const [supplierId, status] of Object.entries(supplierStatuses)) {
+          const supplier = suppliers.find(s => s.id === supplierId);
+          enrichedSupplierStatuses[supplierId] = {
+            ...status,
+            supplierName: supplier?.name || status.supplierName || "Fournisseur inconnu"
+          };
+        }
+
+        // Enrichir les produits avec les infos de la DB
+        let orderProducts: Array<{
+          id?: string;
+          sku?: string;
+          name?: string;
+          quantity?: number;
+          price?: number;
+          purchased_product_id?: string;
+        }> = [];
+
+        if (Array.isArray(order.products)) {
+          orderProducts = order.products as unknown as Array<{
+            id?: string;
+            sku?: string;
+            name?: string;
+            quantity?: number;
+            price?: number;
+            purchased_product_id?: string;
+          }>;
+        }
+
+        // Récupérer les SKUs des produits
+        const productSkus = orderProducts
+          .map(p => p.id || p.sku || p.purchased_product_id)
+          .filter(Boolean) as string[];
+
+        // Récupérer les produits de la DB
+        const dbProducts = productSkus.length > 0
+          ? await prisma.product.findMany({
+              where: { sku: { in: productSkus } },
+              select: { sku: true, name: true, imageUrl: true, price: true }
+            })
+          : [];
+
+        // Enrichir les produits avec les infos de la DB
+        const enrichedProducts = orderProducts.map(p => {
+          const productSku = p.id || p.sku || p.purchased_product_id;
+          const dbProduct = dbProducts.find(dp => dp.sku === productSku);
+
+          return {
+            id: p.id || p.sku || "unknown",
+            sku: productSku,
+            name: p.name || dbProduct?.name || "Produit inconnu",
+            quantity: p.quantity || 1,
+            price: p.price || dbProduct?.price || 0,
+            imageUrl: dbProduct?.imageUrl || null,
+          };
+        });
+
+        return {
+          ...order,
+          products: enrichedProducts,
+          metadata: {
+            ...metadata,
+            supplierStatuses: enrichedSupplierStatuses,
+          }
+        };
+      })
     );
 
-    console.log(`✅ ${orders.length} commandes réelles retournées`);
+    console.log(`✅ ${enrichedOrders.length} commandes enrichies retournées`);
 
     return NextResponse.json({
       success: true,
-      orders: orders,
-      count: orders.length
+      orders: enrichedOrders,
+      count: enrichedOrders.length
     });
   } catch (error) {
     console.error("❌ Erreur récupération commandes:", error);
