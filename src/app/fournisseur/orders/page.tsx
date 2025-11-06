@@ -442,11 +442,18 @@ export default function FournisseurOrdersPage() {
                       if (!a.isMyProduct && b.isMyProduct) return 1;
                       return 0;
                     })
-                    .map((product, idx) => (
+                    .map((product, idx) => {
+                      const productSku = product.sku || product.id;
+                      const isUnavailable = selectedOrder.metadata?.unavailableProducts &&
+                        Object.keys(selectedOrder.metadata.unavailableProducts).includes(productSku);
+
+                      return (
                     <div
                       key={idx}
                       className={`flex items-center gap-4 p-4 rounded-lg border-2 ${
-                        product.isMyProduct
+                        isUnavailable
+                          ? "border-red-300 bg-red-50 opacity-60"
+                          : product.isMyProduct
                           ? "border-blue-500 bg-blue-50"
                           : "border-gray-200 bg-gray-50"
                       }`}
@@ -464,8 +471,14 @@ export default function FournisseurOrdersPage() {
                       )}
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium">{product.name}</p>
-                          {product.isMyProduct ? (
+                          <p className={`font-medium ${isUnavailable ? 'line-through text-gray-500' : ''}`}>
+                            {product.name}
+                          </p>
+                          {isUnavailable ? (
+                            <Badge variant="destructive">
+                              Indisponible
+                            </Badge>
+                          ) : product.isMyProduct ? (
                             <Badge variant="default" className="bg-blue-600">
                               Votre Produit
                             </Badge>
@@ -488,7 +501,7 @@ export default function FournisseurOrdersPage() {
                         <p className="font-bold">
                           {formatPrice(product.price * product.quantity)}
                         </p>
-                        {product.isMyProduct && !selectedOrder.myProductsReady && (
+                        {product.isMyProduct && !selectedOrder.myProductsReady && !isUnavailable && (
                           <Button
                             size="sm"
                             variant="destructive"
@@ -503,7 +516,8 @@ export default function FournisseurOrdersPage() {
                         )}
                       </div>
                     </div>
-                  ))}
+                      );
+                    })}
                 </div>
               </div>
 

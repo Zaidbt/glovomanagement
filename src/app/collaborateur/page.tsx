@@ -481,10 +481,17 @@ export default function CollaborateurDashboard() {
                 <h3 className="font-semibold mb-3">Produits de la Commande</h3>
                 <div className="space-y-2">
                   {selectedOrder.products && selectedOrder.products.length > 0 ? (
-                    selectedOrder.products.map((product, idx) => (
+                    selectedOrder.products.map((product, idx) => {
+                      const productSku = product.sku || product.id;
+                      const isUnavailable = selectedOrder.metadata?.unavailableProducts &&
+                        Object.keys(selectedOrder.metadata.unavailableProducts).includes(productSku);
+
+                      return (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-3 border rounded-lg"
+                      className={`flex items-center justify-between p-3 border rounded-lg ${
+                        isUnavailable ? 'bg-red-50 border-red-300 opacity-75' : ''
+                      }`}
                     >
                       <div className="flex items-center gap-3">
                         {product.imageUrl ? (
@@ -499,7 +506,16 @@ export default function CollaborateurDashboard() {
                           </div>
                         )}
                         <div>
-                          <p className="font-medium">{product.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className={`font-medium ${isUnavailable ? 'line-through text-red-700' : ''}`}>
+                              {product.name}
+                            </p>
+                            {isUnavailable && (
+                              <Badge variant="destructive" className="text-xs">
+                                Indisponible
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-600">
                             Quantité: {product.quantity}
                           </p>
@@ -511,7 +527,8 @@ export default function CollaborateurDashboard() {
                         </p>
                       </div>
                     </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <div className="text-center py-4 text-gray-500">
                       <p>Aucun produit dans cette commande</p>
