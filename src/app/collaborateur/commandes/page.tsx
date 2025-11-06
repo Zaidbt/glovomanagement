@@ -237,51 +237,41 @@ export default function CollaborateurCommandesPage() {
     return count;
   };
 
-  // Determine order alert color based on timing
+  // Determine order alert color based on COLLABORATEUR perspective
   const getOrderAlertClass = (order: Order): { bgClass: string; borderClass: string } => {
     const now = new Date();
     const supplierStatuses = order.metadata?.supplierStatuses;
 
-    // BLUE: If all baskets picked up (final state)
+    // If all baskets picked up - BLUE (done)
     if (supplierStatuses) {
       const allPickedUp = Object.values(supplierStatuses).every((status) => status.pickedUp === true);
       if (allPickedUp) {
         return { bgClass: "bg-blue-50", borderClass: "border-l-4 border-l-blue-500" };
       }
 
-      // BLUE: If any basket is ready (but not picked up yet)
+      // If any basket is ready to pick up
       const anyBasketReady = Object.values(supplierStatuses).some((s) => s.status === "READY" && !s.pickedUp);
       if (anyBasketReady) {
-        // Check if any ready basket has been waiting too long
+        // Check if I'm late picking up (MY performance)
         for (const status of Object.values(supplierStatuses)) {
           if (status.markedReadyAt && !status.pickedUp) {
             const markedReadyTime = new Date(status.markedReadyAt);
             const minutesSinceReady = (now.getTime() - markedReadyTime.getTime()) / (1000 * 60);
 
-            // RED if basket waiting too long for pickup
+            // RED if I'm late picking up
             if (minutesSinceReady > pickupAlertMinutes) {
               return { bgClass: "bg-red-50", borderClass: "border-l-4 border-l-red-500" };
             }
           }
         }
 
-        // BLUE if ready but within time limit
+        // BLUE if ready and I'm within time limit
         return { bgClass: "bg-blue-50", borderClass: "border-l-4 border-l-blue-500" };
       }
     }
 
-    // WHITE (not ready yet) - check if time exceeded
-    if (order.orderTime) {
-      const orderTime = new Date(order.orderTime);
-      const minutesSinceOrder = (now.getTime() - orderTime.getTime()) / (1000 * 60);
-
-      // RED if no baskets ready after time limit
-      if (minutesSinceOrder > preparationAlertMinutes) {
-        return { bgClass: "bg-red-50", borderClass: "border-l-4 border-l-red-500" };
-      }
-    }
-
-    // WHITE (normal state - just received)
+    // WHITE (waiting for fournisseur) - NOT my responsibility yet
+    // This stays WHITE even if fournisseur is late (that's their problem, not mine)
     return { bgClass: "", borderClass: "" };
   };
 
