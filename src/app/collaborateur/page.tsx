@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -8,72 +9,237 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, MessageSquare, Clock, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Package, MessageSquare, Clock, CheckCircle, ShoppingCart, User } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+
+interface OrderProduct {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number;
+  sku?: string;
+  imageUrl?: string;
+}
+
+interface SupplierStatus {
+  status: string;
+  basket?: number;
+  markedReadyAt?: string;
+  pickedUp?: boolean;
+  supplierName?: string;
+}
+
+interface Order {
+  id: string;
+  orderId: string;
+  orderCode?: string;
+  status: string;
+  orderTime?: string;
+  estimatedPickupTime?: string;
+  customerName?: string;
+  customerPhone?: string;
+  courierName?: string;
+  courierPhone?: string;
+  totalAmount?: number;
+  products: OrderProduct[];
+  metadata?: {
+    pickupCode?: string;
+    supplierStatuses?: Record<string, SupplierStatus>;
+    unavailableProducts?: Record<string, string[]>;
+    [key: string]: unknown;
+  };
+}
+
+interface Stats {
+  todayOrders: number;
+  pendingOrders: number;
+  completedOrders: number;
+  readyBaskets: number;
+}
 
 export default function CollaborateurDashboard() {
-  // Mock data - will be replaced with real data from API
-  const stats = {
-    todayOrders: 8,
-    pendingOrders: 3,
-    completedOrders: 5,
-    whatsappMessages: 12,
-    averagePrepTime: "25 min",
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [stats, setStats] = useState<Stats>({
+    todayOrders: 0,
+    pendingOrders: 0,
+    completedOrders: 0,
+    readyBaskets: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const { toast } = useToast();
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/orders");
+
+      if (response.ok) {
+        const data = await response.json();
+        const ordersData = data.orders || [];
+        setOrders(ordersData);
+
+        // Calculate stats
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const todayOrders = ordersData.filter((o: Order) => {
+          if (!o.orderTime) return false;
+          const orderDate = new Date(o.orderTime);
+          orderDate.setHours(0, 0, 0, 0);
+          return orderDate.getTime() === today.getTime();
+        });
+
+        const pendingOrders = ordersData.filter(
+          (o: Order) => o.status === "PENDING" || o.status === "ACCEPTED"
+        );
+
+        const completedOrders = ordersData.filter(
+          (o: Order) => o.status === "COMPLETED" || o.status === "DELIVERED"
+        );
+
+        // Count ready baskets
+        let readyBaskets = 0;
+        ordersData.forEach((o: Order) => {
+          if (o.metadata?.supplierStatuses) {
+            Object.values(o.metadata.supplierStatuses).forEach((status) => {
+              if (status.status === "READY" && !status.pickedUp) {
+                readyBaskets++;
+              }
+            });
+          }
+        });
+
+        setStats({
+          todayOrders: todayOrders.length,
+          pendingOrders: pendingOrders.length,
+          completedOrders: completedOrders.length,
+          readyBaskets,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les commandes",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const recentOrders = [
-    {
-      id: "ORD-001",
-      customer: "Ahmed Benali",
-      total: 150.0,
-      status: "En préparation",
-      time: "14:30",
-    },
-    {
-      id: "ORD-002",
-      customer: "Fatima Alami",
-      total: 89.5,
-      status: "Prête",
-      time: "13:45",
-    },
-    {
-      id: "ORD-003",
-      customer: "Omar Tazi",
-      total: 220.0,
-      status: "En attente",
-      time: "15:15",
-    },
-  ];
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
-  const recentMessages = [
-    {
-      customer: "Ahmed Benali",
-      message: "Bonjour, ma commande est-elle prête ?",
-      time: "15:20",
-      unread: true,
-    },
-    {
-      customer: "Fatima Alami",
-      message: "Merci pour la livraison rapide !",
-      time: "14:30",
-      unread: false,
-    },
-    {
-      customer: "Omar Tazi",
-      message: "Pouvez-vous ajouter des tomates ?",
-      time: "13:45",
-      unread: true,
-    },
-  ];
+  const handlePickupBasket = async (orderId: string, supplierId: string, basketNumber: number) => {
+    try {
+      const response = await fetch(`/api/collaborateur/orders/${orderId}/pickup-basket`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ supplierId }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "✅ Panier récupéré",
+          description: `Panier ${basketNumber} marqué comme récupéré`,
+        });
+        fetchOrders(); // Refresh
+        setDetailsOpen(false);
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible de marquer le panier comme récupéré",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error picking up basket:", error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la mise à jour",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const formatPrice = (price: number) => {
+    return `${(price / 100).toFixed(2)} DH`;
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleString("fr-MA", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const getOrderStatus = (order: Order): { label: string; variant: "default" | "secondary" | "outline" | "destructive" } => {
+    if (order.status === "COMPLETED" || order.status === "DELIVERED") {
+      return { label: "Complétée", variant: "default" };
+    }
+    if (order.status === "ACCEPTED") {
+      return { label: "En préparation", variant: "secondary" };
+    }
+    if (order.status === "PENDING") {
+      return { label: "En attente", variant: "outline" };
+    }
+    if (order.status === "CANCELLED") {
+      return { label: "Annulée", variant: "destructive" };
+    }
+    return { label: order.status, variant: "outline" };
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement des commandes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const recentOrders = orders.slice(0, 5);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          Dashboard Collaborateur
-        </h1>
-        <p className="text-gray-600">
-          Gestion des commandes et communication clients
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Dashboard Collaborateur
+          </h1>
+          <p className="text-gray-600">
+            Gestion des commandes et communication clients
+          </p>
+        </div>
+        <Button onClick={fetchOrders} variant="outline">
+          <ShoppingCart className="w-4 h-4 mr-2" />
+          Actualiser
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -101,9 +267,9 @@ export default function CollaborateurDashboard() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.completedOrders}</div>
+            <div className="text-2xl font-bold text-green-600">{stats.completedOrders}</div>
             <p className="text-xs text-muted-foreground">
-              Temps moyen: {stats.averagePrepTime}
+              Aujourd&apos;hui
             </p>
           </CardContent>
         </Card>
@@ -111,13 +277,13 @@ export default function CollaborateurDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Messages WhatsApp
+              Paniers Prêts
             </CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.whatsappMessages}</div>
-            <p className="text-xs text-muted-foreground">Aujourd&apos;hui</p>
+            <div className="text-2xl font-bold text-purple-600">{stats.readyBaskets}</div>
+            <p className="text-xs text-muted-foreground">À récupérer</p>
           </CardContent>
         </Card>
 
@@ -127,126 +293,245 @@ export default function CollaborateurDashboard() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingOrders}</div>
+            <div className="text-2xl font-bold text-orange-600">{stats.pendingOrders}</div>
             <p className="text-xs text-muted-foreground">Commandes à traiter</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Commandes Récentes</CardTitle>
-            <CardDescription>Dernières commandes reçues</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentOrders.map((order) => (
-                <div
-                  key={order.id}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <p className="text-sm font-medium">{order.id}</p>
-                      <Badge
-                        variant={
-                          order.status === "Prête"
-                            ? "default"
-                            : order.status === "En préparation"
-                            ? "secondary"
-                            : "outline"
-                        }
-                      >
-                        {order.status}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {order.customer} - {order.time}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">
-                      {order.total.toFixed(2)} MAD
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Messages WhatsApp</CardTitle>
-            <CardDescription>Derniers messages clients</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentMessages.map((message, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <div
-                    className={`w-2 h-2 rounded-full mt-2 ${
-                      message.unread ? "bg-blue-500" : "bg-gray-300"
-                    }`}
-                  ></div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">{message.customer}</p>
-                      <p className="text-xs text-gray-500">{message.time}</p>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {message.message}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
+      {/* Recent Orders with Baskets */}
       <Card>
         <CardHeader>
-          <CardTitle>Actions Rapides</CardTitle>
-          <CardDescription>
-            Accès rapide aux fonctionnalités principales
-          </CardDescription>
+          <CardTitle>Commandes Récentes</CardTitle>
+          <CardDescription>Dernières commandes avec statuts des paniers</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
-              <Package className="h-8 w-8 text-blue-500" />
-              <div>
-                <h3 className="font-medium">Gérer les Commandes</h3>
-                <p className="text-sm text-gray-500">
-                  Voir et traiter les commandes
-                </p>
-              </div>
+          {recentOrders.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p>Aucune commande trouvée</p>
             </div>
-            <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
-              <MessageSquare className="h-8 w-8 text-green-500" />
-              <div>
-                <h3 className="font-medium">WhatsApp</h3>
-                <p className="text-sm text-gray-500">
-                  Communiquer avec les clients
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
-              <CheckCircle className="h-8 w-8 text-green-500" />
-              <div>
-                <h3 className="font-medium">Marquer Prêt</h3>
-                <p className="text-sm text-gray-500">
-                  Marquer les commandes comme prêtes
-                </p>
-              </div>
-            </div>
-          </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Heure</TableHead>
+                  <TableHead>Paniers</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentOrders.map((order) => {
+                  const statusInfo = getOrderStatus(order);
+                  const readyBaskets: Array<{ supplierId: string; basket: number; supplierName?: string }> = [];
+
+                  if (order.metadata?.supplierStatuses) {
+                    Object.entries(order.metadata.supplierStatuses).forEach(([supplierId, status]) => {
+                      if (status.status === "READY" && !status.pickedUp && status.basket) {
+                        readyBaskets.push({
+                          supplierId,
+                          basket: status.basket,
+                          supplierName: status.supplierName,
+                        });
+                      }
+                    });
+                  }
+
+                  return (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-mono font-bold">
+                        {order.orderCode || order.orderId.substring(0, 8)}
+                      </TableCell>
+                      <TableCell>
+                        {order.customerName || "Client"}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {formatDate(order.orderTime)}
+                      </TableCell>
+                      <TableCell>
+                        {readyBaskets.length > 0 ? (
+                          <div className="flex gap-1">
+                            {readyBaskets.map((basket, idx) => (
+                              <Badge
+                                key={idx}
+                                variant="outline"
+                                className="bg-purple-50 border-purple-300"
+                              >
+                                Panier {basket.basket}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">Aucun</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={statusInfo.variant}>
+                          {statusInfo.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setDetailsOpen(true);
+                          }}
+                        >
+                          Détails
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
+
+      {/* Order Details Dialog */}
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Détails Commande: {selectedOrder?.orderCode || selectedOrder?.orderId}
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <div className="space-y-6">
+              {/* Order Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Code Commande</p>
+                  <p className="font-mono font-bold">
+                    {selectedOrder.orderCode || selectedOrder.orderId}
+                  </p>
+                </div>
+                {selectedOrder.metadata?.pickupCode && (
+                  <div>
+                    <p className="text-sm text-gray-600">Code Récupération Livreur</p>
+                    <p className="font-mono font-bold text-lg text-green-600">
+                      {selectedOrder.metadata.pickupCode as string}
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm text-gray-600">Heure Commande</p>
+                  <p className="font-medium">{formatDate(selectedOrder.orderTime)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Client</p>
+                  <p className="font-medium">{selectedOrder.customerName || "N/A"}</p>
+                  {selectedOrder.customerPhone && (
+                    <p className="text-sm text-gray-500">{selectedOrder.customerPhone}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Baskets Ready for Pickup */}
+              {selectedOrder.metadata?.supplierStatuses && (
+                <div>
+                  <h3 className="font-semibold mb-3">Paniers Prêts à Récupérer</h3>
+                  <div className="space-y-3">
+                    {Object.entries(selectedOrder.metadata.supplierStatuses).map(([supplierId, status]) => {
+                      if (status.status === "READY" && !status.pickedUp && status.basket) {
+                        return (
+                          <div
+                            key={supplierId}
+                            className="flex items-center justify-between p-4 bg-purple-50 border border-purple-200 rounded-lg"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="bg-purple-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg">
+                                {status.basket}
+                              </div>
+                              <div>
+                                <p className="font-semibold">
+                                  Panier {status.basket}
+                                  {status.supplierName && ` - ${status.supplierName}`}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  Prêt depuis: {formatDate(status.markedReadyAt)}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              onClick={() => handlePickupBasket(selectedOrder.id, supplierId, status.basket!)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Récupéré
+                            </Button>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Products */}
+              <div>
+                <h3 className="font-semibold mb-3">Produits de la Commande</h3>
+                <div className="space-y-2">
+                  {selectedOrder.products?.map((product, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        {product.imageUrl ? (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                            <Package className="w-6 h-6 text-gray-400" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-medium">{product.name}</p>
+                          <p className="text-sm text-gray-600">
+                            Quantité: {product.quantity}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold">
+                          {formatPrice(product.price * product.quantity)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Unavailable Products */}
+              {selectedOrder.metadata?.unavailableProducts &&
+                Object.keys(selectedOrder.metadata.unavailableProducts).length > 0 && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-red-900 mb-2">Produits Indisponibles</h3>
+                    <div className="space-y-1">
+                      {Object.keys(selectedOrder.metadata.unavailableProducts).map((sku) => (
+                        <p key={sku} className="text-sm text-red-700">
+                          • SKU: {sku}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

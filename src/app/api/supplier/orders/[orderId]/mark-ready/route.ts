@@ -92,6 +92,7 @@ export async function POST(
       basket: assignedBasket,
       markedReadyAt: new Date().toISOString(),
       pickedUp: false,
+      supplierName: user.name || session.user.name,
     };
 
     metadata.supplierStatuses = supplierStatuses;
