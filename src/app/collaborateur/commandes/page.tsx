@@ -240,43 +240,48 @@ export default function CollaborateurCommandesPage() {
   // Determine order alert color based on timing
   const getOrderAlertClass = (order: Order): { bgClass: string; borderClass: string } => {
     const now = new Date();
-
-    // If all baskets picked up, show blue
     const supplierStatuses = order.metadata?.supplierStatuses;
+
+    // BLUE: If all baskets picked up (final state)
     if (supplierStatuses) {
       const allPickedUp = Object.values(supplierStatuses).every((status) => status.pickedUp === true);
       if (allPickedUp) {
         return { bgClass: "bg-blue-50", borderClass: "border-l-4 border-l-blue-500" };
       }
-    }
 
-    // If any basket ready but not picked up for > pickupAlertMinutes, show red
-    if (supplierStatuses) {
-      for (const status of Object.values(supplierStatuses)) {
-        if (status.markedReadyAt && !status.pickedUp) {
-          const markedReadyTime = new Date(status.markedReadyAt);
-          const minutesSinceReady = (now.getTime() - markedReadyTime.getTime()) / (1000 * 60);
-          if (minutesSinceReady > pickupAlertMinutes) {
-            return { bgClass: "bg-red-50", borderClass: "border-l-4 border-l-red-500" };
+      // BLUE: If any basket is ready (but not picked up yet)
+      const anyBasketReady = Object.values(supplierStatuses).some((s) => s.status === "READY" && !s.pickedUp);
+      if (anyBasketReady) {
+        // Check if any ready basket has been waiting too long
+        for (const status of Object.values(supplierStatuses)) {
+          if (status.markedReadyAt && !status.pickedUp) {
+            const markedReadyTime = new Date(status.markedReadyAt);
+            const minutesSinceReady = (now.getTime() - markedReadyTime.getTime()) / (1000 * 60);
+
+            // RED if basket waiting too long for pickup
+            if (minutesSinceReady > pickupAlertMinutes) {
+              return { bgClass: "bg-red-50", borderClass: "border-l-4 border-l-red-500" };
+            }
           }
         }
+
+        // BLUE if ready but within time limit
+        return { bgClass: "bg-blue-50", borderClass: "border-l-4 border-l-blue-500" };
       }
     }
 
-    // If order received but no baskets ready for > preparationAlertMinutes, show red
+    // WHITE (not ready yet) - check if time exceeded
     if (order.orderTime) {
       const orderTime = new Date(order.orderTime);
       const minutesSinceOrder = (now.getTime() - orderTime.getTime()) / (1000 * 60);
 
-      // Check if any baskets are ready
-      const anyBasketReady = supplierStatuses && Object.values(supplierStatuses).some((s) => s.status === "READY");
-
-      if (!anyBasketReady && minutesSinceOrder > preparationAlertMinutes) {
+      // RED if no baskets ready after time limit
+      if (minutesSinceOrder > preparationAlertMinutes) {
         return { bgClass: "bg-red-50", borderClass: "border-l-4 border-l-red-500" };
       }
     }
 
-    // Normal state
+    // WHITE (normal state - just received)
     return { bgClass: "", borderClass: "" };
   };
 

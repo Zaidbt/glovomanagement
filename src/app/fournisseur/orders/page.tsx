@@ -206,38 +206,45 @@ export default function FournisseurOrdersPage() {
   // Determine order alert color based on timing
   const getOrderAlertClass = (order: Order): { bgClass: string; borderClass: string } => {
     const now = new Date();
-
-    // If picked up by collaborateur, show blue
     const supplierStatuses = order.metadata?.supplierStatuses;
-    if (supplierStatuses) {
-      const allPickedUp = Object.values(supplierStatuses).every((status) => status.pickedUp === true);
-      if (allPickedUp) {
+
+    // Find my supplier status
+    const myStatus = supplierStatuses ? Object.values(supplierStatuses).find((s) => s.markedReadyAt || s.pickedUp) : null;
+
+    // BLUE: If I marked ready OR if picked up by collaborateur
+    if (order.myProductsReady) {
+      // Check if picked up
+      if (myStatus?.pickedUp) {
+        return { bgClass: "bg-blue-50", borderClass: "border-l-4 border-l-blue-500" };
+      }
+
+      // Marked ready but not picked up yet - check if time exceeded
+      if (myStatus?.markedReadyAt) {
+        const markedReadyTime = new Date(myStatus.markedReadyAt);
+        const minutesSinceReady = (now.getTime() - markedReadyTime.getTime()) / (1000 * 60);
+
+        // RED if waiting too long for pickup
+        if (minutesSinceReady > pickupAlertMinutes) {
+          return { bgClass: "bg-red-50", borderClass: "border-l-4 border-l-red-500" };
+        }
+
+        // BLUE if marked ready but within time limit
         return { bgClass: "bg-blue-50", borderClass: "border-l-4 border-l-blue-500" };
       }
     }
 
-    // If products ready but not picked up for > pickupAlertMinutes, show red
-    if (order.myProductsReady && order.metadata?.supplierStatuses) {
-      const myStatus = Object.values(order.metadata.supplierStatuses).find((s) => s.markedReadyAt);
-      if (myStatus?.markedReadyAt && !myStatus.pickedUp) {
-        const markedReadyTime = new Date(myStatus.markedReadyAt);
-        const minutesSinceReady = (now.getTime() - markedReadyTime.getTime()) / (1000 * 60);
-        if (minutesSinceReady > pickupAlertMinutes) {
-          return { bgClass: "bg-red-50", borderClass: "border-l-4 border-l-red-500" };
-        }
-      }
-    }
-
-    // If order received but not prepared for > preparationAlertMinutes, show red
+    // WHITE (not ready yet) - check if time exceeded
     if (!order.myProductsReady && order.orderTime) {
       const orderTime = new Date(order.orderTime);
       const minutesSinceOrder = (now.getTime() - orderTime.getTime()) / (1000 * 60);
+
+      // RED if not prepared after time limit
       if (minutesSinceOrder > preparationAlertMinutes) {
         return { bgClass: "bg-red-50", borderClass: "border-l-4 border-l-red-500" };
       }
     }
 
-    // Normal state
+    // WHITE (normal state - just received)
     return { bgClass: "", borderClass: "" };
   };
 
