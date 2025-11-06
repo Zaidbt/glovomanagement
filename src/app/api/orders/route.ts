@@ -52,7 +52,11 @@ export async function GET() {
 
     console.log(`✅ ${orders.length} commandes réelles retournées`);
 
-    return NextResponse.json(orders);
+    return NextResponse.json({
+      success: true,
+      orders: orders,
+      count: orders.length
+    });
   } catch (error) {
     console.error("❌ Erreur récupération commandes:", error);
     console.error(

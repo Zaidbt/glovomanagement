@@ -480,7 +480,8 @@ export default function CollaborateurDashboard() {
               <div>
                 <h3 className="font-semibold mb-3">Produits de la Commande</h3>
                 <div className="space-y-2">
-                  {selectedOrder.products?.map((product, idx) => (
+                  {selectedOrder.products && selectedOrder.products.length > 0 ? (
+                    selectedOrder.products.map((product, idx) => (
                     <div
                       key={idx}
                       className="flex items-center justify-between p-3 border rounded-lg"
@@ -510,7 +511,12 @@ export default function CollaborateurDashboard() {
                         </p>
                       </div>
                     </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      <p>Aucun produit dans cette commande</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
