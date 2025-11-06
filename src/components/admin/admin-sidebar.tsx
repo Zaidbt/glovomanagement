@@ -21,6 +21,7 @@ import {
   Trash2,
   UserCheck,
   Activity,
+  Settings,
 } from "lucide-react";
 
 const navigation = [
@@ -34,6 +35,7 @@ const navigation = [
   { name: "Messagerie", href: "/admin/messaging", icon: MessageSquare },
   { name: "Commandes", href: "/admin/orders", icon: ShoppingCart },
   { name: "Événements", href: "/admin/events", icon: Activity },
+  { name: "Paramètres", href: "/admin/settings", icon: Settings },
   { name: "Cleanup", href: "/admin/cleanup", icon: Trash2 },
 ];
 
