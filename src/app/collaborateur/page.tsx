@@ -493,7 +493,10 @@ export default function CollaborateurDashboard() {
               </div>
 
               {/* Baskets Ready for Pickup */}
-              {selectedOrder.metadata?.supplierStatuses && (
+              {selectedOrder.metadata?.supplierStatuses &&
+               Object.values(selectedOrder.metadata.supplierStatuses).some(
+                 (s) => s.status === "READY" && !s.pickedUp && s.basket
+               ) && (
                 <div>
                   <h3 className="font-semibold mb-3">Paniers Prêts à Récupérer</h3>
                   <div className="space-y-3">

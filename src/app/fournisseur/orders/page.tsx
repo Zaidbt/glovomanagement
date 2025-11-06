@@ -203,7 +203,7 @@ export default function FournisseurOrdersPage() {
     });
   };
 
-  // Determine order alert color based on timing
+  // Determine order alert color based on FOURNISSEUR perspective
   const getOrderAlertClass = (order: Order): { bgClass: string; borderClass: string } => {
     const now = new Date();
     const supplierStatuses = order.metadata?.supplierStatuses;
@@ -211,40 +211,24 @@ export default function FournisseurOrdersPage() {
     // Find my supplier status
     const myStatus = supplierStatuses ? Object.values(supplierStatuses).find((s) => s.markedReadyAt || s.pickedUp) : null;
 
-    // BLUE: If I marked ready OR if picked up by collaborateur
+    // If I marked ready - BLUE (my job is done!)
+    // Stays BLUE even if collaborateur is late - that's their problem, not mine
     if (order.myProductsReady) {
-      // Check if picked up
-      if (myStatus?.pickedUp) {
-        return { bgClass: "bg-blue-50", borderClass: "border-l-4 border-l-blue-500" };
-      }
-
-      // Marked ready but not picked up yet - check if time exceeded
-      if (myStatus?.markedReadyAt) {
-        const markedReadyTime = new Date(myStatus.markedReadyAt);
-        const minutesSinceReady = (now.getTime() - markedReadyTime.getTime()) / (1000 * 60);
-
-        // RED if waiting too long for pickup
-        if (minutesSinceReady > pickupAlertMinutes) {
-          return { bgClass: "bg-red-50", borderClass: "border-l-4 border-l-red-500" };
-        }
-
-        // BLUE if marked ready but within time limit
-        return { bgClass: "bg-blue-50", borderClass: "border-l-4 border-l-blue-500" };
-      }
+      return { bgClass: "bg-blue-50", borderClass: "border-l-4 border-l-blue-500" };
     }
 
-    // WHITE (not ready yet) - check if time exceeded
+    // Not ready yet (WHITE state) - check MY preparation performance
     if (!order.myProductsReady && order.orderTime) {
       const orderTime = new Date(order.orderTime);
       const minutesSinceOrder = (now.getTime() - orderTime.getTime()) / (1000 * 60);
 
-      // RED if not prepared after time limit
+      // RED if I'm late preparing
       if (minutesSinceOrder > preparationAlertMinutes) {
         return { bgClass: "bg-red-50", borderClass: "border-l-4 border-l-red-500" };
       }
     }
 
-    // WHITE (normal state - just received)
+    // WHITE (normal - just received, need to prepare)
     return { bgClass: "", borderClass: "" };
   };
 
