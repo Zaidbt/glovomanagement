@@ -53,11 +53,18 @@ interface Order {
   products: OrderProduct[];
   metadata?: {
     pickupCode?: string;
+    supplierStatuses?: Record<string, {
+      status: string;
+      basket?: number;
+      markedReadyAt?: string;
+      pickedUp?: boolean;
+    }>;
     [key: string]: unknown;
   };
   myProductsCount: number;
   totalProductsCount: number;
   myProductsReady?: boolean;
+  myBasketNumber?: number;
 }
 
 export default function FournisseurOrdersPage() {
@@ -105,9 +112,10 @@ export default function FournisseurOrdersPage() {
       });
 
       if (response.ok) {
+        const result = await response.json();
         toast({
           title: "✅ Produits marqués comme prêts",
-          description: "Le collaborateur sera notifié",
+          description: result.basket ? `Panier ${result.basket} assigné` : "Le collaborateur sera notifié",
         });
         fetchOrders(); // Refresh
       } else {
@@ -119,6 +127,37 @@ export default function FournisseurOrdersPage() {
       }
     } catch (error) {
       console.error("Error marking ready:", error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la mise à jour",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleProductUnavailable = async (orderId: string, productSku: string, productName: string) => {
+    try {
+      const response = await fetch(`/api/supplier/orders/${orderId}/product-unavailable`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productSku }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "✅ Produit marqué indisponible",
+          description: `${productName} - Un autre fournisseur sera contacté`,
+        });
+        fetchOrders(); // Refresh
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible de marquer comme indisponible",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error marking unavailable:", error);
       toast({
         title: "Erreur",
         description: "Erreur lors de la mise à jour",
@@ -250,10 +289,17 @@ export default function FournisseurOrdersPage() {
                     </TableCell>
                     <TableCell>
                       {order.myProductsReady ? (
-                        <Badge variant="default" className="bg-green-600">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Prêt
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="default" className="bg-green-600">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Prêt
+                          </Badge>
+                          {order.myBasketNumber && (
+                            <Badge variant="outline" className="bg-purple-50 border-purple-300">
+                              Panier {order.myBasketNumber}
+                            </Badge>
+                          )}
+                        </div>
                       ) : (
                         <Badge variant="secondary">
                           <Clock className="w-3 h-3 mr-1" />
@@ -363,6 +409,25 @@ export default function FournisseurOrdersPage() {
                 )}
               </div>
 
+              {/* Basket Info if ready */}
+              {selectedOrder.myProductsReady && selectedOrder.myBasketNumber && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                      {selectedOrder.myBasketNumber}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-purple-900">
+                        Vos produits sont dans le Panier {selectedOrder.myBasketNumber}
+                      </p>
+                      <p className="text-sm text-purple-700">
+                        Le collaborateur viendra récupérer ce panier
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Products */}
               <div>
                 <h3 className="font-semibold mb-4 flex items-center gap-2">
@@ -370,7 +435,14 @@ export default function FournisseurOrdersPage() {
                   Produits de la Commande
                 </h3>
                 <div className="space-y-3">
-                  {selectedOrder.products.map((product, idx) => (
+                  {selectedOrder.products
+                    .sort((a, b) => {
+                      // Sort: my products first, then others
+                      if (a.isMyProduct && !b.isMyProduct) return -1;
+                      if (!a.isMyProduct && b.isMyProduct) return 1;
+                      return 0;
+                    })
+                    .map((product, idx) => (
                     <div
                       key={idx}
                       className={`flex items-center gap-4 p-4 rounded-lg border-2 ${
@@ -412,10 +484,23 @@ export default function FournisseurOrdersPage() {
                           </p>
                         )}
                       </div>
-                      <div className="text-right">
+                      <div className="flex flex-col items-end gap-2">
                         <p className="font-bold">
                           {formatPrice(product.price * product.quantity)}
                         </p>
+                        {product.isMyProduct && !selectedOrder.myProductsReady && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleProductUnavailable(
+                              selectedOrder.id,
+                              product.sku || product.id,
+                              product.name
+                            )}
+                          >
+                            Je n&apos;ai pas
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}

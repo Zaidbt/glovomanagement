@@ -46,11 +46,54 @@ export async function POST(
       );
     }
 
-    // Update metadata to mark supplier's products as ready
+    // Get supplier's current basket assignments (to find next available basket)
+    const supplierOrders = await prisma.order.findMany({
+      where: {
+        metadata: {
+          path: ['supplierStatuses', session.user.id, 'status'],
+          equals: 'READY' as never,
+        },
+      },
+    });
+
+    // Count orders in each basket (that haven't been picked up yet)
+    const basketCounts = { 1: 0, 2: 0, 3: 0 };
+    for (const supplierOrder of supplierOrders) {
+      const supplierMeta = (supplierOrder.metadata as Record<string, unknown>) || {};
+      const supplierStatuses = (supplierMeta.supplierStatuses as Record<string, unknown>) || {};
+      const supplierStatus = (supplierStatuses[session.user.id] as Record<string, unknown>) || {};
+
+      if (supplierStatus.basket && !supplierStatus.pickedUp) {
+        const basketNum = supplierStatus.basket as number;
+        if (basketNum >= 1 && basketNum <= 3) {
+          basketCounts[basketNum as 1 | 2 | 3]++;
+        }
+      }
+    }
+
+    // Find basket with least orders (prefer 1, then 2, then 3)
+    let assignedBasket = 1;
+    if (basketCounts[1] <= basketCounts[2] && basketCounts[1] <= basketCounts[3]) {
+      assignedBasket = 1;
+    } else if (basketCounts[2] <= basketCounts[3]) {
+      assignedBasket = 2;
+    } else {
+      assignedBasket = 3;
+    }
+
+    console.log(`🧺 Assigning basket ${assignedBasket} for supplier ${user.name}`);
+
+    // Update metadata to mark supplier's products as ready with basket
     const metadata = (order.metadata as Record<string, unknown>) || {};
     const supplierStatuses = (metadata.supplierStatuses as Record<string, unknown>) || {};
 
-    supplierStatuses[session.user.id] = "READY";
+    supplierStatuses[session.user.id] = {
+      status: 'READY',
+      basket: assignedBasket,
+      markedReadyAt: new Date().toISOString(),
+      pickedUp: false,
+    };
+
     metadata.supplierStatuses = supplierStatuses;
     metadata.lastUpdatedBy = user.name;
     metadata.lastUpdatedAt = new Date().toISOString();
@@ -84,6 +127,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       message: "Produits marqués comme prêts",
+      basket: assignedBasket,
     });
   } catch (error) {
     console.error("💥 Error marking ready:", error);

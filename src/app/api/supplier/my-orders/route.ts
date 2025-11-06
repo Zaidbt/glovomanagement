@@ -126,7 +126,15 @@ export async function GET() {
         // Check if supplier marked as ready (from metadata)
         const metadata = order.metadata as Record<string, unknown> || {};
         const supplierStatuses = (metadata.supplierStatuses as Record<string, unknown>) || {};
-        const myProductsReady = supplierStatuses[session.user.id] === "READY";
+        const myStatus = (supplierStatuses[session.user.id] as Record<string, unknown>) || {};
+
+        const myProductsReady = typeof myStatus === 'object'
+          ? myStatus.status === 'READY'
+          : myStatus === 'READY';
+
+        const myBasketNumber = typeof myStatus === 'object' && myProductsReady
+          ? (myStatus.basket as number)
+          : null;
 
         relevantOrders.push({
           id: order.id,
@@ -142,10 +150,12 @@ export async function GET() {
           products: enrichedProducts,
           metadata: {
             pickupCode: (metadata.pickupCode as string) || null,
+            supplierStatuses: supplierStatuses as Record<string, unknown>,
           },
           myProductsCount: matchingProducts.length,
           totalProductsCount: orderProducts.length,
           myProductsReady,
+          myBasketNumber,
         });
       }
     }
