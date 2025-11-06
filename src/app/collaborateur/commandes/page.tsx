@@ -83,6 +83,10 @@ export default function CollaborateurCommandesPage() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const { toast } = useToast();
 
+  // Settings for alert timing
+  const [preparationAlertMinutes, setPreparationAlertMinutes] = useState(5);
+  const [pickupAlertMinutes, setPickupAlertMinutes] = useState(5);
+
   const fetchOrders = async () => {
     try {
       setLoading(true);
@@ -112,7 +116,25 @@ export default function CollaborateurCommandesPage() {
     }
   };
 
+  // Fetch settings
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch("/api/settings");
+      if (response.ok) {
+        const data = await response.json();
+        const prepAlert = data.settings.find((s: { key: string; value: string }) => s.key === "preparation_alert_minutes");
+        const pickAlert = data.settings.find((s: { key: string; value: string }) => s.key === "pickup_alert_minutes");
+
+        if (prepAlert) setPreparationAlertMinutes(parseInt(prepAlert.value));
+        if (pickAlert) setPickupAlertMinutes(parseInt(pickAlert.value));
+      }
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+    }
+  };
+
   useEffect(() => {
+    fetchSettings();
     fetchOrders();
   }, []);
 
@@ -215,6 +237,49 @@ export default function CollaborateurCommandesPage() {
     return count;
   };
 
+  // Determine order alert color based on timing
+  const getOrderAlertClass = (order: Order): { bgClass: string; borderClass: string } => {
+    const now = new Date();
+
+    // If all baskets picked up, show blue
+    const supplierStatuses = order.metadata?.supplierStatuses;
+    if (supplierStatuses) {
+      const allPickedUp = Object.values(supplierStatuses).every((status) => status.pickedUp === true);
+      if (allPickedUp) {
+        return { bgClass: "bg-blue-50", borderClass: "border-l-4 border-l-blue-500" };
+      }
+    }
+
+    // If any basket ready but not picked up for > pickupAlertMinutes, show red
+    if (supplierStatuses) {
+      for (const status of Object.values(supplierStatuses)) {
+        if (status.markedReadyAt && !status.pickedUp) {
+          const markedReadyTime = new Date(status.markedReadyAt);
+          const minutesSinceReady = (now.getTime() - markedReadyTime.getTime()) / (1000 * 60);
+          if (minutesSinceReady > pickupAlertMinutes) {
+            return { bgClass: "bg-red-50", borderClass: "border-l-4 border-l-red-500" };
+          }
+        }
+      }
+    }
+
+    // If order received but no baskets ready for > preparationAlertMinutes, show red
+    if (order.orderTime) {
+      const orderTime = new Date(order.orderTime);
+      const minutesSinceOrder = (now.getTime() - orderTime.getTime()) / (1000 * 60);
+
+      // Check if any baskets are ready
+      const anyBasketReady = supplierStatuses && Object.values(supplierStatuses).some((s) => s.status === "READY");
+
+      if (!anyBasketReady && minutesSinceOrder > preparationAlertMinutes) {
+        return { bgClass: "bg-red-50", borderClass: "border-l-4 border-l-red-500" };
+      }
+    }
+
+    // Normal state
+    return { bgClass: "", borderClass: "" };
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -307,6 +372,7 @@ export default function CollaborateurCommandesPage() {
                 <TableBody>
                   {filteredOrders.map((order) => {
                     const statusInfo = getOrderStatus(order);
+                    const alertClass = getOrderAlertClass(order);
                     const readyBasketsCount = countReadyBaskets(order);
                     const readyBaskets: Array<{ supplierId: string; basket: number; supplierName?: string }> = [];
 
@@ -323,12 +389,12 @@ export default function CollaborateurCommandesPage() {
                     }
 
                     return (
-                      <TableRow key={order.id} className="cursor-pointer hover:bg-gray-50">
+                      <TableRow key={order.id} className={`cursor-pointer hover:bg-gray-50 ${alertClass.bgClass} ${alertClass.borderClass}`}>
                         <TableCell className="font-mono font-bold">
                           {order.orderCode || order.orderId.substring(0, 8)}
                         </TableCell>
                         <TableCell>
-                          {order.customerName || "Client"}
+                          <span className="text-gray-400">Confidentiel</span>
                         </TableCell>
                         <TableCell className="text-sm">
                           {formatDate(order.orderTime)}
@@ -410,10 +476,7 @@ export default function CollaborateurCommandesPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Client</p>
-                  <p className="font-medium">{selectedOrder.customerName || "N/A"}</p>
-                  {selectedOrder.customerPhone && (
-                    <p className="text-sm text-gray-500">{selectedOrder.customerPhone}</p>
-                  )}
+                  <p className="font-medium text-gray-400">Confidentiel</p>
                 </div>
               </div>
 

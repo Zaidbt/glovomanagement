@@ -74,6 +74,10 @@ export default function FournisseurOrdersPage() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const { toast } = useToast();
 
+  // Settings for alert timing
+  const [preparationAlertMinutes, setPreparationAlertMinutes] = useState(5);
+  const [pickupAlertMinutes, setPickupAlertMinutes] = useState(5);
+
   const fetchOrders = async () => {
     try {
       setLoading(true);
@@ -101,7 +105,25 @@ export default function FournisseurOrdersPage() {
     }
   };
 
+  // Fetch settings
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch("/api/settings");
+      if (response.ok) {
+        const data = await response.json();
+        const prepAlert = data.settings.find((s: { key: string; value: string }) => s.key === "preparation_alert_minutes");
+        const pickAlert = data.settings.find((s: { key: string; value: string }) => s.key === "pickup_alert_minutes");
+
+        if (prepAlert) setPreparationAlertMinutes(parseInt(prepAlert.value));
+        if (pickAlert) setPickupAlertMinutes(parseInt(pickAlert.value));
+      }
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+    }
+  };
+
   useEffect(() => {
+    fetchSettings();
     fetchOrders();
   }, []);
 
@@ -179,6 +201,44 @@ export default function FournisseurOrdersPage() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  // Determine order alert color based on timing
+  const getOrderAlertClass = (order: Order): { bgClass: string; borderClass: string } => {
+    const now = new Date();
+
+    // If picked up by collaborateur, show blue
+    const supplierStatuses = order.metadata?.supplierStatuses;
+    if (supplierStatuses) {
+      const allPickedUp = Object.values(supplierStatuses).every((status) => status.pickedUp === true);
+      if (allPickedUp) {
+        return { bgClass: "bg-blue-50", borderClass: "border-l-4 border-l-blue-500" };
+      }
+    }
+
+    // If products ready but not picked up for > pickupAlertMinutes, show red
+    if (order.myProductsReady && order.metadata?.supplierStatuses) {
+      const myStatus = Object.values(order.metadata.supplierStatuses).find((s) => s.markedReadyAt);
+      if (myStatus?.markedReadyAt && !myStatus.pickedUp) {
+        const markedReadyTime = new Date(myStatus.markedReadyAt);
+        const minutesSinceReady = (now.getTime() - markedReadyTime.getTime()) / (1000 * 60);
+        if (minutesSinceReady > pickupAlertMinutes) {
+          return { bgClass: "bg-red-50", borderClass: "border-l-4 border-l-red-500" };
+        }
+      }
+    }
+
+    // If order received but not prepared for > preparationAlertMinutes, show red
+    if (!order.myProductsReady && order.orderTime) {
+      const orderTime = new Date(order.orderTime);
+      const minutesSinceOrder = (now.getTime() - orderTime.getTime()) / (1000 * 60);
+      if (minutesSinceOrder > preparationAlertMinutes) {
+        return { bgClass: "bg-red-50", borderClass: "border-l-4 border-l-red-500" };
+      }
+    }
+
+    // Normal state
+    return { bgClass: "", borderClass: "" };
   };
 
   if (loading) {
@@ -269,8 +329,10 @@ export default function FournisseurOrdersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order.id}>
+                {orders.map((order) => {
+                  const alertClass = getOrderAlertClass(order);
+                  return (
+                  <TableRow key={order.id} className={`${alertClass.bgClass} ${alertClass.borderClass}`}>
                     <TableCell className="font-mono font-bold">
                       {order.orderCode || order.orderId.substring(0, 8)}
                     </TableCell>
@@ -331,7 +393,8 @@ export default function FournisseurOrdersPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           )}
@@ -379,20 +442,13 @@ export default function FournisseurOrdersPage() {
 
               {/* Customer & Courier Info */}
               <div className="grid grid-cols-2 gap-4">
-                {selectedOrder.customerName && (
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Client</p>
-                      <p className="font-medium">{selectedOrder.customerName}</p>
-                      {selectedOrder.customerPhone && (
-                        <p className="text-sm text-gray-500">
-                          {selectedOrder.customerPhone}
-                        </p>
-                      )}
-                    </div>
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-600">Client</p>
+                    <p className="font-medium text-gray-400">Confidentiel</p>
                   </div>
-                )}
+                </div>
                 {selectedOrder.courierName && (
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-gray-400" />
