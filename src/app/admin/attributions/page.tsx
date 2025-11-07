@@ -25,7 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Link as LinkIcon, Store, Users, Truck } from "lucide-react";
+import { Link as LinkIcon, Store, Users, Truck, ListOrdered } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Store {
   id: string;
@@ -50,6 +51,7 @@ interface Store {
 }
 
 export default function AttributionsPage() {
+  const router = useRouter();
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStore, setSelectedStore] = useState<string>("");
@@ -293,6 +295,20 @@ export default function AttributionsPage() {
                 Gérer les Stores
               </a>
             </Button>
+            {selectedStore && (
+              <Button
+                variant="outline"
+                className="natura-gradient text-white border-0"
+                onClick={() =>
+                  router.push(
+                    `/admin/stores/${selectedStore}/category-priorities`
+                  )
+                }
+              >
+                <ListOrdered className="h-4 w-4 mr-2" />
+                Gérer Priorités par Catégorie
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
