@@ -336,3 +336,104 @@ export async function DELETE(
     );
   }
 }
+
+// PATCH /api/stores/[storeId]/products/[productId]/suppliers
+// Update supplier priority
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ storeId: string; productId: string }> }
+) {
+  try {
+    const { storeId, productId } = await params;
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: "Non authentifié" },
+        { status: 401 }
+      );
+    }
+
+    // Only admins and collaborateurs can update priorities
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: {
+        collaborateurStores: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "Utilisateur non trouvé" },
+        { status: 404 }
+      );
+    }
+
+    const isAdmin = user.role === "ADMIN";
+    const hasStoreAccess = user.collaborateurStores.some(
+      (cs) => cs.storeId === storeId
+    );
+
+    if (!isAdmin && !hasStoreAccess) {
+      return NextResponse.json(
+        { success: false, error: "Accès refusé" },
+        { status: 403 }
+      );
+    }
+
+    // Parse request body
+    const body = await request.json();
+    const { productSupplierId, priority } = body;
+
+    if (!productSupplierId || priority === undefined) {
+      return NextResponse.json(
+        { success: false, error: "productSupplierId et priority requis" },
+        { status: 400 }
+      );
+    }
+
+    // Update priority
+    const updatedAssignment = await prisma.productSupplier.update({
+      where: { id: productSupplierId },
+      data: { priority },
+      include: {
+        product: true,
+        supplier: true,
+      },
+    });
+
+    // Log event
+    await prisma.event.create({
+      data: {
+        type: "SUPPLIER_PRIORITY_UPDATED",
+        title: "Priorité fournisseur modifiée",
+        description: `Priorité de ${updatedAssignment.supplier.name} pour ${updatedAssignment.product.name} changée à ${priority}`,
+        metadata: {
+          productId: updatedAssignment.product.id,
+          productName: updatedAssignment.product.name,
+          supplierId: updatedAssignment.supplier.id,
+          supplierName: updatedAssignment.supplier.name,
+          newPriority: priority,
+        },
+        userId: session.user.id,
+        storeId,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Priorité mise à jour avec succès",
+      assignment: updatedAssignment,
+    });
+  } catch (error) {
+    console.error("💥 Erreur mise à jour priorité:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Erreur mise à jour priorité",
+        message: error instanceof Error ? error.message : "Erreur inconnue",
+      },
+      { status: 500 }
+    );
+  }
+}

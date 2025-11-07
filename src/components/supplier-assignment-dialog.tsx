@@ -48,6 +48,11 @@ interface SupplierAssignmentDialogProps {
   onSuccess?: () => void;
 }
 
+interface EditingPriority {
+  productSupplierId: string;
+  newPriority: number;
+}
+
 export function SupplierAssignmentDialog({
   open,
   onOpenChange,
@@ -67,6 +72,7 @@ export function SupplierAssignmentDialog({
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [editingPriority, setEditingPriority] = useState<EditingPriority | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -98,7 +104,16 @@ export function SupplierAssignmentDialog({
       );
       if (response.ok) {
         const data = await response.json();
-        setCurrentSuppliers(data.suppliers || []);
+        const suppliersList = data.suppliers || [];
+        setCurrentSuppliers(suppliersList);
+
+        // Auto-suggest next priority
+        if (suppliersList.length > 0) {
+          const maxPriority = Math.max(...suppliersList.map((s: ProductSupplier) => s.priority));
+          setPriority(maxPriority + 1);
+        } else {
+          setPriority(1);
+        }
       }
     } catch (error) {
       console.error("Error fetching current suppliers:", error);
@@ -209,6 +224,42 @@ export function SupplierAssignmentDialog({
     }
   };
 
+  const handleUpdatePriority = async (productSupplierId: string, newPriority: number) => {
+    if (!productId) return;
+
+    try {
+      const response = await fetch(
+        `/api/stores/${storeId}/products/${productId}/suppliers`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productSupplierId,
+            priority: newPriority,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        setSuccessMessage("Priorité mise à jour avec succès");
+        setEditingPriority(null);
+        fetchCurrentSuppliers();
+
+        if (onSuccess) {
+          setTimeout(() => {
+            onSuccess();
+          }, 1000);
+        }
+      } else {
+        const data = await response.json();
+        setErrorMessage(data.error || "Erreur lors de la mise à jour");
+      }
+    } catch (error) {
+      console.error("Error updating priority:", error);
+      setErrorMessage("Erreur lors de la mise à jour");
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -260,7 +311,22 @@ export function SupplierAssignmentDialog({
                     className="flex items-center justify-between bg-white p-2 rounded border"
                   >
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">#{ps.priority}</Badge>
+                      {editingPriority?.productSupplierId === ps.id ? (
+                        <Input
+                          type="number"
+                          min={1}
+                          value={editingPriority.newPriority}
+                          onChange={(e) =>
+                            setEditingPriority({
+                              productSupplierId: ps.id,
+                              newPriority: parseInt(e.target.value) || 1,
+                            })
+                          }
+                          className="w-16 h-8"
+                        />
+                      ) : (
+                        <Badge variant="outline">#{ps.priority}</Badge>
+                      )}
                       <span className="font-medium">{ps.supplier.name}</span>
                       <span className="text-sm text-gray-500">
                         {ps.supplier.email}
@@ -269,13 +335,52 @@ export function SupplierAssignmentDialog({
                         <Badge variant="secondary">Inactif</Badge>
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveSupplier(ps.supplier.id)}
-                    >
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </Button>
+                    <div className="flex gap-1">
+                      {editingPriority?.productSupplierId === ps.id ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              handleUpdatePriority(ps.id, editingPriority.newPriority)
+                            }
+                          >
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditingPriority(null)}
+                          >
+                            <AlertCircle className="w-4 h-4 text-gray-500" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setEditingPriority({
+                                productSupplierId: ps.id,
+                                newPriority: ps.priority,
+                              })
+                            }
+                            title="Modifier la priorité"
+                          >
+                            <span className="text-xs font-bold text-blue-600">#</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveSupplier(ps.supplier.id)}
+                            title="Retirer le fournisseur"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
