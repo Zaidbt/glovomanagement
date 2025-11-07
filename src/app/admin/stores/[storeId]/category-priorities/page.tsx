@@ -195,7 +195,7 @@ export default function CategoryPrioritiesPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.push(`/admin/stores/${storeId}`)}
+            onClick={() => router.push("/admin/stores")}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour
