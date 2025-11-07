@@ -170,7 +170,18 @@ export default function FournisseurOrdersPage() {
           title: "✅ Produit marqué indisponible",
           description: `${productName} - Un autre fournisseur sera contacté`,
         });
-        fetchOrders(); // Refresh
+        await fetchOrders(); // Refresh
+        // Update selected order to show changes in modal
+        if (selectedOrder) {
+          const response = await fetch("/api/supplier/my-orders");
+          if (response.ok) {
+            const data = await response.json();
+            const updatedOrder = data.orders?.find((o: Order) => o.id === selectedOrder.id);
+            if (updatedOrder) {
+              setSelectedOrder(updatedOrder);
+            }
+          }
+        }
       } else {
         toast({
           title: "Erreur",
