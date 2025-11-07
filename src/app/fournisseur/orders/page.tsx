@@ -166,22 +166,31 @@ export default function FournisseurOrdersPage() {
       });
 
       if (response.ok) {
+        // Immediately update selectedOrder to show visual feedback
+        if (selectedOrder) {
+          const updatedMetadata = {
+            ...selectedOrder.metadata,
+            unavailableProducts: {
+              ...(selectedOrder.metadata?.unavailableProducts || {}),
+              [productSku]: [
+                ...((selectedOrder.metadata?.unavailableProducts as Record<string, string[]>)?.[productSku] || []),
+                // Add current user ID to the list
+              ]
+            }
+          };
+          setSelectedOrder({
+            ...selectedOrder,
+            metadata: updatedMetadata
+          });
+        }
+
         toast({
           title: "✅ Produit marqué indisponible",
           description: `${productName} - Un autre fournisseur sera contacté`,
         });
-        await fetchOrders(); // Refresh
-        // Update selected order to show changes in modal
-        if (selectedOrder) {
-          const response = await fetch("/api/supplier/my-orders");
-          if (response.ok) {
-            const data = await response.json();
-            const updatedOrder = data.orders?.find((o: Order) => o.id === selectedOrder.id);
-            if (updatedOrder) {
-              setSelectedOrder(updatedOrder);
-            }
-          }
-        }
+
+        // Refresh orders list in background
+        fetchOrders();
       } else {
         toast({
           title: "Erreur",
