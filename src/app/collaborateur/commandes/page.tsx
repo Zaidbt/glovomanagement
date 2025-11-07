@@ -243,7 +243,7 @@ export default function CollaborateurCommandesPage() {
     const supplierStatuses = order.metadata?.supplierStatuses;
 
     // If all baskets picked up - BLUE (done)
-    if (supplierStatuses) {
+    if (supplierStatuses && Object.keys(supplierStatuses).length > 0) {
       const allPickedUp = Object.values(supplierStatuses).every((status) => status.pickedUp === true);
       if (allPickedUp) {
         return { bgClass: "bg-blue-50", borderClass: "border-l-4 border-l-blue-500" };
