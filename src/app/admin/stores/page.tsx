@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Edit, Trash2, Store, MessageSquare, Package } from "lucide-react";
+import { Plus, Edit, Trash2, Store, MessageSquare, Package, ListOrdered } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Store {
@@ -595,6 +595,15 @@ export default function StoresPage() {
                           title="Gérer les produits"
                         >
                           <Package className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => router.push(`/admin/stores/${store.id}/category-priorities`)}
+                          className="hover:bg-purple-50 hover:text-purple-700 transition-colors"
+                          title="Gérer priorités fournisseurs par catégorie"
+                        >
+                          <ListOrdered className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"

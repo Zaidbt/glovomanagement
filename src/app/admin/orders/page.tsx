@@ -114,7 +114,8 @@ export default function OrdersPage() {
       const response = await fetch("/api/orders");
       if (response.ok) {
         const data = await response.json();
-        setOrders(data);
+        // API returns { success: true, orders: [...], count: ... }
+        setOrders(Array.isArray(data) ? data : (data.orders || []));
       } else {
         throw new Error("Erreur lors du chargement des commandes");
       }
