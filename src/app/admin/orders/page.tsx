@@ -478,28 +478,52 @@ export default function OrdersPage() {
                         name?: string;
                         quantity?: number;
                         externalId?: string;
-                        price?: { value?: number; currencyCode?: string };
+                        sku?: string;
+                        imageUrl?: string;
+                        price?: number | { value?: number; currencyCode?: string };
                       };
+
+                      // Handle both old and new price formats
+                      const price = typeof productData.price === 'number'
+                        ? productData.price
+                        : (productData.price?.value || 0) * 100;
+
+                      const currency = typeof productData.price === 'object'
+                        ? productData.price?.currencyCode || "MAD"
+                        : "MAD";
+
                       return (
                         <div
                           key={index}
-                          className="flex justify-between items-center p-3 border rounded-lg"
+                          className="flex items-center gap-3 p-3 border rounded-lg"
                         >
+                          {/* Product Image */}
+                          {productData.imageUrl && (
+                            <img
+                              src={productData.imageUrl}
+                              alt={productData.name || "Produit"}
+                              className="w-16 h-16 object-cover rounded-md"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          )}
+
+                          {/* Product Info */}
                           <div className="flex-1">
                             <div className="font-medium text-sm">
                               {productData.name || "Produit inconnu"}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              Quantité: {productData.quantity || 0} | ID:{" "}
-                              {productData.externalId || "N/A"}
+                              Quantité: {productData.quantity || 0}
+                              {productData.sku && ` | SKU: ${productData.sku}`}
                             </div>
                           </div>
+
+                          {/* Price */}
                           <div className="text-right">
                             <div className="font-semibold text-sm">
-                              {formatPrice(
-                                (productData.price?.value || 0) * 100,
-                                productData.price?.currencyCode || "MAD"
-                              )}
+                              {formatPrice(price, currency)}
                             </div>
                           </div>
                         </div>
