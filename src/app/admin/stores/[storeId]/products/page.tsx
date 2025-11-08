@@ -44,6 +44,7 @@ import {
   AlertCircle,
   CheckCircle,
   ArrowLeft,
+  RefreshCw,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -87,6 +88,7 @@ export default function StoreProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [flushing, setFlushing] = useState(false);
 
   // Filters
@@ -104,10 +106,21 @@ export default function StoreProductsPage() {
 
   // Dialogs
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [syncProgressOpen, setSyncProgressOpen] = useState(false);
   const [flushDialogOpen, setFlushDialogOpen] = useState(false);
   const [flushConfirmation, setFlushConfirmation] = useState("");
   const [productDetailOpen, setProductDetailOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  // Sync progress
+  const [syncProgress, setSyncProgress] = useState({
+    currentPage: 0,
+    totalPages: 0,
+    productsProcessed: 0,
+    totalProducts: 0,
+    percentage: 0,
+    status: "Initialisation...",
+  });
 
   // File upload
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -235,6 +248,84 @@ export default function StoreProductsPage() {
     }
   };
 
+  const handleSyncGlovo = async () => {
+    try {
+      setSyncing(true);
+      setSyncProgressOpen(true);
+      setErrorMessage("");
+      setSuccessMessage("");
+
+      // Reset progress
+      setSyncProgress({
+        currentPage: 0,
+        totalPages: 0,
+        productsProcessed: 0,
+        totalProducts: 0,
+        percentage: 0,
+        status: "Connexion à l'API Glovo...",
+      });
+
+      // Simulate progress while the backend processes
+      const progressInterval = setInterval(() => {
+        setSyncProgress((prev) => {
+          if (prev.percentage >= 95) return prev; // Cap at 95% until we get real response
+          return {
+            ...prev,
+            percentage: Math.min(prev.percentage + 5, 95),
+            status: prev.percentage < 30 ? "Récupération des produits depuis Glovo..." :
+                   prev.percentage < 60 ? "Traitement des données..." :
+                   "Sauvegarde dans la base de données...",
+          };
+        });
+      }, 500);
+
+      const response = await fetch(`/api/stores/${storeId}/products/sync-glovo`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          replaceExisting: false,
+        }),
+      });
+
+      clearInterval(progressInterval);
+      const data = await response.json();
+
+      if (response.ok) {
+        // Complete progress
+        setSyncProgress({
+          currentPage: data.results.total || 0,
+          totalPages: data.results.total || 0,
+          productsProcessed: data.results.created + data.results.updated,
+          totalProducts: data.results.total,
+          percentage: 100,
+          status: "Synchronisation terminée!",
+        });
+
+        // Wait a bit to show completion
+        setTimeout(() => {
+          setSyncProgressOpen(false);
+          setSuccessMessage(
+            data.message ||
+              `${data.results.created + data.results.updated} produits synchronisés depuis Glovo`
+          );
+          fetchProducts();
+        }, 1500);
+      } else {
+        clearInterval(progressInterval);
+        setSyncProgressOpen(false);
+        setErrorMessage(data.error || "Erreur lors de la synchronisation Glovo");
+      }
+    } catch (error) {
+      console.error("Error syncing Glovo products:", error);
+      setSyncProgressOpen(false);
+      setErrorMessage("Erreur lors de la synchronisation avec Glovo");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const handleFlush = async () => {
     if (flushConfirmation !== "DELETE") {
       setErrorMessage('Veuillez taper "DELETE" pour confirmer');
@@ -305,6 +396,15 @@ export default function StoreProductsPage() {
           <Button onClick={() => setUploadDialogOpen(true)}>
             <Upload className="w-4 h-4 mr-2" />
             Importer
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleSyncGlovo}
+            disabled={syncing}
+            className="border-blue-500 text-blue-600 hover:bg-blue-50"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Synchronisation..." : "Synchroniser Glovo"}
           </Button>
           <Button
             variant="destructive"
@@ -608,6 +708,84 @@ export default function StoreProductsPage() {
               {uploading ? "Import en cours..." : "Importer"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sync Progress Dialog */}
+      <Dialog open={syncProgressOpen} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />
+              Synchronisation Glovo
+            </DialogTitle>
+            <DialogDescription>
+              Récupération des produits depuis l&apos;API Glovo...
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">{syncProgress.status}</span>
+                <span className="font-semibold text-blue-600">
+                  {syncProgress.percentage}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-500 ease-out rounded-full"
+                  style={{ width: `${syncProgress.percentage}%` }}
+                >
+                  <div className="h-full w-full bg-white/20 animate-pulse" />
+                </div>
+              </div>
+            </div>
+
+            {/* Stats */}
+            {syncProgress.totalProducts > 0 && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <div className="text-sm text-blue-600 font-medium mb-1">
+                    Produits traités
+                  </div>
+                  <div className="text-2xl font-bold text-blue-900">
+                    {syncProgress.productsProcessed}
+                    <span className="text-sm font-normal text-blue-600 ml-1">
+                      / {syncProgress.totalProducts}
+                    </span>
+                  </div>
+                </div>
+                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                  <div className="text-sm text-green-600 font-medium mb-1">
+                    Progression
+                  </div>
+                  <div className="text-2xl font-bold text-green-900">
+                    {syncProgress.percentage}%
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Loading Animation */}
+            <div className="flex items-center justify-center py-2">
+              <div className="flex space-x-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            </div>
+
+            {syncProgress.percentage === 100 && (
+              <Alert className="border-green-500 bg-green-50">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <AlertDescription className="text-green-800 font-medium">
+                  Synchronisation terminée avec succès!
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
