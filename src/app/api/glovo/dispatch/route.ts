@@ -247,6 +247,7 @@ async function handleNewOrder(body: Record<string, unknown>) {
 
     console.log("📊 Statistiques client mises à jour:", customer.name);
 
+    // WhatsApp notification removed - now sent when collaborateur marks order as ready
     return NextResponse.json({
       success: true,
       message: "Commande reçue et stockée avec succès",

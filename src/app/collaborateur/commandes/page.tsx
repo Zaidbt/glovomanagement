@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Package, ShoppingCart, CheckCircle, Search, Filter, AlertCircle } from "lucide-react";
+import { Package, ShoppingCart, CheckCircle, Search, Filter, AlertCircle, Send } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface OrderProduct {
@@ -81,6 +81,7 @@ export default function CollaborateurCommandesPage() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [markingReady, setMarkingReady] = useState(false);
   const { toast } = useToast();
 
   // Settings for alert timing
@@ -173,7 +174,7 @@ export default function CollaborateurCommandesPage() {
           description: `Panier ${basketNumber} marqué comme récupéré`,
         });
         fetchOrders();
-        setDetailsOpen(false);
+        // Don't close dialog - let user see "Commande Prête" button if all baskets picked up
       } else {
         toast({
           title: "Erreur",
@@ -188,6 +189,40 @@ export default function CollaborateurCommandesPage() {
         description: "Erreur lors de la mise à jour",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleMarkOrderReady = async (orderId: string) => {
+    try {
+      setMarkingReady(true);
+      const response = await fetch(`/api/collaborateur/orders/${orderId}/mark-ready`, {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        toast({
+          title: "✅ Commande prête",
+          description: "Le client a été notifié par WhatsApp",
+        });
+        fetchOrders();
+        setDetailsOpen(false);
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Erreur",
+          description: errorData.error || "Impossible de marquer la commande comme prête",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error marking order as ready:", error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la mise à jour",
+        variant: "destructive",
+      });
+    } finally {
+      setMarkingReady(false);
     }
   };
 
@@ -476,46 +511,92 @@ export default function CollaborateurCommandesPage() {
               </div>
 
               {/* Baskets Ready for Pickup */}
-              {selectedOrder.metadata?.supplierStatuses && (
-                <div>
-                  <h3 className="font-semibold mb-3">Paniers Prêts à Récupérer</h3>
-                  <div className="space-y-3">
-                    {Object.entries(selectedOrder.metadata.supplierStatuses).map(([supplierId, status]) => {
-                      if (status.status === "READY" && !status.pickedUp && status.basket) {
-                        return (
-                          <div
-                            key={supplierId}
-                            className="flex items-center justify-between p-4 bg-purple-50 border border-purple-200 rounded-lg"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="bg-purple-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg">
-                                {status.basket}
-                              </div>
-                              <div>
-                                <p className="font-semibold">
-                                  Panier {status.basket}
-                                  {status.supplierName && ` - ${status.supplierName}`}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  Prêt depuis: {formatDate(status.markedReadyAt)}
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              onClick={() => handlePickupBasket(selectedOrder.id, supplierId, status.basket!)}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              Récupéré
-                            </Button>
+              {selectedOrder.metadata?.supplierStatuses && (() => {
+                const statuses = selectedOrder.metadata.supplierStatuses;
+                const allPickedUp = Object.values(statuses).every((s) => s.pickedUp === true);
+                const hasUnpickedBaskets = Object.values(statuses).some(
+                  (s) => s.status === "READY" && !s.pickedUp && s.basket
+                );
+
+                return (
+                  <div>
+                    {hasUnpickedBaskets && (
+                      <>
+                        <h3 className="font-semibold mb-3">Paniers Prêts à Récupérer</h3>
+                        <div className="space-y-3">
+                          {Object.entries(statuses).map(([supplierId, status]) => {
+                            if (status.status === "READY" && !status.pickedUp && status.basket) {
+                              return (
+                                <div
+                                  key={supplierId}
+                                  className="flex items-center justify-between p-4 bg-purple-50 border border-purple-200 rounded-lg"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="bg-purple-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg">
+                                      {status.basket}
+                                    </div>
+                                    <div>
+                                      <p className="font-semibold">
+                                        Panier {status.basket}
+                                        {status.supplierName && ` - ${status.supplierName}`}
+                                      </p>
+                                      <p className="text-sm text-gray-600">
+                                        Prêt depuis: {formatDate(status.markedReadyAt)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    onClick={() => handlePickupBasket(selectedOrder.id, supplierId, status.basket!)}
+                                    className="bg-green-600 hover:bg-green-700"
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Récupéré
+                                  </Button>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Commande Prête Button - Show when all baskets picked up */}
+                    {allPickedUp && selectedOrder.status !== "READY_FOR_PICKUP" && selectedOrder.status !== "DELIVERED" && (
+                      <div className="bg-green-50 border-2 border-green-300 rounded-lg p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-bold text-green-900 text-lg mb-1">
+                              ✅ Tous les paniers récupérés
+                            </h3>
+                            <p className="text-sm text-green-700">
+                              Cliquez sur le bouton pour marquer la commande comme prête et notifier le client par WhatsApp
+                            </p>
                           </div>
-                        );
-                      }
-                      return null;
-                    })}
+                          <Button
+                            onClick={() => handleMarkOrderReady(selectedOrder.id)}
+                            disabled={markingReady}
+                            size="lg"
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            {markingReady ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                                Envoi...
+                              </>
+                            ) : (
+                              <>
+                                <Send className="w-5 h-5 mr-2" />
+                                Commande Prête
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Products */}
               <div>
