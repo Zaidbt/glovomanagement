@@ -514,6 +514,7 @@ export default function CollaborateurCommandesPage() {
               {selectedOrder.metadata?.supplierStatuses && (() => {
                 const statuses = selectedOrder.metadata.supplierStatuses;
                 const allPickedUp = Object.values(statuses).every((s) => s.pickedUp === true);
+                const hasPickedUpBaskets = Object.values(statuses).some((s) => s.pickedUp === true);
                 const hasUnpickedBaskets = Object.values(statuses).some(
                   (s) => s.status === "READY" && !s.pickedUp && s.basket
                 );
@@ -561,16 +562,18 @@ export default function CollaborateurCommandesPage() {
                       </>
                     )}
 
-                    {/* Commande Prête Button - Show when all baskets picked up */}
-                    {allPickedUp && selectedOrder.status !== "READY_FOR_PICKUP" && selectedOrder.status !== "DELIVERED" && (
-                      <div className="bg-green-50 border-2 border-green-300 rounded-lg p-6">
+                    {/* Commande Prête Button - Show when at least one basket picked up (for testing) */}
+                    {hasPickedUpBaskets && selectedOrder.status !== "READY_FOR_PICKUP" && selectedOrder.status !== "DELIVERED" && (
+                      <div className={`border-2 rounded-lg p-6 ${allPickedUp ? 'bg-green-50 border-green-300' : 'bg-yellow-50 border-yellow-300'}`}>
                         <div className="flex items-center justify-between">
                           <div>
-                            <h3 className="font-bold text-green-900 text-lg mb-1">
-                              ✅ Tous les paniers récupérés
+                            <h3 className={`font-bold text-lg mb-1 ${allPickedUp ? 'text-green-900' : 'text-yellow-900'}`}>
+                              {allPickedUp ? '✅ Tous les paniers récupérés' : '⚠️ Paniers partiellement récupérés'}
                             </h3>
-                            <p className="text-sm text-green-700">
-                              Cliquez sur le bouton pour marquer la commande comme prête et notifier le client par WhatsApp
+                            <p className={`text-sm ${allPickedUp ? 'text-green-700' : 'text-yellow-700'}`}>
+                              {allPickedUp
+                                ? 'Cliquez sur le bouton pour marquer la commande comme prête et notifier le client par WhatsApp'
+                                : 'Mode test: Vous pouvez envoyer le message même si tous les paniers ne sont pas récupérés'}
                             </p>
                           </div>
                           <Button

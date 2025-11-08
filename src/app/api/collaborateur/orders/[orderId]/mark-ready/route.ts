@@ -36,7 +36,7 @@ export async function POST(
       );
     }
 
-    // Check if all baskets are picked up
+    // Check if at least one basket is picked up (for testing - remove this check in production)
     const supplierStatuses = order.metadata as Record<string, unknown>;
     const statuses = supplierStatuses?.supplierStatuses as Record<
       string,
@@ -44,13 +44,13 @@ export async function POST(
     >;
 
     if (statuses) {
-      const allPickedUp = Object.values(statuses).every(
+      const hasPickedUpBaskets = Object.values(statuses).some(
         (status) => status.pickedUp === true
       );
 
-      if (!allPickedUp) {
+      if (!hasPickedUpBaskets) {
         return NextResponse.json(
-          { error: "Not all baskets have been picked up" },
+          { error: "At least one basket must be picked up before marking order as ready" },
           { status: 400 }
         );
       }
