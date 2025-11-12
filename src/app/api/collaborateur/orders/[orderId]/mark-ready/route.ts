@@ -21,11 +21,7 @@ export async function POST(
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
-        store: {
-          include: {
-            glovoCredential: true,
-          },
-        },
+        store: true,
       },
     });
 
@@ -56,50 +52,47 @@ export async function POST(
       }
     }
 
-    // Get Glovo credentials
-    const glovoCredential = order.store?.glovoCredential;
+    // Call Glovo API to mark as READY_FOR_PICKUP
+    try {
+      // Use environment variables for Glovo API configuration
+      const chainId = process.env.GLOVO_CHAIN_ID;
+      const apiUrl = process.env.GLOVO_API_URL || "https://glovo.partner.deliveryhero.io";
+      const apiToken = process.env.GLOVO_API_TOKEN;
 
-    if (!glovoCredential) {
-      console.warn(
-        "⚠️ No Glovo credentials configured for store, skipping API call"
-      );
-    } else {
-      // Call Glovo API to mark as READY_FOR_PICKUP
-      try {
-        const storeId = order.store?.glovoStoreId;
-        if (!storeId) {
-          console.warn("⚠️ No glovoStoreId configured, skipping API call");
+      if (!chainId || !apiToken) {
+        console.warn("⚠️ GLOVO_CHAIN_ID or GLOVO_API_TOKEN not configured, skipping Glovo API call");
+      } else {
+        const glovoApiUrl = `${apiUrl}/v2/chains/${chainId}/orders/${order.orderId}`;
+
+        console.log(`📡 Calling Glovo API: PUT ${glovoApiUrl}`);
+
+        const glovoResponse = await fetch(glovoApiUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiToken}`,
+          },
+          body: JSON.stringify({
+            status: "READY_FOR_PICKUP",
+          }),
+        });
+
+        if (glovoResponse.ok) {
+          console.log(
+            `✅ Glovo API: Order ${order.orderId} marked as READY_FOR_PICKUP`
+          );
         } else {
-          const glovoApiUrl = `https://stageapi.glovoapp.com/v2/stores/${storeId}/orders/${order.orderId}`;
-
-          const glovoResponse = await fetch(glovoApiUrl, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${glovoCredential.accessToken}`,
-            },
-            body: JSON.stringify({
-              status: "READY_FOR_PICKUP",
-            }),
-          });
-
-          if (glovoResponse.ok) {
-            console.log(
-              `✅ Glovo API: Order ${order.orderId} marked as READY_FOR_PICKUP`
-            );
-          } else {
-            const errorData = await glovoResponse.text();
-            console.error(
-              `❌ Glovo API error (status ${glovoResponse.status}):`,
-              errorData
-            );
-            // Don't fail the entire operation if Glovo API fails
-          }
+          const errorData = await glovoResponse.text();
+          console.error(
+            `❌ Glovo API error (status ${glovoResponse.status}):`,
+            errorData
+          );
+          // Don't fail the entire operation if Glovo API fails
         }
-      } catch (glovoError) {
-        console.error("❌ Error calling Glovo API:", glovoError);
-        // Don't fail the entire operation
       }
+    } catch (glovoError) {
+      console.error("❌ Error calling Glovo API:", glovoError);
+      // Don't fail the entire operation
     }
 
     // Update order status in database
