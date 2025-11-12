@@ -36,6 +36,8 @@ import {
   Award,
   User,
   AlertCircle,
+  Download,
+  FileSpreadsheet,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -201,6 +203,156 @@ export default function CustomersPage() {
     return "text-green-600";
   };
 
+  // Export to CSV
+  const exportToCSV = () => {
+    const headers = [
+      "Nom",
+      "Téléphone",
+      "Email",
+      "Ville",
+      "Adresse",
+      "Nombre Commandes",
+      "Total Dépensé (DH)",
+      "Valeur Moyenne (DH)",
+      "CLV (DH)",
+      "Tier Fidélité",
+      "Risque Churn",
+      "Dernière Commande",
+      "Première Commande",
+      "WhatsApp",
+      "SMS",
+      "Email Opt-in",
+      "Statut",
+      "Date Création",
+    ];
+
+    const rows = filteredCustomers.map((customer) => [
+      customer.name || "N/A",
+      customer.phoneNumber,
+      customer.email || "N/A",
+      customer.city || "N/A",
+      customer.address || "N/A",
+      customer.totalOrders,
+      (customer.totalSpent / 100).toFixed(2),
+      (customer.averageOrderValue / 100).toFixed(2),
+      (customer.customerLifetimeValue / 100).toFixed(2),
+      customer.loyaltyTier,
+      customer.churnRiskScore.toFixed(2),
+      formatDate(customer.lastOrderDate),
+      formatDate(customer.firstOrderDate),
+      customer.whatsappOptIn ? "Oui" : "Non",
+      customer.smsOptIn ? "Oui" : "Non",
+      customer.emailOptIn ? "Oui" : "Non",
+      customer.isActive ? "Actif" : "Inactif",
+      formatDate(customer.createdAt),
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob(["\ufeff" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `clients_natura_beldi_${new Date().toISOString().split("T")[0]}.csv`
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "✅ Export réussi",
+      description: `${filteredCustomers.length} clients exportés en CSV`,
+    });
+  };
+
+  // Export to Excel (using HTML table method)
+  const exportToExcel = () => {
+    const tableHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th>Téléphone</th>
+            <th>Email</th>
+            <th>Ville</th>
+            <th>Adresse</th>
+            <th>Nombre Commandes</th>
+            <th>Total Dépensé (DH)</th>
+            <th>Valeur Moyenne (DH)</th>
+            <th>CLV (DH)</th>
+            <th>Tier Fidélité</th>
+            <th>Risque Churn</th>
+            <th>Dernière Commande</th>
+            <th>Première Commande</th>
+            <th>WhatsApp</th>
+            <th>SMS</th>
+            <th>Email Opt-in</th>
+            <th>Statut</th>
+            <th>Date Création</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filteredCustomers
+            .map(
+              (customer) => `
+            <tr>
+              <td>${customer.name || "N/A"}</td>
+              <td>${customer.phoneNumber}</td>
+              <td>${customer.email || "N/A"}</td>
+              <td>${customer.city || "N/A"}</td>
+              <td>${customer.address || "N/A"}</td>
+              <td>${customer.totalOrders}</td>
+              <td>${(customer.totalSpent / 100).toFixed(2)}</td>
+              <td>${(customer.averageOrderValue / 100).toFixed(2)}</td>
+              <td>${(customer.customerLifetimeValue / 100).toFixed(2)}</td>
+              <td>${customer.loyaltyTier}</td>
+              <td>${customer.churnRiskScore.toFixed(2)}</td>
+              <td>${formatDate(customer.lastOrderDate)}</td>
+              <td>${formatDate(customer.firstOrderDate)}</td>
+              <td>${customer.whatsappOptIn ? "Oui" : "Non"}</td>
+              <td>${customer.smsOptIn ? "Oui" : "Non"}</td>
+              <td>${customer.emailOptIn ? "Oui" : "Non"}</td>
+              <td>${customer.isActive ? "Actif" : "Inactif"}</td>
+              <td>${formatDate(customer.createdAt)}</td>
+            </tr>
+          `
+            )
+            .join("")}
+        </tbody>
+      </table>
+    `;
+
+    const blob = new Blob([tableHTML], {
+      type: "application/vnd.ms-excel",
+    });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `clients_natura_beldi_${new Date().toISOString().split("T")[0]}.xls`
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "✅ Export réussi",
+      description: `${filteredCustomers.length} clients exportés en Excel`,
+    });
+  };
+
   // Customer Details Modal
   const CustomerDetailsModal = ({ customer }: { customer: Customer }) => (
     <Dialog>
@@ -348,12 +500,30 @@ export default function CustomersPage() {
             clients)
           </p>
         </div>
-        <Button onClick={loadCustomers} disabled={loading}>
-          <RefreshCw
-            className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
-          />
-          Actualiser
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={exportToCSV}
+            disabled={filteredCustomers.length === 0}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button
+            variant="outline"
+            onClick={exportToExcel}
+            disabled={filteredCustomers.length === 0}
+          >
+            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            Export Excel
+          </Button>
+          <Button onClick={loadCustomers} disabled={loading}>
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
+            Actualiser
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
