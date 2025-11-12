@@ -172,7 +172,7 @@ model Order {
 
   // Source et statut
   source String // GLOVO, TWILIO, CUSTOM, etc.
-  status String // ACCEPTED, READY_FOR_PICKUP, OUT_FOR_DELIVERY, PICKED_UP_BY_CUSTOMER, CANCELLED
+  status String // CREATED, ACCEPTED, PREPARING, READY, DISPATCHED, DELIVERED, CANCELLED
 
   // Horaires (format Glovo: yyyy-MM-dd HH:mm:ss)
   orderTime           String? // order_time de Glovo

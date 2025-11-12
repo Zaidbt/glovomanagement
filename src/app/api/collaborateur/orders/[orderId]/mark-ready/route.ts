@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { sendAutomaticMessageOnDispatch } from "@/lib/automatic-messaging";
+import { OrderStatus, mapToGlovoStatus } from "@/types/order-status";
 
 const prisma = new PrismaClient();
 
@@ -15,7 +16,7 @@ export async function POST(
   try {
     const { orderId } = await context.params;
 
-    console.log(`📦 Marking order ${orderId} as READY_FOR_PICKUP`);
+    console.log(`📦 Marking order ${orderId} as READY`);
 
     // Get the order
     const order = await prisma.order.findUnique({
@@ -52,7 +53,7 @@ export async function POST(
       }
     }
 
-    // Call Glovo API to mark as READY_FOR_PICKUP
+    // Call Glovo API to mark as READY
     try {
       // Use environment variables for Glovo API configuration
       const chainId = process.env.GLOVO_CHAIN_ID;
@@ -64,7 +65,10 @@ export async function POST(
       } else {
         const glovoApiUrl = `${apiUrl}/v2/chains/${chainId}/orders/${order.orderId}`;
 
-        console.log(`📡 Calling Glovo API: PUT ${glovoApiUrl}`);
+        // Map internal READY status to Glovo's READY_FOR_PICKUP
+        const glovoStatus = mapToGlovoStatus(OrderStatus.READY, "LOGISTICS_DELIVERY");
+
+        console.log(`📡 Calling Glovo API: PUT ${glovoApiUrl} with status ${glovoStatus}`);
 
         const glovoResponse = await fetch(glovoApiUrl, {
           method: "PUT",
@@ -73,13 +77,13 @@ export async function POST(
             Authorization: `Bearer ${apiToken}`,
           },
           body: JSON.stringify({
-            status: "READY_FOR_PICKUP",
+            status: glovoStatus,
           }),
         });
 
         if (glovoResponse.ok) {
           console.log(
-            `✅ Glovo API: Order ${order.orderId} marked as READY_FOR_PICKUP`
+            `✅ Glovo API: Order ${order.orderId} marked as ${glovoStatus}`
           );
         } else {
           const errorData = await glovoResponse.text();
@@ -99,12 +103,12 @@ export async function POST(
     await prisma.order.update({
       where: { id: orderId },
       data: {
-        status: "READY_FOR_PICKUP",
+        status: OrderStatus.READY,
       },
     });
 
     console.log(
-      `✅ Order ${orderId} marked as READY_FOR_PICKUP in database`
+      `✅ Order ${orderId} marked as READY in database`
     );
 
     // Send WhatsApp message to customer

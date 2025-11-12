@@ -11,6 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { OrderStatus, getStatusLabel } from "@/types/order-status";
 import {
   Dialog,
   DialogContent,
@@ -245,19 +246,24 @@ export default function CollaborateurCommandesPage() {
     label: string;
     variant: "default" | "secondary" | "outline" | "destructive"
   } => {
-    if (order.status === "COMPLETED" || order.status === "DELIVERED") {
-      return { label: "Complétée", variant: "default" };
+    const status = order.status as OrderStatus;
+
+    switch (status) {
+      case OrderStatus.DELIVERED:
+        return { label: getStatusLabel(OrderStatus.DELIVERED), variant: "default" };
+      case OrderStatus.READY:
+      case OrderStatus.DISPATCHED:
+        return { label: getStatusLabel(status), variant: "default" };
+      case OrderStatus.ACCEPTED:
+      case OrderStatus.PREPARING:
+        return { label: getStatusLabel(status), variant: "secondary" };
+      case OrderStatus.CREATED:
+        return { label: getStatusLabel(OrderStatus.CREATED), variant: "outline" };
+      case OrderStatus.CANCELLED:
+        return { label: getStatusLabel(OrderStatus.CANCELLED), variant: "destructive" };
+      default:
+        return { label: getStatusLabel(status), variant: "outline" };
     }
-    if (order.status === "ACCEPTED") {
-      return { label: "En préparation", variant: "secondary" };
-    }
-    if (order.status === "PENDING") {
-      return { label: "En attente", variant: "outline" };
-    }
-    if (order.status === "CANCELLED") {
-      return { label: "Annulée", variant: "destructive" };
-    }
-    return { label: order.status, variant: "outline" };
   };
 
   const countReadyBaskets = (order: Order): number => {
@@ -361,11 +367,13 @@ export default function CollaborateurCommandesPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">Tous les statuts</SelectItem>
-                <SelectItem value="PENDING">En attente</SelectItem>
-                <SelectItem value="ACCEPTED">En préparation</SelectItem>
-                <SelectItem value="COMPLETED">Complétée</SelectItem>
-                <SelectItem value="DELIVERED">Livrée</SelectItem>
-                <SelectItem value="CANCELLED">Annulée</SelectItem>
+                <SelectItem value={OrderStatus.CREATED}>Créée</SelectItem>
+                <SelectItem value={OrderStatus.ACCEPTED}>Acceptée</SelectItem>
+                <SelectItem value={OrderStatus.PREPARING}>En préparation</SelectItem>
+                <SelectItem value={OrderStatus.READY}>Prête</SelectItem>
+                <SelectItem value={OrderStatus.DISPATCHED}>En livraison</SelectItem>
+                <SelectItem value={OrderStatus.DELIVERED}>Livrée</SelectItem>
+                <SelectItem value={OrderStatus.CANCELLED}>Annulée</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -563,7 +571,7 @@ export default function CollaborateurCommandesPage() {
                     )}
 
                     {/* Commande Prête Button - Show when at least one basket picked up (for testing) */}
-                    {hasPickedUpBaskets && selectedOrder.status !== "READY_FOR_PICKUP" && selectedOrder.status !== "DELIVERED" && (
+                    {hasPickedUpBaskets && selectedOrder.status !== OrderStatus.READY && selectedOrder.status !== OrderStatus.DELIVERED && (
                       <div className={`border-2 rounded-lg p-6 ${allPickedUp ? 'bg-green-50 border-green-300' : 'bg-yellow-50 border-yellow-300'}`}>
                         <div className="flex items-center justify-between">
                           <div>

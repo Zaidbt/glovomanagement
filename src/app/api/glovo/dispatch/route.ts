@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { OrderStatus } from "@/types/order-status";
 
 const prisma = new PrismaClient();
 
@@ -9,28 +10,51 @@ const prisma = new PrismaClient();
  */
 export async function POST(request: NextRequest) {
   try {
+    console.log("\n");
+    console.log("═══════════════════════════════════════════════════════════");
+    console.log("🚚 [DISPATCH WEBHOOK] REQUEST RECEIVED");
+    console.log("═══════════════════════════════════════════════════════════");
+    console.log("⏰ Timestamp:", new Date().toISOString());
+    console.log("📍 URL:", request.url);
+    console.log("🔗 Route: /api/glovo/dispatch");
+
     const body = await request.json();
-    console.log(
-      "🚚 Glovo Webhook - Données reçues:",
-      JSON.stringify(body, null, 2)
-    );
+    console.log("\n📦 [DISPATCH WEBHOOK] Payload complet:");
+    console.log(JSON.stringify(body, null, 2));
+
+    console.log("\n🔍 [DISPATCH WEBHOOK] Analyse du payload:");
+    console.log("  - body.order_id:", body.order_id || "❌ absent");
+    console.log("  - body.store_id:", body.store_id || "❌ absent");
+    console.log("  - body.trackingNumber:", body.trackingNumber || "❌ absent");
+    console.log("  - body.eventType:", body.eventType || "❌ absent");
+    console.log("  - body.status:", body.status || "❌ absent");
 
     // Check if this is a NEW ORDER (has order_id and store_id)
     if (body.order_id && body.store_id) {
-      console.log("🆕 NEW ORDER detected - processing as new order");
+      console.log("\n✅ [DISPATCH WEBHOOK] NEW ORDER détecté!");
+      console.log("   order_id:", body.order_id);
+      console.log("   store_id:", body.store_id);
+      console.log("   customer_name:", (body.customer as Record<string, unknown>)?.name || "N/A");
+      console.log("   order_code:", body.order_code || "N/A");
+      console.log("🔄 [DISPATCH WEBHOOK] Redirection vers handleNewOrder()...");
       return await handleNewOrder(body);
     }
 
     // Otherwise, handle as DISPATCH event
-    console.log("🚚 DISPATCH EVENT detected - processing as dispatch");
+    console.log("\n⚡ [DISPATCH WEBHOOK] DISPATCH EVENT détecté!");
+    console.log("   (pas un NEW ORDER - format différent)");
     const { trackingNumber, status, webhookId, date, eventType } = body;
 
     if (!trackingNumber) {
+      console.log("❌ [DISPATCH WEBHOOK] trackingNumber manquant - Erreur 400");
       return NextResponse.json(
         { error: "trackingNumber manquant" },
         { status: 400 }
       );
     }
+
+    console.log("🔍 [DISPATCH WEBHOOK] Recherche commande existante...");
+    console.log("   trackingNumber:", trackingNumber);
 
     // Mettre à jour la commande existante
     const order = await prisma.order.findFirst({
@@ -40,10 +64,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (order) {
+      console.log("✅ [DISPATCH WEBHOOK] Commande trouvée en DB!");
+      console.log("   Database ID:", order.id);
+      console.log("   Status actuel:", order.status);
+      console.log("   Nouveau status:", status || OrderStatus.DISPATCHED);
+
       await prisma.order.update({
         where: { id: order.id },
         data: {
-          status: status || "DISPATCHED",
+          status: status || OrderStatus.DISPATCHED,
           metadata: {
             ...(order.metadata as object),
             dispatchEvent: {
@@ -56,7 +85,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      console.log("✅ Commande mise à jour (dispatched):", trackingNumber);
+      console.log("✅ [DISPATCH WEBHOOK] Commande mise à jour avec succès!");
 
       // Track event
       await prisma.event.create({
@@ -72,10 +101,14 @@ export async function POST(request: NextRequest) {
           orderId: order.id,
         },
       });
+      console.log("✅ [DISPATCH WEBHOOK] Event créé en DB");
     } else {
-      console.warn("⚠️ Commande non trouvée:", trackingNumber);
+      console.warn("⚠️ [DISPATCH WEBHOOK] Commande NON trouvée en DB!");
+      console.warn("   trackingNumber recherché:", trackingNumber);
     }
 
+    console.log("\n✅ [DISPATCH WEBHOOK] Traitement terminé avec succès");
+    console.log("═══════════════════════════════════════════════════════════\n");
     return NextResponse.json({
       success: true,
       message: "Dispatch event reçu avec succès",
@@ -83,7 +116,8 @@ export async function POST(request: NextRequest) {
       status,
     });
   } catch (error) {
-    console.error("❌ Erreur webhook Glovo dispatch:", error);
+    console.error("\n❌ [DISPATCH WEBHOOK] ERREUR:", error);
+    console.error("═══════════════════════════════════════════════════════════\n");
     return NextResponse.json(
       { error: "Erreur lors du traitement du webhook dispatch" },
       { status: 500 }
@@ -96,12 +130,13 @@ export async function POST(request: NextRequest) {
  */
 async function handleNewOrder(body: Record<string, unknown>) {
   try {
-    console.log("📋 NEW ORDER - Processing order:", {
-      order_id: body.order_id,
-      store_id: body.store_id,
-      customer_name: (body.customer as Record<string, unknown>)?.name,
-      order_code: body.order_code,
-    });
+    console.log("\n🆕 [DISPATCH > handleNewOrder] Début du traitement NEW ORDER");
+    console.log("───────────────────────────────────────────────────────────");
+    console.log("📋 Informations commande:");
+    console.log("   order_id:", body.order_id);
+    console.log("   store_id:", body.store_id);
+    console.log("   customer_name:", (body.customer as Record<string, unknown>)?.name);
+    console.log("   order_code:", body.order_code);
 
     // Find the store
     let store = await prisma.store.findFirst({
@@ -186,7 +221,7 @@ async function handleNewOrder(body: Record<string, unknown>) {
         customerId: customer.id,
         orderCode: (body.order_code as string) || (body.order_id as string),
         source: "GLOVO",
-        status: "CREATED",
+        status: OrderStatus.CREATED,
         orderTime: (body.order_time as string) || new Date().toISOString(),
         estimatedPickupTime: body.estimated_pickup_time as string,
         utcOffsetMinutes: body.utc_offset_minutes as string,
@@ -227,10 +262,13 @@ async function handleNewOrder(body: Record<string, unknown>) {
       },
     });
 
-    console.log("✅ Commande stockée en base de données:", order.id);
+    console.log("✅ [DISPATCH > handleNewOrder] Commande stockée en DB!");
+    console.log("   Database ID:", order.id);
+    console.log("   Status:", order.status);
 
     // Update customer statistics
     const orderTotal = order.estimatedTotalPrice || 0;
+    console.log("\n📊 [DISPATCH > handleNewOrder] Mise à jour stats client...");
     await prisma.customer.update({
       where: { id: customer.id },
       data: {
@@ -245,7 +283,9 @@ async function handleNewOrder(body: Record<string, unknown>) {
       },
     });
 
-    console.log("📊 Statistiques client mises à jour:", customer.name);
+    console.log("✅ [DISPATCH > handleNewOrder] Stats client mises à jour!");
+    console.log("\n✅ [DISPATCH > handleNewOrder] Traitement terminé avec SUCCÈS");
+    console.log("═══════════════════════════════════════════════════════════\n");
 
     // WhatsApp notification removed - now sent when collaborateur marks order as ready
     return NextResponse.json({
@@ -255,7 +295,8 @@ async function handleNewOrder(body: Record<string, unknown>) {
       databaseId: order.id,
     });
   } catch (error) {
-    console.error("❌ Erreur lors de la création de la commande:", error);
+    console.error("\n❌ [DISPATCH > handleNewOrder] ERREUR:", error);
+    console.error("═══════════════════════════════════════════════════════════\n");
     return NextResponse.json({
       success: false,
       message: "Erreur lors de la sauvegarde de la commande",

@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { OrderStatus, getStatusLabel, getStatusColor } from "@/types/order-status";
 import {
   Table,
   TableBody,
@@ -224,36 +225,27 @@ export default function OrdersPage() {
     return matchesSource && matchesStatus && matchesSearch;
   });
 
-  // Obtenir la couleur du statut
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ACCEPTED":
-        return "bg-blue-100 text-blue-800 border-blue-300";
-      case "READY_FOR_PICKUP":
-        return "bg-yellow-100 text-yellow-800 border-yellow-300";
-      case "OUT_FOR_DELIVERY":
-        return "bg-purple-100 text-purple-800 border-purple-300";
-      case "PICKED_UP_BY_CUSTOMER":
-        return "bg-green-100 text-green-800 border-green-300";
-      case "CANCELLED":
-        return "bg-red-100 text-red-800 border-red-300";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-300";
-    }
+  // Use the centralized status color function
+  const getBadgeColor = (status: string) => {
+    return getStatusColor(status as OrderStatus);
   };
 
-  // Obtenir l'icône du statut
+  // Get status icon
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "ACCEPTED":
-        return <CheckCircle className="w-4 h-4" />;
-      case "READY_FOR_PICKUP":
+      case OrderStatus.CREATED:
         return <Clock className="w-4 h-4" />;
-      case "OUT_FOR_DELIVERY":
+      case OrderStatus.ACCEPTED:
+        return <CheckCircle className="w-4 h-4" />;
+      case OrderStatus.PREPARING:
+        return <Package className="w-4 h-4" />;
+      case OrderStatus.READY:
+        return <CheckCircle className="w-4 h-4" />;
+      case OrderStatus.DISPATCHED:
         return <Truck className="w-4 h-4" />;
-      case "PICKED_UP_BY_CUSTOMER":
-        return <User className="w-4 h-4" />;
-      case "CANCELLED":
+      case OrderStatus.DELIVERED:
+        return <CheckCircle className="w-4 h-4" />;
+      case OrderStatus.CANCELLED:
         return <XCircle className="w-4 h-4" />;
       default:
         return <Clock className="w-4 h-4" />;
@@ -291,8 +283,8 @@ export default function OrdersPage() {
           <DialogTitle className="flex items-center space-x-2 text-xl">
             <Package className="w-6 h-6 text-blue-600" />
             <span>Commande {order.orderId}</span>
-            <Badge className={getStatusColor(order.status)}>
-              {order.status}
+            <Badge className={getBadgeColor(order.status)}>
+              {getStatusLabel(order.status as OrderStatus)}
             </Badge>
           </DialogTitle>
         </DialogHeader>
@@ -348,10 +340,10 @@ export default function OrdersPage() {
                 <div className="text-sm font-medium text-muted-foreground mb-1">
                   Statut
                 </div>
-                <Badge className={getStatusColor(order.status)}>
+                <Badge className={getBadgeColor(order.status)}>
                   <span className="flex items-center space-x-1">
                     {getStatusIcon(order.status)}
-                    <span>{order.status}</span>
+                    <span>{getStatusLabel(order.status as OrderStatus)}</span>
                   </span>
                 </Badge>
               </div>
@@ -586,9 +578,9 @@ export default function OrdersPage() {
             <div className="flex items-center space-x-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
               <div>
-                <p className="text-sm font-medium">Acceptées</p>
+                <p className="text-sm font-medium">Prêtes</p>
                 <p className="text-2xl font-bold">
-                  {orders.filter((o) => o.status === "ACCEPTED").length}
+                  {orders.filter((o) => o.status === OrderStatus.READY).length}
                 </p>
               </div>
             </div>
@@ -602,7 +594,7 @@ export default function OrdersPage() {
               <div>
                 <p className="text-sm font-medium">En Livraison</p>
                 <p className="text-2xl font-bold">
-                  {orders.filter((o) => o.status === "OUT_FOR_DELIVERY").length}
+                  {orders.filter((o) => o.status === OrderStatus.DISPATCHED).length}
                 </p>
               </div>
             </div>
@@ -689,13 +681,13 @@ export default function OrdersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="ACCEPTED">Acceptée</SelectItem>
-                  <SelectItem value="READY_FOR_PICKUP">Prête</SelectItem>
-                  <SelectItem value="OUT_FOR_DELIVERY">En livraison</SelectItem>
-                  <SelectItem value="PICKED_UP_BY_CUSTOMER">
-                    Récupérée
-                  </SelectItem>
-                  <SelectItem value="CANCELLED">Annulée</SelectItem>
+                  <SelectItem value={OrderStatus.CREATED}>Créée</SelectItem>
+                  <SelectItem value={OrderStatus.ACCEPTED}>Acceptée</SelectItem>
+                  <SelectItem value={OrderStatus.PREPARING}>En préparation</SelectItem>
+                  <SelectItem value={OrderStatus.READY}>Prête</SelectItem>
+                  <SelectItem value={OrderStatus.DISPATCHED}>En livraison</SelectItem>
+                  <SelectItem value={OrderStatus.DELIVERED}>Livrée</SelectItem>
+                  <SelectItem value={OrderStatus.CANCELLED}>Annulée</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -762,10 +754,10 @@ export default function OrdersPage() {
                       </TableCell>
 
                       <TableCell>
-                        <Badge className={getStatusColor(order.status)}>
+                        <Badge className={getBadgeColor(order.status)}>
                           <span className="flex items-center space-x-1">
                             {getStatusIcon(order.status)}
-                            <span>{order.status}</span>
+                            <span>{getStatusLabel(order.status as OrderStatus)}</span>
                           </span>
                         </Badge>
                       </TableCell>

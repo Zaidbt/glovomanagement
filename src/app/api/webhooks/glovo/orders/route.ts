@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { eventTracker } from "@/lib/event-tracker";
+import { OrderStatus } from "@/types/order-status";
 import fs from "fs";
 import path from "path";
 
@@ -58,23 +59,34 @@ const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    console.log(
-      "🔍 Webhook Glovo - Données reçues:",
-      JSON.stringify(body, null, 2)
-    );
+    console.log("\n");
+    console.log("╔══════════════════════════════════════════════════════════╗");
+    console.log("║  📨 [ORDERS WEBHOOK] REQUEST RECEIVED                   ║");
+    console.log("╚══════════════════════════════════════════════════════════╝");
+    console.log("⏰ Timestamp:", new Date().toISOString());
+    console.log("📍 URL:", request.url);
+    console.log("🔗 Route: /api/webhooks/glovo/orders");
 
-    console.log("🔍 Webhook processing started - checking event type...");
+    const body = await request.json();
+    console.log("\n📦 [ORDERS WEBHOOK] Payload complet:");
+    console.log(JSON.stringify(body, null, 2));
+
+    console.log("\n🔍 [ORDERS WEBHOOK] Analyse du payload:");
+    console.log("  - body.order_id:", body.order_id || "❌ absent");
+    console.log("  - body.store_id:", body.store_id || "❌ absent");
+    console.log("  - body.eventType:", body.eventType || "❌ absent");
+    console.log("  - body.job_id:", body.job_id || "❌ absent");
+    console.log("  - body.trackingNumber:", body.trackingNumber || "❌ absent");
+
+    console.log("\n🔍 [ORDERS WEBHOOK] Début de l'analyse du type d'événement...");
 
     // Check if this is a CATALOG EXPORT webhook
     if (body.job_id || body.catalog_url || body.download_url) {
-      console.log("📦 Catalog Export webhook detected!");
-      console.log("📥 Export details:", {
-        job_id: body.job_id,
-        catalog_url: body.catalog_url || body.download_url,
-        job_status: body.job_status,
-        vendor_id: body.vendor_id,
-      });
+      console.log("\n📦 [ORDERS WEBHOOK] CATALOG EXPORT détecté!");
+      console.log("   job_id:", body.job_id);
+      console.log("   catalog_url:", body.catalog_url || body.download_url);
+      console.log("   job_status:", body.job_status);
+      console.log("   vendor_id:", body.vendor_id);
 
       // Save catalog export info for manual review
       const exportData = {
@@ -89,7 +101,8 @@ export async function POST(request: NextRequest) {
       fs.mkdirSync(path.dirname(exportPath), { recursive: true });
       fs.writeFileSync(exportPath, JSON.stringify(exportData, null, 2));
 
-      console.log("✅ Catalog export saved to:", exportPath);
+      console.log("✅ [ORDERS WEBHOOK] Catalog export enregistré:", exportPath);
+      console.log("╚══════════════════════════════════════════════════════════╝\n");
 
       return NextResponse.json({
         success: true,
@@ -101,12 +114,11 @@ export async function POST(request: NextRequest) {
 
     // Vérifier le type d'événement
     if (body.eventType === "STATUS_UPDATE") {
-      console.log("📋 Status Update reçu:", {
-        webhookId: body.webhookId,
-        trackingNumber: body.trackingNumber,
-        status: body.status,
-        date: body.date,
-      });
+      console.log("\n📊 [ORDERS WEBHOOK] STATUS UPDATE détecté!");
+      console.log("   webhookId:", body.webhookId);
+      console.log("   trackingNumber:", body.trackingNumber);
+      console.log("   status:", body.status);
+      console.log("   date:", body.date);
 
       // Si c'est une commande créée (CREATED), traiter comme une nouvelle commande
       if (body.status === "CREATED") {
@@ -199,7 +211,7 @@ export async function POST(request: NextRequest) {
               storeId: parcelData.partnerId?.toString() || "glovo_store",
               orderCode: parcelData.orderCode,
               source: "GLOVO",
-              status: parcelData.status?.state || "CREATED",
+              status: parcelData.status?.state || OrderStatus.CREATED,
               orderTime: parcelData.status?.createdAt,
               estimatedPickupTime: parcelData.pickupDetails?.pickupTime,
               paymentMethod:
@@ -273,24 +285,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Vérifier si c'est une commande (format Glovo réel ou ancien format)
-    console.log("🔍 Checking if this is an order:", {
-      hasOrderId: !!body.order_id,
-      hasStoreId: !!body.store_id,
-      hasClientStoreId: !!body.client?.store_id,
-      orderId: body.order_id,
-      storeId: body.store_id,
-    });
-
-    console.log("🔍 Order detection logic - about to check conditions...");
+    console.log("\n🔍 [ORDERS WEBHOOK] Vérification si c'est un ORDER...");
+    console.log("   hasOrderId:", !!body.order_id);
+    console.log("   hasStoreId:", !!body.store_id);
+    console.log("   hasClientStoreId:", !!body.client?.store_id);
 
     if (body.order_id && (body.store_id || body.client?.store_id)) {
       const storeId = body.store_id || body.client?.store_id;
-      console.log("📋 Commande reçue:", {
-        order_id: body.order_id,
-        store_id: storeId,
-        customer_name: body.customer?.first_name || body.customer?.name,
-        order_code: body.order_code,
-      });
+      console.log("\n✅ [ORDERS WEBHOOK] NEW ORDER détecté!");
+      console.log("   order_id:", body.order_id);
+      console.log("   store_id:", storeId);
+      console.log("   customer_name:", body.customer?.first_name || body.customer?.name);
+      console.log("   order_code:", body.order_code);
 
       try {
         // Trouver le store correspondant à ce store_id Glovo
@@ -403,7 +409,7 @@ export async function POST(request: NextRequest) {
             customerId: customer.id, // Lier la commande au client
             orderCode: body.order_code || body.order_id,
             source: "GLOVO",
-            status: "CREATED",
+            status: OrderStatus.CREATED,
             orderTime:
               body.order_time ||
               (body.sys?.created_at
@@ -478,10 +484,13 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        console.log("✅ Commande stockée en base de données:", order.id);
+        console.log("✅ [ORDERS WEBHOOK] Commande stockée en DB!");
+        console.log("   Database ID:", order.id);
+        console.log("   Status:", order.status);
 
         // Mettre à jour les statistiques du client
         const orderTotal = order.estimatedTotalPrice || 0;
+        console.log("\n📊 [ORDERS WEBHOOK] Mise à jour stats client...");
         await prisma.customer.update({
           where: { id: customer.id },
           data: {
@@ -496,9 +505,10 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        console.log("📊 Statistiques client mises à jour:", customer.name);
+        console.log("✅ [ORDERS WEBHOOK] Stats client mises à jour!");
 
         // Track order creation event
+        console.log("📝 [ORDERS WEBHOOK] Création event tracker...");
         await eventTracker.trackEvent({
           type: "ORDER_CREATED",
           title: "Commande reçue",
@@ -517,6 +527,9 @@ export async function POST(request: NextRequest) {
           },
         });
 
+        console.log("\n✅ [ORDERS WEBHOOK] Traitement terminé avec SUCCÈS");
+        console.log("╚══════════════════════════════════════════════════════════╝\n");
+
         // WhatsApp notification removed - now sent when collaborateur marks order as ready
         return NextResponse.json({
           success: true,
@@ -525,11 +538,9 @@ export async function POST(request: NextRequest) {
           databaseId: order.id,
         });
       } catch (error) {
-        console.error("❌ Erreur lors de la sauvegarde:", error);
-        console.error(
-          "❌ Stack trace:",
-          error instanceof Error ? error.stack : "Unknown error"
-        );
+        console.error("\n❌ [ORDERS WEBHOOK] ERREUR lors de la sauvegarde:", error);
+        console.error("   Stack trace:", error instanceof Error ? error.stack : "Unknown error");
+        console.error("╚══════════════════════════════════════════════════════════╝\n");
         return NextResponse.json({
           success: false,
           message: "Erreur lors de la sauvegarde de la commande",
@@ -540,21 +551,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Si ce n'est ni un status update ni une commande
-    console.log("⚠️ Type d'événement non reconnu:", body);
-    console.log(
-      "⚠️ Event not recognized - returning success but not processing"
-    );
+    console.log("\n⚠️ [ORDERS WEBHOOK] Type d'événement NON RECONNU!");
+    console.log("   Payload reçu mais aucune condition ne correspond");
+    console.log("╚══════════════════════════════════════════════════════════╝\n");
     return NextResponse.json({
       success: true,
       message: "Événement reçu mais non traité",
       eventType: body.eventType || "unknown",
     });
   } catch (error) {
-    console.error("❌ Erreur webhook Glovo:", error);
-    console.error(
-      "❌ Stack trace:",
-      error instanceof Error ? error.stack : "Unknown error"
-    );
+    console.error("\n❌ [ORDERS WEBHOOK] ERREUR GÉNÉRALE:", error);
+    console.error("   Stack trace:", error instanceof Error ? error.stack : "Unknown error");
+    console.error("╚══════════════════════════════════════════════════════════╝\n");
     return NextResponse.json(
       { error: "Erreur lors du traitement du webhook" },
       { status: 500 }
