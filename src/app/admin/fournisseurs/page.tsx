@@ -51,6 +51,7 @@ export default function FournisseursPage() {
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
   const [stores, setStores] = useState<{ id: string; name: string }[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingFournisseur, setEditingFournisseur] =
@@ -113,7 +114,7 @@ export default function FournisseursPage() {
           name: formData.get("name"),
           email: formData.get("email"),
           phone: formData.get("phone"),
-          assignedCategories: formData.getAll("assignedCategories"),
+          assignedCategories: selectedCategories,
           storeIds: formData.getAll("storeIds"),
         }),
       });
@@ -121,6 +122,7 @@ export default function FournisseursPage() {
       if (response.ok) {
         fetchFournisseurs();
         setIsDialogOpen(false);
+        setSelectedCategories([]);
       }
     } catch (error) {
       console.error("Error creating fournisseur:", error);
@@ -143,7 +145,7 @@ export default function FournisseursPage() {
             name: formData.get("name"),
             email: formData.get("email"),
             phone: formData.get("phone"),
-            assignedCategories: formData.getAll("assignedCategories"),
+            assignedCategories: selectedCategories,
             isActive: formData.get("isActive") === "on",
             storeIds: formData.getAll("storeIds"),
           }),
@@ -154,6 +156,7 @@ export default function FournisseursPage() {
         fetchFournisseurs();
         setIsDialogOpen(false);
         setEditingFournisseur(null);
+        setSelectedCategories([]);
       }
     } catch (error) {
       console.error("Error updating fournisseur:", error);
@@ -178,12 +181,34 @@ export default function FournisseursPage() {
 
   const openEditDialog = (fournisseur: Fournisseur) => {
     setEditingFournisseur(fournisseur);
+    setSelectedCategories(fournisseur.assignedCategories || []);
     setIsDialogOpen(true);
   };
 
   const openCreateDialog = () => {
     setEditingFournisseur(null);
+    setSelectedCategories([]);
     setIsDialogOpen(true);
+  };
+
+  // Toggle all categories selection
+  const toggleAllCategories = () => {
+    if (selectedCategories.length === categories.length) {
+      // Deselect all
+      setSelectedCategories([]);
+    } else {
+      // Select all
+      setSelectedCategories([...categories]);
+    }
+  };
+
+  // Toggle individual category
+  const toggleCategory = (category: string) => {
+    if (selectedCategories.includes(category)) {
+      setSelectedCategories(selectedCategories.filter((c) => c !== category));
+    } else {
+      setSelectedCategories([...selectedCategories, category]);
+    }
   };
 
   if (loading) {
@@ -290,7 +315,22 @@ export default function FournisseursPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Catégories assignées</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Catégories assignées</Label>
+                  {categories.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={toggleAllCategories}
+                      className="text-xs"
+                    >
+                      {selectedCategories.length === categories.length
+                        ? "Tout désélectionner"
+                        : "Tout sélectionner"}
+                    </Button>
+                  )}
+                </div>
                 {categories.length === 0 ? (
                   <p className="text-sm text-gray-500">
                     Aucune catégorie disponible. Importez des produits pour créer
@@ -306,12 +346,9 @@ export default function FournisseursPage() {
                         <input
                           type="checkbox"
                           id={`category-${category}`}
-                          name="assignedCategories"
-                          value={category}
-                          defaultChecked={editingFournisseur?.assignedCategories?.includes(
-                            category
-                          )}
-                          className="rounded"
+                          checked={selectedCategories.includes(category)}
+                          onChange={() => toggleCategory(category)}
+                          className="rounded cursor-pointer"
                         />
                         <Label
                           htmlFor={`category-${category}`}

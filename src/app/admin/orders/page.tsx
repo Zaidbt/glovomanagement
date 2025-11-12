@@ -131,41 +131,6 @@ export default function OrdersPage() {
     }
   }, [toast]);
 
-  // Simuler des commandes Glovo réelles
-  const simulateGlovoOrders = async () => {
-    try {
-      setSyncing(true);
-
-      const response = await fetch("/api/orders/simulate-glovo", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        toast({
-          title: "Commandes simulées",
-          description: data.message,
-        });
-        // Recharger les commandes
-        await loadOrders();
-      } else {
-        throw new Error("Erreur de simulation");
-      }
-    } catch (error) {
-      console.error("Error simulating Glovo orders:", error);
-      toast({
-        title: "Erreur",
-        description: "Erreur lors de la simulation des commandes",
-        variant: "destructive",
-      });
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   // Synchroniser avec l'API officielle Glovo Business
   const syncGlovoBusiness = async () => {
     try {
@@ -598,17 +563,6 @@ export default function OrdersPage() {
               className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`}
             />
             {syncing ? "Sync..." : "Sync Glovo Business"}
-          </Button>
-          <Button
-            onClick={simulateGlovoOrders}
-            variant="outline"
-            size="sm"
-            disabled={syncing}
-          >
-            <RefreshCw
-              className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`}
-            />
-            {syncing ? "Simulation..." : "Simuler Glovo"}
           </Button>
         </div>
       </div>
