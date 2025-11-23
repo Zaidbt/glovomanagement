@@ -1,17 +1,30 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { verifyMobileToken } from "@/lib/auth-mobile";
 
 /**
  * GET /api/supplier/my-orders
  * Get orders containing products assigned to the current supplier
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Try session auth first (web)
     const session = await getServerSession(authOptions);
+    let userId: string | null = null;
 
-    if (!session?.user) {
+    if (session?.user?.id) {
+      userId = session.user.id;
+    } else {
+      // Try mobile JWT token
+      const mobileUser = await verifyMobileToken(request);
+      if (mobileUser) {
+        userId = mobileUser.userId;
+      }
+    }
+
+    if (!userId) {
       return NextResponse.json(
         { success: false, error: "Non authentifié" },
         { status: 401 }
@@ -20,7 +33,7 @@ export async function GET() {
 
     // Verify user is a fournisseur
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: userId },
       select: {
         id: true,
         role: true,
@@ -40,7 +53,7 @@ export async function GET() {
     // Get all products assigned to this supplier
     const supplierProducts = await prisma.productSupplier.findMany({
       where: {
-        supplierId: session.user.id,
+        supplierId: userId,
         isActive: true,
       },
       include: {
