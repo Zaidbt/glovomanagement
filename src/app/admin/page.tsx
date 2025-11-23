@@ -19,6 +19,7 @@ import {
   Clock,
   CheckCircle,
 } from "lucide-react";
+import WebSocketHealthWidget from "@/components/websocket-health";
 
 interface DashboardStats {
   totalStores: number;
@@ -263,6 +264,11 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        {/* WebSocket Health Monitor */}
+        <div className="max-w-md">
+          <WebSocketHealthWidget />
         </div>
 
         {/* Recent Activity */}
