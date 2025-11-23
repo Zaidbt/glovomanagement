@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "node server.js",
+    "dev:turbo": "next dev --turbopack",
     "build": "next build --turbopack",
-    "start": "next start",
+    "start": "NODE_ENV=production node server.js",
+    "start:next": "next start",
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
