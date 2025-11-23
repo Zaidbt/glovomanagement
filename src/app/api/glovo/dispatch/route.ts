@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { OrderStatus } from "@/types/order-status";
+import { eventTracker } from "@/lib/event-tracker";
 
 const prisma = new PrismaClient();
 
@@ -166,12 +167,18 @@ async function handleNewOrder(body: Record<string, unknown>) {
       );
     }
 
-    // Create or find customer
+    // Create or find customer (Hybrid approach: phone + Glovo ID)
     const customerData = body.customer as Record<string, unknown>;
     const customerPhone =
       (customerData?.phone_number as string) || "+212600000000";
-    const glovoCustomerId = customerData?.hash as string;
-    const customerName = (customerData?.name as string) || "Client Test";
+    // Support both _id and id for Glovo customer ID (different API formats)
+    const glovoCustomerId = (customerData?._id as string) || (customerData?.id as string) || (customerData?.hash as string);
+    // Support both name and first_name + last_name
+    const customerName =
+      (customerData?.name as string) ||
+      (customerData?.first_name
+        ? `${customerData.first_name as string} ${(customerData.last_name as string) || ""}`.trim()
+        : "Client Test");
 
     console.log("🔍 Recherche client:", { customerPhone, glovoCustomerId });
 
@@ -198,8 +205,16 @@ async function handleNewOrder(body: Record<string, unknown>) {
           email: (customerData?.email as string) || undefined,
           address:
             ((customerData?.invoicing_details as Record<string, unknown>)
-              ?.company_address as string) || undefined,
-          city: "Casablanca",
+              ?.company_address as string) ||
+            ((customerData?.delivery_address as Record<string, unknown>)
+              ?.street as string) ||
+            undefined,
+          city:
+            ((customerData?.delivery_address as Record<string, unknown>)
+              ?.city as string) || "Casablanca",
+          postalCode:
+            ((customerData?.delivery_address as Record<string, unknown>)
+              ?.postal_code as string) || undefined,
           loyaltyTier: "NEW",
           churnRiskScore: 0.0,
           isActive: true,
@@ -211,6 +226,28 @@ async function handleNewOrder(body: Record<string, unknown>) {
       console.log("✅ Nouveau client créé:", customer.id);
     } else {
       console.log("👤 Client existant trouvé:", customer.name, customer.id);
+
+      // Update existing customer with missing identifiers
+      const updateData: Record<string, unknown> = {};
+      if (glovoCustomerId && !customer.glovoCustomerId) {
+        updateData.glovoCustomerId = glovoCustomerId;
+        console.log(
+          "🔗 Ajout Glovo ID au client existant:",
+          glovoCustomerId
+        );
+      }
+      if (customerPhone !== customer.phoneNumber) {
+        updateData.phoneNumber = customerPhone;
+        console.log("📱 Mise à jour numéro de téléphone:", customerPhone);
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        customer = await prisma.customer.update({
+          where: { id: customer.id },
+          data: updateData,
+        });
+        console.log("✅ Client mis à jour avec nouveaux identifiants");
+      }
     }
 
     // Create the order
@@ -222,25 +259,58 @@ async function handleNewOrder(body: Record<string, unknown>) {
         orderCode: (body.order_code as string) || (body.order_id as string),
         source: "GLOVO",
         status: OrderStatus.CREATED,
-        orderTime: (body.order_time as string) || new Date().toISOString(),
-        estimatedPickupTime: body.estimated_pickup_time as string,
+        orderTime:
+          (body.order_time as string) ||
+          ((body.sys as Record<string, unknown>)?.created_at
+            ? new Date((body.sys as Record<string, unknown>).created_at as string).toISOString()
+            : new Date().toISOString()),
+        estimatedPickupTime:
+          (body.estimated_pickup_time as string) ||
+          (body.promised_for
+            ? new Date(body.promised_for as string).toISOString()
+            : undefined),
         utcOffsetMinutes: body.utc_offset_minutes as string,
-        paymentMethod: (body.payment_method as string) || "CASH",
+        paymentMethod:
+          (body.payment_method as string) ||
+          ((body.payment as Record<string, unknown>)?.type === "PAID" ? "DELAYED" : "CASH"),
         currency: (body.currency as string) || "MAD",
-        estimatedTotalPrice: body.estimated_total_price as number,
-        deliveryFee: body.delivery_fee as number,
-        totalAmount: body.estimated_total_price as number,
+        estimatedTotalPrice:
+          (body.estimated_total_price as number) ||
+          Math.round(((body.payment as Record<string, unknown>)?.order_total as number || 0) * 100),
+        deliveryFee:
+          (body.delivery_fee as number) ||
+          Math.round(((body.payment as Record<string, unknown>)?.delivery_fee as number || 0) * 100),
+        totalAmount:
+          (body.estimated_total_price as number) ||
+          Math.round(((body.payment as Record<string, unknown>)?.order_total as number || 0) * 100),
         customerName: customerName,
         customerPhone: customerPhone,
-        customerHash: customerData?.hash as string,
+        customerHash: (customerData?.hash as string) || (customerData?._id as string),
+        customerCashPaymentAmount: body.customer_cash_payment_amount as number,
         customerInvoicingDetails: customerData?.invoicing_details as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         courierName: (body.courier as Record<string, unknown>)?.name as string,
         courierPhone: (body.courier as Record<string, unknown>)
           ?.phone_number as string,
         allergyInfo: body.allergy_info as string,
         specialRequirements: body.special_requirements as string,
-        products: (body.products as any) || [], // eslint-disable-line @typescript-eslint/no-explicit-any
+        products: (body.products as any) || (body.items as any) || [], // eslint-disable-line @typescript-eslint/no-explicit-any
         metadata: {
+          // Format Glovo réel (nouveaux champs)
+          accepted_for: body.accepted_for,
+          promised_for: body.promised_for,
+          comment: body.comment,
+          external_order_id: body.external_order_id,
+          isPreorder: body.isPreorder,
+          order_type: body.order_type,
+          cancellation: body.cancellation,
+          client: body.client,
+          customer: body.customer,
+          items: body.items,
+          payment: body.payment,
+          status: body.status,
+          sys: body.sys,
+          transport_type: body.transport_type,
+          // Ancien format (compatibilité)
           delivery_address: body.delivery_address,
           bundled_orders: body.bundled_orders,
           is_picked_up_by_customer: body.is_picked_up_by_customer,
@@ -257,6 +327,11 @@ async function handleNewOrder(body: Record<string, unknown>) {
           voucher_code: body.voucher_code,
           meal_voucher_provider: body.meal_voucher_provider,
           meal_voucher_amount: body.meal_voucher_amount,
+          allergy_info: body.allergy_info,
+          special_requirements: body.special_requirements,
+          customer_cash_payment_amount: body.customer_cash_payment_amount,
+          courier: body.courier,
+          products: body.products,
         } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         credentialId: null,
       },
@@ -284,6 +359,30 @@ async function handleNewOrder(body: Record<string, unknown>) {
     });
 
     console.log("✅ [DISPATCH > handleNewOrder] Stats client mises à jour!");
+
+    // Track order creation event
+    console.log("\n📝 [DISPATCH > handleNewOrder] Création event tracker...");
+    await eventTracker.trackEvent({
+      type: "ORDER_CREATED",
+      title: "Commande reçue",
+      description: `Commande ${
+        order.orderCode || order.orderId
+      } reçue pour ${customer.name}`,
+      storeId: store.id,
+      orderId: order.id,
+      metadata: {
+        orderId: order.orderId,
+        orderCode: order.orderCode,
+        customerName: customer.name,
+        customerPhone: customer.phoneNumber,
+        totalAmount: order.estimatedTotalPrice,
+        currency: order.currency,
+        pickUpCode: body.pick_up_code,
+        allergyInfo: body.allergy_info,
+        specialRequirements: body.special_requirements,
+      },
+    });
+
     console.log("\n✅ [DISPATCH > handleNewOrder] Traitement terminé avec SUCCÈS");
     console.log("═══════════════════════════════════════════════════════════\n");
 

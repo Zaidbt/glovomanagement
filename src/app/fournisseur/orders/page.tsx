@@ -51,6 +51,8 @@ interface Order {
   courierName?: string;
   courierPhone?: string;
   products: OrderProduct[];
+  allergyInfo?: string;
+  specialRequirements?: string;
   metadata?: {
     pickupCode?: string;
     supplierStatuses?: Record<string, {
@@ -431,11 +433,11 @@ export default function FournisseurOrdersPage() {
                     {selectedOrder.orderCode || selectedOrder.orderId}
                   </p>
                 </div>
-                {selectedOrder.metadata?.pickupCode && (
+                {(selectedOrder.metadata?.pick_up_code || selectedOrder.metadata?.pickupCode) && (
                   <div>
                     <p className="text-sm text-gray-600">Code Récupération Livreur</p>
-                    <p className="font-mono font-bold text-lg text-green-600">
-                      {selectedOrder.metadata.pickupCode as string}
+                    <p className="font-mono font-bold text-2xl text-green-600">
+                      {(selectedOrder.metadata.pick_up_code as string) || (selectedOrder.metadata.pickupCode as string)}
                     </p>
                   </div>
                 )}
@@ -450,6 +452,28 @@ export default function FournisseurOrdersPage() {
                   </p>
                 </div>
               </div>
+
+              {/* Allergy Info & Special Requirements */}
+              {(selectedOrder.allergyInfo || selectedOrder.specialRequirements) && (
+                <div className="border-2 border-yellow-300 bg-yellow-50 rounded-lg p-4">
+                  <h3 className="font-bold text-yellow-900 mb-2 flex items-center">
+                    <span className="mr-2">⚠️</span>
+                    Informations Importantes
+                  </h3>
+                  {selectedOrder.allergyInfo && (
+                    <div className="mb-2">
+                      <p className="text-sm font-semibold text-yellow-800">Allergies:</p>
+                      <p className="text-sm text-yellow-900">{selectedOrder.allergyInfo}</p>
+                    </div>
+                  )}
+                  {selectedOrder.specialRequirements && (
+                    <div>
+                      <p className="text-sm font-semibold text-yellow-800">Exigences Spéciales:</p>
+                      <p className="text-sm text-yellow-900">{selectedOrder.specialRequirements}</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Customer & Courier Info */}
               <div className="grid grid-cols-2 gap-4">
