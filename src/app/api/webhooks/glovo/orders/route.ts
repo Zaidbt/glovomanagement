@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { eventTracker } from "@/lib/event-tracker";
 import { OrderStatus } from "@/types/order-status";
-import { notifyAllCollaborateurs } from "@/lib/socket";
 import fs from "fs";
 import path from "path";
 
@@ -249,17 +248,25 @@ export async function POST(request: NextRequest) {
 
           console.log("✅ Commande stockée en base de données:", order.id);
 
-          // Notify all collaborateurs via WebSocket about new order
-          notifyAllCollaborateurs("new-order-created", {
-            id: order.id,
-            orderId: order.orderId,
-            orderCode: order.orderCode,
-            customerName: order.customerName,
-            totalAmount: order.estimatedTotalPrice,
-            orderTime: order.orderTime,
-            source: order.source,
+          // Notify collaborateurs assigned to this store via WebSocket
+          const storeCollaborateurs = await prisma.collaborateurStore.findMany({
+            where: { storeId: store.id },
+            include: { collaborateur: true },
           });
-          console.log("📤 Collaborateurs notifiés via WebSocket");
+
+          const { notifyCollaborateur } = await import("@/lib/socket");
+          storeCollaborateurs.forEach((sc) => {
+            notifyCollaborateur(sc.collaborateur.id, "new-order-created", {
+              id: order.id,
+              orderId: order.orderId,
+              orderCode: order.orderCode,
+              customerName: order.customerName,
+              totalAmount: order.estimatedTotalPrice,
+              orderTime: order.orderTime,
+              source: order.source,
+            });
+          });
+          console.log(`📤 ${storeCollaborateurs.length} collaborateurs notifiés via WebSocket`);
 
           return NextResponse.json({
             success: true,
@@ -543,17 +550,25 @@ export async function POST(request: NextRequest) {
 
         console.log("\n✅ [ORDERS WEBHOOK] Traitement terminé avec SUCCÈS");
 
-        // Notify all collaborateurs via WebSocket about new order
-        notifyAllCollaborateurs("new-order-created", {
-          id: order.id,
-          orderId: order.orderId,
-          orderCode: order.orderCode,
-          customerName: order.customerName,
-          totalAmount: order.estimatedTotalPrice,
-          orderTime: order.orderTime,
-          source: order.source,
+        // Notify collaborateurs assigned to this store via WebSocket
+        const storeCollaborateurs = await prisma.collaborateurStore.findMany({
+          where: { storeId: store.id },
+          include: { collaborateur: true },
         });
-        console.log("📤 [ORDERS WEBHOOK] Collaborateurs notifiés via WebSocket");
+
+        const { notifyCollaborateur } = await import("@/lib/socket");
+        storeCollaborateurs.forEach((sc) => {
+          notifyCollaborateur(sc.collaborateur.id, "new-order-created", {
+            id: order.id,
+            orderId: order.orderId,
+            orderCode: order.orderCode,
+            customerName: order.customerName,
+            totalAmount: order.estimatedTotalPrice,
+            orderTime: order.orderTime,
+            source: order.source,
+          });
+        });
+        console.log(`📤 [ORDERS WEBHOOK] ${storeCollaborateurs.length} collaborateurs notifiés via WebSocket`);
 
         console.log("╚══════════════════════════════════════════════════════════╝\n");
 
