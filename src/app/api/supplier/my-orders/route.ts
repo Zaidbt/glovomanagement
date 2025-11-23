@@ -60,15 +60,20 @@ export async function GET() {
     const myProductSKUs = new Set(supplierProducts.map((sp) => sp.product.sku));
     console.log(`👤 Supplier has ${myProductSKUs.size} products`);
 
-    // Get all orders
+    // Get only ACCEPTED orders (not CREATED - collaborateur must accept first)
     const allOrders = await prisma.order.findMany({
+      where: {
+        status: {
+          not: "CREATED", // Exclude orders that haven't been accepted yet
+        },
+      },
       orderBy: {
         orderTime: "desc",
       },
       take: 100, // Last 100 orders
     });
 
-    console.log(`📋 Total orders in system: ${allOrders.length}`);
+    console.log(`📋 Total ACCEPTED orders in system: ${allOrders.length}`);
 
     // Filter orders that contain at least one of supplier's products
     const relevantOrders = [];
