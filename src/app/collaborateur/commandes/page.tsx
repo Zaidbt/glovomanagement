@@ -158,6 +158,21 @@ export default function CollaborateurCommandesPage() {
       console.log("✅ Connected to WebSocket");
       // Join personal collaborateur room
       socket.emit("join-room", `collaborateur:${(session.user as { id: string }).id}`);
+      // Join global collaborateurs room for new orders
+      socket.emit("join-room", "collaborateurs");
+    });
+
+    socket.on("new-order-created", (orderData) => {
+      console.log("🆕 New order created via WebSocket:", orderData);
+
+      // Show toast notification
+      toast({
+        title: "🆕 Nouvelle commande Glovo!",
+        description: `Commande ${orderData.orderCode || orderData.orderId} de ${orderData.customerName}`,
+      });
+
+      // Refresh orders list
+      fetchOrders();
     });
 
     socket.on("basket-ready", (data) => {

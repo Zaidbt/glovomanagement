@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { eventTracker } from "@/lib/event-tracker";
 import { OrderStatus } from "@/types/order-status";
+import { notifyAllCollaborateurs } from "@/lib/socket";
 import fs from "fs";
 import path from "path";
 
@@ -247,6 +248,19 @@ export async function POST(request: NextRequest) {
           });
 
           console.log("✅ Commande stockée en base de données:", order.id);
+
+          // Notify all collaborateurs via WebSocket about new order
+          notifyAllCollaborateurs("new-order-created", {
+            id: order.id,
+            orderId: order.orderId,
+            orderCode: order.orderCode,
+            customerName: order.customerName,
+            totalAmount: order.estimatedTotalPrice,
+            orderTime: order.orderTime,
+            source: order.source,
+          });
+          console.log("📤 Collaborateurs notifiés via WebSocket");
+
           return NextResponse.json({
             success: true,
             message: "Nouvelle commande stockée avec succès",
@@ -528,6 +542,19 @@ export async function POST(request: NextRequest) {
         });
 
         console.log("\n✅ [ORDERS WEBHOOK] Traitement terminé avec SUCCÈS");
+
+        // Notify all collaborateurs via WebSocket about new order
+        notifyAllCollaborateurs("new-order-created", {
+          id: order.id,
+          orderId: order.orderId,
+          orderCode: order.orderCode,
+          customerName: order.customerName,
+          totalAmount: order.estimatedTotalPrice,
+          orderTime: order.orderTime,
+          source: order.source,
+        });
+        console.log("📤 [ORDERS WEBHOOK] Collaborateurs notifiés via WebSocket");
+
         console.log("╚══════════════════════════════════════════════════════════╝\n");
 
         // WhatsApp notification removed - now sent when collaborateur marks order as ready
