@@ -57,7 +57,8 @@ export async function POST(
     });
 
     // Count orders in each basket (that haven't been picked up yet)
-    const basketCounts = { 1: 0, 2: 0, 3: 0 };
+    // MAX 1 commande par panier!
+    const basketOccupied = { 1: false, 2: false, 3: false };
     for (const supplierOrder of supplierOrders) {
       const supplierMeta = (supplierOrder.metadata as Record<string, unknown>) || {};
       const supplierStatuses = (supplierMeta.supplierStatuses as Record<string, unknown>) || {};
@@ -66,22 +67,27 @@ export async function POST(
       if (supplierStatus.basket && !supplierStatus.pickedUp) {
         const basketNum = supplierStatus.basket as number;
         if (basketNum >= 1 && basketNum <= 3) {
-          basketCounts[basketNum as 1 | 2 | 3]++;
+          basketOccupied[basketNum as 1 | 2 | 3] = true;
         }
       }
     }
 
-    // Find basket with least orders (prefer 1, then 2, then 3)
-    let assignedBasket = 1;
-    if (basketCounts[1] <= basketCounts[2] && basketCounts[1] <= basketCounts[3]) {
+    // Find first available basket (prefer 1, then 2, then 3)
+    // If all full, assign null (no basket)
+    let assignedBasket: number | null = null;
+    if (!basketOccupied[1]) {
       assignedBasket = 1;
-    } else if (basketCounts[2] <= basketCounts[3]) {
+    } else if (!basketOccupied[2]) {
       assignedBasket = 2;
-    } else {
+    } else if (!basketOccupied[3]) {
       assignedBasket = 3;
     }
 
-    console.log(`🧺 Assigning basket ${assignedBasket} for supplier ${user.name}`);
+    if (assignedBasket === null) {
+      console.log(`⚠️ Tous les paniers sont pleins! Commande marquée READY sans panier pour ${user.name}`);
+    } else {
+      console.log(`🧺 Assigning basket ${assignedBasket} for supplier ${user.name}`);
+    }
 
     // Update metadata to mark supplier's products as ready with basket
     const metadata = (order.metadata as Record<string, unknown>) || {};

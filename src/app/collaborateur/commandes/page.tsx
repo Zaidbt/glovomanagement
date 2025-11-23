@@ -164,7 +164,7 @@ export default function CollaborateurCommandesPage() {
     setFilteredOrders(filtered);
   }, [orders, statusFilter, searchQuery]);
 
-  const handlePickupBasket = async (orderId: string, supplierId: string, basketNumber: number) => {
+  const handlePickupBasket = async (orderId: string, supplierId: string, basketNumber: number | null) => {
     try {
       const response = await fetch(`/api/collaborateur/orders/${orderId}/pickup-basket`, {
         method: "POST",
@@ -175,7 +175,7 @@ export default function CollaborateurCommandesPage() {
       if (response.ok) {
         toast({
           title: "✅ Panier récupéré",
-          description: `Panier ${basketNumber} marqué comme récupéré`,
+          description: basketNumber ? `Panier ${basketNumber} marqué comme récupéré` : "Produits marqués comme récupérés",
         });
         fetchOrders();
         // Don't close dialog - let user see "Commande Prête" button if all baskets picked up
@@ -454,6 +454,7 @@ export default function CollaborateurCommandesPage() {
                     const alertClass = getOrderAlertClass(order);
                     const readyBasketsCount = countReadyBaskets(order);
                     const readyBaskets: Array<{ supplierId: string; basket: number; supplierName?: string }> = [];
+                    let hasNoBasketOrders = false;
 
                     if (order.metadata?.supplierStatuses) {
                       Object.entries(order.metadata.supplierStatuses).forEach(([supplierId, status]) => {
@@ -463,6 +464,9 @@ export default function CollaborateurCommandesPage() {
                             basket: status.basket,
                             supplierName: status.supplierName,
                           });
+                        }
+                        if (status.status === "READY" && !status.pickedUp && !status.basket) {
+                          hasNoBasketOrders = true;
                         }
                       });
                     }
@@ -479,8 +483,8 @@ export default function CollaborateurCommandesPage() {
                           {formatDate(order.orderTime)}
                         </TableCell>
                         <TableCell>
-                          {readyBasketsCount > 0 ? (
-                            <div className="flex gap-1">
+                          {readyBasketsCount > 0 || hasNoBasketOrders ? (
+                            <div className="flex gap-1 flex-wrap">
                               {readyBaskets.map((basket, idx) => (
                                 <Badge
                                   key={idx}
@@ -490,6 +494,14 @@ export default function CollaborateurCommandesPage() {
                                   {basket.basket}
                                 </Badge>
                               ))}
+                              {hasNoBasketOrders && (
+                                <Badge
+                                  variant="outline"
+                                  className="bg-orange-50 border-orange-300 text-orange-700"
+                                >
+                                  ⚠️
+                                </Badge>
+                              )}
                             </div>
                           ) : (
                             <span className="text-xs text-gray-400">-</span>
@@ -623,6 +635,9 @@ export default function CollaborateurCommandesPage() {
                 const hasUnpickedBaskets = Object.values(statuses).some(
                   (s) => s.status === "READY" && !s.pickedUp && s.basket
                 );
+                const hasNoBasketOrders = Object.values(statuses).some(
+                  (s) => s.status === "READY" && !s.pickedUp && !s.basket
+                );
 
                 return (
                   <div>
@@ -654,6 +669,50 @@ export default function CollaborateurCommandesPage() {
                                   <Button
                                     onClick={() => handlePickupBasket(selectedOrder.id, supplierId, status.basket!)}
                                     className="bg-green-600 hover:bg-green-700"
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Récupéré
+                                  </Button>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Orders without baskets (all baskets full) */}
+                    {hasNoBasketOrders && (
+                      <>
+                        <h3 className="font-semibold mb-3 mt-6">⚠️ Produits Prêts Sans Panier</h3>
+                        <div className="space-y-3">
+                          {Object.entries(statuses).map(([supplierId, status]) => {
+                            if (status.status === "READY" && !status.pickedUp && !status.basket) {
+                              return (
+                                <div
+                                  key={supplierId}
+                                  className="flex items-center justify-between p-4 bg-orange-50 border-2 border-orange-300 rounded-lg"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="bg-orange-500 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg">
+                                      ⚠️
+                                    </div>
+                                    <div>
+                                      <p className="font-semibold text-orange-900">
+                                        {status.supplierName || "Fournisseur"}
+                                      </p>
+                                      <p className="text-sm text-orange-700">
+                                        Produits prêts depuis: {formatDate(status.markedReadyAt)}
+                                      </p>
+                                      <p className="text-xs text-orange-600 mt-1">
+                                        Tous les paniers étaient pleins - à récupérer directement
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    onClick={() => handlePickupBasket(selectedOrder.id, supplierId, null)}
+                                    className="bg-orange-600 hover:bg-orange-700"
                                   >
                                     <CheckCircle className="w-4 h-4 mr-2" />
                                     Récupéré
