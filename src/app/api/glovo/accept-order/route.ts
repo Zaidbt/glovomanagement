@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { OrderStatus } from "@/types/order-status";
+import { notifySupplier } from "@/lib/socket";
 
 const prisma = new PrismaClient();
 
@@ -123,6 +124,43 @@ export async function POST(request: NextRequest) {
           storeId: order.storeId,
         },
       });
+
+      // Notify suppliers via WebSocket about new order
+      const orderProducts = Array.isArray(order.products) ? order.products as unknown as Array<{ id?: string; sku?: string; purchased_product_id?: string }> : [];
+      const productSKUs = orderProducts.map((p) => p.id || p.sku || p.purchased_product_id).filter(Boolean);
+
+      if (productSKUs.length > 0) {
+        const supplierAssignments = await prisma.productSupplier.findMany({
+          where: {
+            product: {
+              sku: { in: productSKUs as string[] },
+            },
+            isActive: true,
+          },
+          include: {
+            supplier: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        });
+
+        const uniqueSuppliers = new Set(supplierAssignments.map((s) => s.supplierId));
+
+        uniqueSuppliers.forEach((supplierId) => {
+          notifySupplier(supplierId, "new-order", {
+            id: order.id,
+            orderId: order.orderId,
+            orderCode: order.orderCode,
+            productCount: orderProducts.length,
+            orderTime: order.orderTime,
+          });
+        });
+
+        console.log(`📤 Notified ${uniqueSuppliers.size} suppliers via WebSocket`);
+      }
 
       return NextResponse.json({
         success: true,

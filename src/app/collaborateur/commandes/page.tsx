@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { io, Socket } from "socket.io-client";
 import {
   Card,
   CardContent,
@@ -77,6 +79,7 @@ interface Order {
 }
 
 export default function CollaborateurCommandesPage() {
+  const { data: session } = useSession();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -142,6 +145,44 @@ export default function CollaborateurCommandesPage() {
     fetchSettings();
     fetchOrders();
   }, []);
+
+  // WebSocket connection for live updates
+  useEffect(() => {
+    if (!session?.user || !(session.user as { id?: string }).id) return;
+
+    const socket: Socket = io({
+      path: "/socket.io/",
+    });
+
+    socket.on("connect", () => {
+      console.log("✅ Connected to WebSocket");
+      // Join personal collaborateur room
+      socket.emit("join-room", `collaborateur:${(session.user as { id: string }).id}`);
+    });
+
+    socket.on("basket-ready", (data) => {
+      console.log("🧺 Basket ready received via WebSocket:", data);
+
+      // Show toast notification
+      toast({
+        title: "🧺 Panier prêt!",
+        description: data.basket
+          ? `Panier ${data.basket} - ${data.supplierName} - Commande ${data.orderCode}`
+          : `${data.supplierName} - Commande ${data.orderCode} (sans panier)`,
+      });
+
+      // Refresh orders list
+      fetchOrders();
+    });
+
+    socket.on("disconnect", () => {
+      console.log("❌ Disconnected from WebSocket");
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [(session?.user as { id?: string })?.id]);
 
   useEffect(() => {
     let filtered = [...orders];

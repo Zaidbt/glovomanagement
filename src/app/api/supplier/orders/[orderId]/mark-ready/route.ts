@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { notifyCollaborateur } from "@/lib/socket";
 
 /**
  * POST /api/supplier/orders/[orderId]/mark-ready
@@ -130,6 +131,24 @@ export async function POST(
         },
       },
     });
+
+    // Notify collaborateurs via WebSocket about basket ready
+    const collaborateurs = await prisma.user.findMany({
+      where: { role: "COLLABORATEUR" },
+      select: { id: true },
+    });
+
+    collaborateurs.forEach((collab) => {
+      notifyCollaborateur(collab.id, "basket-ready", {
+        orderId: order.id,
+        orderCode: order.orderCode,
+        supplierId: session.user.id,
+        supplierName: user.name,
+        basket: assignedBasket,
+      });
+    });
+
+    console.log(`📤 Notified ${collaborateurs.length} collaborateurs via WebSocket`);
 
     return NextResponse.json({
       success: true,

@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { io, Socket } from "socket.io-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,6 +72,7 @@ interface Order {
 }
 
 export default function FournisseurOrdersPage() {
+  const { data: session } = useSession();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -128,6 +131,42 @@ export default function FournisseurOrdersPage() {
     fetchSettings();
     fetchOrders();
   }, []);
+
+  // WebSocket connection for live updates
+  useEffect(() => {
+    if (!session?.user || !(session.user as { id?: string }).id) return;
+
+    const socket: Socket = io({
+      path: "/socket.io/",
+    });
+
+    socket.on("connect", () => {
+      console.log("✅ Connected to WebSocket");
+      // Join personal supplier room
+      socket.emit("join-room", `supplier:${(session.user as { id: string }).id}`);
+    });
+
+    socket.on("new-order", (orderData) => {
+      console.log("🔔 New order received via WebSocket:", orderData);
+
+      // Show toast notification
+      toast({
+        title: "🔔 Nouvelle commande!",
+        description: `Commande ${orderData.orderCode || orderData.orderId} - ${orderData.productCount} produits`,
+      });
+
+      // Refresh orders list
+      fetchOrders();
+    });
+
+    socket.on("disconnect", () => {
+      console.log("❌ Disconnected from WebSocket");
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [(session?.user as { id?: string })?.id]);
 
   const handleMarkReady = async (orderId: string) => {
     try {
