@@ -1,17 +1,19 @@
 /**
  * Accept Glovo Order API Endpoint
- * This endpoint accepts a Glovo order using the Integration API
+ * Accepts a Glovo order using the Integration API
+ * Also updates local order status to ACCEPTED
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+import { OrderStatus } from "@/types/order-status";
 
-const GLOVO_SHARED_TOKEN = "8b979af6-8e38-4bdb-aa07-26408928052a";
-const GLOVO_STORE_EXTERNAL_ID = "store-01"; // Your external ID from webhook
+const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { orderId, storeExternalId, committedPreparationTime } = body;
+    const { orderId, committedPreparationTime } = body;
 
     if (!orderId) {
       return NextResponse.json(
@@ -20,167 +22,139 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const externalId = storeExternalId || GLOVO_STORE_EXTERNAL_ID;
+    console.log("🚀 [ACCEPT ORDER] Attempting to accept Glovo order:", orderId);
 
-    console.log("🚀 Attempting to accept Glovo order:", {
-      orderId,
-      externalId,
-      committedPreparationTime,
+    // Get order from database
+    const order = await prisma.order.findFirst({
+      where: { orderId: orderId },
+      include: { store: true },
     });
+
+    if (!order) {
+      return NextResponse.json(
+        { error: "Order not found in database" },
+        { status: 404 }
+      );
+    }
+
+    // Use environment variables for Glovo API
+    const apiBaseUrl = process.env.GLOVO_API_BASE_URL || "https://api.glovoapp.com";
+    const sharedToken = process.env.GLOVO_SHARED_TOKEN;
+    const storeExternalId = order.store.glovoStoreId || process.env.GLOVO_STORE_EXTERNAL_ID;
+
+    if (!sharedToken || !storeExternalId) {
+      console.error("❌ Missing GLOVO_SHARED_TOKEN or store external ID");
+      return NextResponse.json(
+        { error: "Glovo API configuration incomplete" },
+        { status: 500 }
+      );
+    }
 
     // Calculate preparation time (30 minutes from now if not provided)
     const prepTime =
       committedPreparationTime ||
       new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
-    // Try multiple endpoints to find which one works
-    const attempts = [];
+    console.log("📡 [ACCEPT ORDER] Calling Glovo API...");
+    console.log("   API URL:", `${apiBaseUrl}/api/v0/integrations/orders/${orderId}/accept`);
+    console.log("   Store External ID:", storeExternalId);
+    console.log("   Preparation Time:", prepTime);
 
-    // Attempt 1: Integration API with /accept endpoint
-    console.log("🔄 Attempt 1: Integration API /accept endpoint");
+    // Call Glovo API to accept the order
+    const glovoResponse = await fetch(
+      `${apiBaseUrl}/api/v0/integrations/orders/${orderId}/accept`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: sharedToken,
+          "Content-Type": "application/json",
+          "Glovo-Store-Address-External-Id": storeExternalId,
+        },
+        body: JSON.stringify({
+          committedPreparationTime: prepTime,
+        }),
+      }
+    );
+
+    const responseText = await glovoResponse.text();
+    let glovoData;
     try {
-      const response1 = await fetch(
-        `https://stageapi.glovoapp.com/api/v0/integrations/orders/${orderId}/accept`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: GLOVO_SHARED_TOKEN,
-            "Content-Type": "application/json",
-            "Glovo-Store-Address-External-Id": externalId,
-          },
-          body: JSON.stringify({
+      glovoData = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      glovoData = { rawResponse: responseText };
+    }
+
+    console.log("📥 [ACCEPT ORDER] Glovo API response:", {
+      status: glovoResponse.status,
+      data: glovoData,
+    });
+
+    // Check if acceptance was successful
+    if (glovoResponse.ok || glovoResponse.status === 202 || glovoResponse.status === 204) {
+      console.log("✅ [ACCEPT ORDER] Order accepted by Glovo API!");
+
+      // Update order status in database
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: OrderStatus.ACCEPTED,
+          metadata: {
+            ...(order.metadata as object),
+            acceptedAt: new Date().toISOString(),
             committedPreparationTime: prepTime,
-          }),
-        }
-      );
-
-      const data1 = await response1.json();
-      attempts.push({
-        endpoint: "Integration API /accept",
-        status: response1.status,
-        data: data1,
-      });
-
-      if (response1.ok || response1.status === 202 || response1.status === 204) {
-        console.log("✅ Order accepted successfully via Integration API!");
-        return NextResponse.json({
-          success: true,
-          message: "Order accepted successfully",
-          method: "Integration API /accept",
-          orderId,
-          response: data1,
-        });
-      }
-    } catch (error) {
-      console.error("❌ Attempt 1 failed:", error);
-      attempts.push({
-        endpoint: "Integration API /accept",
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-
-    // Attempt 2: Webhook API with /status endpoint
-    console.log("🔄 Attempt 2: Webhook API /status endpoint");
-    try {
-      const response2 = await fetch(
-        `https://stageapi.glovoapp.com/webhook/stores/${externalId}/orders/${orderId}/status`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: GLOVO_SHARED_TOKEN,
-            "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            status: "ACCEPTED",
-          }),
-        }
-      );
-
-      const data2 = await response2.json();
-      attempts.push({
-        endpoint: "Webhook API /status",
-        status: response2.status,
-        data: data2,
+        },
       });
 
-      if (response2.ok || response2.status === 202 || response2.status === 204) {
-        console.log("✅ Order accepted successfully via Webhook API!");
-        return NextResponse.json({
-          success: true,
-          message: "Order accepted successfully",
-          method: "Webhook API /status",
-          orderId,
-          response: data2,
-        });
-      }
-    } catch (error) {
-      console.error("❌ Attempt 2 failed:", error);
-      attempts.push({
-        endpoint: "Webhook API /status",
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
+      console.log("✅ [ACCEPT ORDER] Database updated to ACCEPTED status");
 
-    // Attempt 3: Try with Bearer prefix
-    console.log("🔄 Attempt 3: Integration API with Bearer prefix");
-    try {
-      const response3 = await fetch(
-        `https://stageapi.glovoapp.com/api/v0/integrations/orders/${orderId}/accept`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${GLOVO_SHARED_TOKEN}`,
-            "Content-Type": "application/json",
-            "Glovo-Store-Address-External-Id": externalId,
-          },
-          body: JSON.stringify({
+      // Create event
+      await prisma.event.create({
+        data: {
+          type: "ORDER_ACCEPTED",
+          title: "Commande acceptée",
+          description: `Commande ${order.orderCode || orderId} acceptée par le store`,
+          metadata: {
+            orderId: order.id,
+            orderCode: order.orderCode,
             committedPreparationTime: prepTime,
-          }),
-        }
-      );
-
-      const data3 = await response3.json();
-      attempts.push({
-        endpoint: "Integration API /accept (Bearer)",
-        status: response3.status,
-        data: data3,
+          },
+          orderId: order.id,
+          storeId: order.storeId,
+        },
       });
 
-      if (response3.ok || response3.status === 202 || response3.status === 204) {
-        console.log("✅ Order accepted successfully with Bearer token!");
-        return NextResponse.json({
-          success: true,
-          message: "Order accepted successfully",
-          method: "Integration API /accept (Bearer)",
+      return NextResponse.json({
+        success: true,
+        message: "Commande acceptée avec succès",
+        orderId,
+        committedPreparationTime: prepTime,
+        glovoResponse: glovoData,
+      });
+    } else {
+      // Glovo API failed
+      console.error("❌ [ACCEPT ORDER] Glovo API error:", {
+        status: glovoResponse.status,
+        data: glovoData,
+      });
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Glovo API returned an error",
           orderId,
-          response: data3,
-        });
-      }
-    } catch (error) {
-      console.error("❌ Attempt 3 failed:", error);
-      attempts.push({
-        endpoint: "Integration API /accept (Bearer)",
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
+          status: glovoResponse.status,
+          glovoResponse: glovoData,
+          suggestion: "The order might be auto-accepted by Glovo, or check API permissions.",
+        },
+        { status: glovoResponse.status }
+      );
     }
-
-    // All attempts failed
-    console.error("❌ All accept attempts failed");
+  } catch (error) {
+    console.error("💥 [ACCEPT ORDER] Error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to accept order - all methods failed",
-        orderId,
-        attempts,
-        suggestion:
-          "The order might be auto-accepted by Glovo, or the shared token may not have API permissions. Check the Glovo Partner Portal to verify the order status.",
-      },
-      { status: 500 }
-    );
-  } catch (error) {
-    console.error("💥 Error in accept-order endpoint:", error);
-    return NextResponse.json(
-      {
         error: "Internal server error",
         details: error instanceof Error ? error.message : "Unknown error",
       },

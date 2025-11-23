@@ -33,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Package, ShoppingCart, CheckCircle, Search, Filter, AlertCircle, Send } from "lucide-react";
+import { Package, ShoppingCart, CheckCircle, Search, Filter, AlertCircle, Send, Clock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface OrderProduct {
@@ -85,6 +85,7 @@ export default function CollaborateurCommandesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [markingReady, setMarkingReady] = useState(false);
+  const [acceptingOrder, setAcceptingOrder] = useState(false);
   const { toast } = useToast();
 
   // Settings for alert timing
@@ -192,6 +193,44 @@ export default function CollaborateurCommandesPage() {
         description: "Erreur lors de la mise à jour",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleAcceptOrder = async (order: Order) => {
+    try {
+      setAcceptingOrder(true);
+      const response = await fetch("/api/glovo/accept-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: order.orderId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast({
+          title: "✅ Commande acceptée",
+          description: `Commande ${order.orderCode || order.orderId} acceptée avec succès`,
+        });
+        fetchOrders();
+      } else {
+        toast({
+          title: "Erreur",
+          description: data.error || data.suggestion || "Impossible d'accepter la commande",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error accepting order:", error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de l'acceptation de la commande",
+        variant: "destructive",
+      });
+    } finally {
+      setAcceptingOrder(false);
     }
   };
 
@@ -519,6 +558,40 @@ export default function CollaborateurCommandesPage() {
                   <p className="font-medium text-gray-400">Confidentiel</p>
                 </div>
               </div>
+
+              {/* Accept Order Button - Show only for CREATED orders */}
+              {selectedOrder.status === OrderStatus.CREATED && (
+                <div className="border-2 border-blue-300 bg-blue-50 rounded-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-lg mb-1 text-blue-900">
+                        📋 Nouvelle commande
+                      </h3>
+                      <p className="text-sm text-blue-700">
+                        Acceptez cette commande pour confirmer au client que vous commencez la préparation (30 min estimé)
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => handleAcceptOrder(selectedOrder)}
+                      disabled={acceptingOrder}
+                      size="lg"
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {acceptingOrder ? (
+                        <>
+                          <Clock className="w-5 h-5 mr-2 animate-spin" />
+                          Acceptation...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-5 h-5 mr-2" />
+                          Accepter Commande
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {/* Allergy Info & Special Requirements */}
               {(selectedOrder.allergyInfo || selectedOrder.specialRequirements) && (
