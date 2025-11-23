@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eventTracker } from "@/lib/event-tracker";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,6 +38,90 @@ export async function POST(request: NextRequest) {
     const messageType = fromString.startsWith("whatsapp:") ? "whatsapp" : "sms";
     const cleanFrom = fromString.replace("whatsapp:", "") || "";
     const cleanTo = toString.replace("whatsapp:", "") || "";
+
+    // Find the store that owns this Twilio number
+    const store = await prisma.store.findFirst({
+      where: {
+        twilioNumber: cleanTo,
+      },
+    });
+
+    if (!store) {
+      console.warn(`⚠️ No store found for Twilio number: ${cleanTo}`);
+    }
+
+    // Save message to database if it's an inbound message
+    if (fromString.startsWith("whatsapp:") && store) {
+      // Find or create conversation
+      let conversation = await prisma.conversation.findFirst({
+        where: {
+          storeId: store.id,
+          contactNumber: cleanFrom,
+        },
+      });
+
+      if (!conversation) {
+        conversation = await prisma.conversation.create({
+          data: {
+            storeId: store.id,
+            contactNumber: cleanFrom,
+          },
+        });
+      }
+
+      // Save the message
+      await prisma.message.upsert({
+        where: {
+          twilioSid: MessageSid as string,
+        },
+        update: {
+          body: Body as string,
+          status: MessageStatus as string,
+          updatedAt: new Date(),
+        },
+        create: {
+          conversationId: conversation.id,
+          twilioSid: MessageSid as string,
+          direction: "inbound",
+          fromNumber: cleanFrom,
+          toNumber: cleanTo,
+          body: Body as string || "",
+          status: MessageStatus as string,
+          sentAt: new Date(),
+          receivedAt: new Date(),
+          isRead: false,
+        },
+      });
+
+      // Update conversation unread count
+      await prisma.conversation.update({
+        where: { id: conversation.id },
+        data: {
+          unreadCount: { increment: 1 },
+          lastMessageAt: new Date(),
+          lastMessage: Body as string,
+        },
+      });
+
+      // Notify collaborateurs assigned to this store via WebSocket
+      const storeCollaborateurs = await prisma.collaborateurStore.findMany({
+        where: { storeId: store.id },
+        include: { collaborateur: true },
+      });
+
+      const { notifyCollaborateur } = await import("@/lib/socket");
+      storeCollaborateurs.forEach((sc) => {
+        notifyCollaborateur(sc.collaborateur.id, "new-message", {
+          conversationId: conversation.id,
+          contactNumber: cleanFrom,
+          message: Body as string,
+          storeId: store.id,
+          storeName: store.name,
+        });
+      });
+
+      console.log(`📤 ${storeCollaborateurs.length} collaborateurs notifiés du nouveau message`);
+    }
 
     // Sauvegarder le message dans la base de données
     const messageData = {

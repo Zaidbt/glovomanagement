@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { io, Socket } from "socket.io-client";
 import "./messaging.css";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -58,6 +60,7 @@ interface Message {
 }
 
 export default function MessagingPage() {
+  const { data: session } = useSession();
   const [stores, setStores] = useState<Store[]>([]);
   const [selectedStore, setSelectedStore] = useState<string>("");
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -208,6 +211,51 @@ export default function MessagingPage() {
       fetchMessages();
     }
   }, [selectedStore, selectedConversation, fetchMessages]);
+
+  // WebSocket connection for live message notifications
+  useEffect(() => {
+    if (!session?.user || !(session.user as { id?: string }).id) return;
+
+    const socket: Socket = io({
+      path: "/socket.io/",
+    });
+
+    socket.on("connect", () => {
+      console.log("✅ Connected to WebSocket");
+      // Join personal collaborateur/admin room
+      socket.emit("join-room", `collaborateur:${(session.user as { id: string }).id}`);
+    });
+
+    socket.on("new-message", (data) => {
+      console.log("💬 New message received via WebSocket:", data);
+
+      // Show toast notification if not viewing this conversation
+      if (data.storeId === selectedStore) {
+        if (data.contactNumber !== selectedConversation) {
+          toast({
+            title: "💬 Nouveau message!",
+            description: `De ${data.contactNumber}: ${data.message.substring(0, 50)}${data.message.length > 50 ? '...' : ''}`,
+          });
+        }
+
+        // Refresh conversations to update unread count
+        fetchConversations(currentPage, true);
+
+        // If viewing this conversation, refresh messages
+        if (data.contactNumber === selectedConversation) {
+          fetchMessages();
+        }
+      }
+    });
+
+    socket.on("disconnect", () => {
+      console.log("❌ Disconnected from WebSocket");
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [(session?.user as { id?: string })?.id, selectedStore, selectedConversation, currentPage, fetchConversations, fetchMessages, toast]);
 
   // Log pour debug
   useEffect(() => {}, [messages]);
