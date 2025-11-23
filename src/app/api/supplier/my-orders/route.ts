@@ -50,28 +50,34 @@ export async function GET(request: NextRequest) {
 
     console.log(`📦 Fetching orders for supplier: ${user.name}`);
 
-    // Get all products assigned to this supplier
-    const supplierProducts = await prisma.productSupplier.findMany({
-      where: {
-        supplierId: userId,
-        isActive: true,
-      },
-      include: {
-        product: {
-          select: {
-            id: true,
-            sku: true,
-            name: true,
-            price: true,
-            imageUrl: true,
-            category1: true,
+    // TEMPORARY: Get all products assigned to this supplier (skip if tables don't exist)
+    let supplierProducts: any[] = [];
+    let myProductSKUs = new Set<string>();
+
+    try {
+      supplierProducts = await prisma.productSupplier.findMany({
+        where: {
+          supplierId: userId,
+          isActive: true,
+        },
+        include: {
+          product: {
+            select: {
+              id: true,
+              sku: true,
+              name: true,
+              price: true,
+              imageUrl: true,
+              category1: true,
+            },
           },
         },
-      },
-    });
-
-    const myProductSKUs = new Set(supplierProducts.map((sp) => sp.product.sku));
-    console.log(`👤 Supplier has ${myProductSKUs.size} products`);
+      });
+      myProductSKUs = new Set(supplierProducts.map((sp) => sp.product.sku));
+      console.log(`👤 Supplier has ${myProductSKUs.size} products`);
+    } catch (error) {
+      console.log(`⚠️ Product assignment system not ready, showing all orders`);
+    }
 
     // Get only ACCEPTED orders (not CREATED - collaborateur must accept first)
     const allOrders = await prisma.order.findMany({
@@ -89,7 +95,9 @@ export async function GET(request: NextRequest) {
     console.log(`📋 Total ACCEPTED orders in system: ${allOrders.length}`);
 
     // Filter orders that contain at least one of supplier's products
+    // TEMPORARY: If no product assignments, show ALL orders
     const relevantOrders = [];
+    const showAllOrders = myProductSKUs.size === 0;
 
     for (const order of allOrders) {
       // Parse products from order
@@ -119,7 +127,8 @@ export async function GET(request: NextRequest) {
         return productSKU && myProductSKUs.has(productSKU);
       });
 
-      if (matchingProducts.length > 0) {
+      // TEMPORARY: Show all orders if no product assignments
+      if (showAllOrders || matchingProducts.length > 0) {
         // Enrich products with database info
         const enrichedProducts = orderProducts.map((p) => {
           const productSKU = p.id || p.sku || p.purchased_product_id;
@@ -137,7 +146,7 @@ export async function GET(request: NextRequest) {
             quantity: p.quantity || 1,
             price: p.price || dbProduct?.price || 0,
             imageUrl: dbProduct?.imageUrl || null,
-            isMyProduct,
+            isMyProduct: showAllOrders ? true : isMyProduct, // TEMPORARY: Mark all as "my product" if no assignments
           };
         });
 
@@ -170,7 +179,7 @@ export async function GET(request: NextRequest) {
             pickupCode: (metadata.pickupCode as string) || null,
             supplierStatuses: supplierStatuses as Record<string, unknown>,
           },
-          myProductsCount: matchingProducts.length,
+          myProductsCount: showAllOrders ? orderProducts.length : matchingProducts.length,
           totalProductsCount: orderProducts.length,
           myProductsReady,
           myBasketNumber,
