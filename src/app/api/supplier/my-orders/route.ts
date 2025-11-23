@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
         // Check if supplier marked as ready (from metadata)
         const metadata = order.metadata as Record<string, unknown> || {};
         const supplierStatuses = (metadata.supplierStatuses as Record<string, unknown>) || {};
-        const myStatus = (supplierStatuses[session.user.id] as Record<string, unknown>) || {};
+        const myStatus = (supplierStatuses[userId] as Record<string, unknown>) || {};
 
         const myProductsReady = typeof myStatus === 'object'
           ? myStatus.status === 'READY'
