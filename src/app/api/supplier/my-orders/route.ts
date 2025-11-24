@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log(`📦 Fetching orders for supplier: ${user.name}`);
+    console.log(`📦 Fetching orders for supplier: ${user.name} (ID: ${userId})`);
 
     // Get all products assigned to this supplier
     const supplierProducts = await prisma.productSupplier.findMany({
@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log(`✅ Found ${relevantOrders.length} relevant orders for supplier`);
+    console.log(`✅ Found ${relevantOrders.length} relevant orders for supplier ${user.name}`);
 
     return NextResponse.json({
       success: true,
