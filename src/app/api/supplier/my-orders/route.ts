@@ -130,6 +130,13 @@ export async function GET(request: NextRequest) {
             (sp) => sp.product.sku === productSKU
           )?.product;
 
+          // Debug imageUrl
+          if (isMyProduct && !dbProduct?.imageUrl) {
+            console.log(`⚠️ Product ${productSKU} (${p.name}) has no imageUrl in DB`);
+          } else if (isMyProduct && dbProduct?.imageUrl) {
+            console.log(`✅ Product ${productSKU} has imageUrl: ${dbProduct.imageUrl}`);
+          }
+
           return {
             id: p.id || p.sku || "unknown",
             sku: productSKU,
