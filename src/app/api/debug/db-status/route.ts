@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
  */
 export async function GET() {
   try {
-    const status: any = {
+    const status: Record<string, unknown> = {
       timestamp: new Date().toISOString(),
       database: "PostgreSQL",
     };
