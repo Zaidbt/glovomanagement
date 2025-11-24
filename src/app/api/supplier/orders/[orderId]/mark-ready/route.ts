@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notifyCollaborateur } from "@/lib/socket";
+import { verifyMobileToken } from "@/lib/auth-mobile";
 
 /**
  * POST /api/supplier/orders/[orderId]/mark-ready
@@ -14,9 +15,32 @@ export async function POST(
 ) {
   try {
     const { orderId } = await params;
-    const session = await getServerSession(authOptions);
 
-    if (!session?.user) {
+    console.log("🚀 Mark Ready Request for order:", orderId);
+
+    // Try session auth first (web)
+    const session = await getServerSession(authOptions);
+    let userId: string | null = null;
+
+    console.log("🌐 Session auth result:", session?.user?.id ? "SUCCESS" : "NONE");
+
+    if (session?.user?.id) {
+      userId = session.user.id;
+      console.log("✅ Using session auth for user:", userId);
+    } else {
+      // Try mobile JWT token
+      console.log("📱 Attempting mobile JWT auth...");
+      const mobileUser = await verifyMobileToken(request);
+      if (mobileUser) {
+        userId = mobileUser.userId;
+        console.log("✅ Using mobile JWT auth for user:", userId);
+      } else {
+        console.log("❌ Mobile JWT auth failed");
+      }
+    }
+
+    if (!userId) {
+      console.error("❌ Authentication failed - no userId");
       return NextResponse.json(
         { success: false, error: "Non authentifié" },
         { status: 401 }
@@ -25,7 +49,7 @@ export async function POST(
 
     // Verify user is a fournisseur
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: userId },
     });
 
     if (!user || user.role !== "FOURNISSEUR") {
@@ -47,11 +71,15 @@ export async function POST(
       );
     }
 
-    // Get supplier's current basket assignments (to find next available basket)
+    // Get requested basket from body (if any)
+    const body = await request.json().catch(() => ({}));
+    const requestedBasket = body.basket as number | null | undefined;
+
+    // Get supplier's current basket assignments (to find available baskets)
     const supplierOrders = await prisma.order.findMany({
       where: {
         metadata: {
-          path: ['supplierStatuses', session.user.id, 'status'],
+          path: ['supplierStatuses', userId, 'status'],
           equals: 'READY' as never,
         },
       },
@@ -63,7 +91,7 @@ export async function POST(
     for (const supplierOrder of supplierOrders) {
       const supplierMeta = (supplierOrder.metadata as Record<string, unknown>) || {};
       const supplierStatuses = (supplierMeta.supplierStatuses as Record<string, unknown>) || {};
-      const supplierStatus = (supplierStatuses[session.user.id] as Record<string, unknown>) || {};
+      const supplierStatus = (supplierStatuses[userId] as Record<string, unknown>) || {};
 
       if (supplierStatus.basket && !supplierStatus.pickedUp) {
         const basketNum = supplierStatus.basket as number;
@@ -73,19 +101,37 @@ export async function POST(
       }
     }
 
-    // Find first available basket (prefer 1, then 2, then 3)
-    // If all full, assign null (no basket)
+    // Assign basket based on request or availability
     let assignedBasket: number | null = null;
-    if (!basketOccupied[1]) {
-      assignedBasket = 1;
-    } else if (!basketOccupied[2]) {
-      assignedBasket = 2;
-    } else if (!basketOccupied[3]) {
-      assignedBasket = 3;
+
+    if (requestedBasket === null || requestedBasket === undefined) {
+      // No specific basket requested, find first available
+      if (!basketOccupied[1]) {
+        assignedBasket = 1;
+      } else if (!basketOccupied[2]) {
+        assignedBasket = 2;
+      } else if (!basketOccupied[3]) {
+        assignedBasket = 3;
+      }
+    } else {
+      // Specific basket requested, check if available
+      if (requestedBasket >= 1 && requestedBasket <= 3) {
+        if (!basketOccupied[requestedBasket as 1 | 2 | 3]) {
+          assignedBasket = requestedBasket;
+        } else {
+          return NextResponse.json(
+            { success: false, error: `Panier ${requestedBasket} est déjà occupé` },
+            { status: 400 }
+          );
+        }
+      } else {
+        // Invalid basket number, allow null (no basket)
+        assignedBasket = null;
+      }
     }
 
     if (assignedBasket === null) {
-      console.log(`⚠️ Tous les paniers sont pleins! Commande marquée READY sans panier pour ${user.name}`);
+      console.log(`⚠️ Commande marquée READY sans panier pour ${user.name}`);
     } else {
       console.log(`🧺 Assigning basket ${assignedBasket} for supplier ${user.name}`);
     }
@@ -94,12 +140,12 @@ export async function POST(
     const metadata = (order.metadata as Record<string, unknown>) || {};
     const supplierStatuses = (metadata.supplierStatuses as Record<string, unknown>) || {};
 
-    supplierStatuses[session.user.id] = {
+    supplierStatuses[userId] = {
       status: 'READY',
       basket: assignedBasket,
       markedReadyAt: new Date().toISOString(),
       pickedUp: false,
-      supplierName: user.name || session.user.name,
+      supplierName: user.name,
     };
 
     metadata.supplierStatuses = supplierStatuses;
@@ -122,11 +168,11 @@ export async function POST(
         type: "ORDER_SUPPLIER_READY",
         title: "Produits fournisseur prêts",
         description: `${user.name} a marqué ses produits comme prêts pour la commande ${order.orderCode || orderId}`,
-        userId: session.user.id,
+        userId: userId,
         metadata: {
           orderId: order.id,
           orderCode: order.orderCode,
-          supplierId: session.user.id,
+          supplierId: userId,
           supplierName: user.name,
         },
       },
@@ -142,7 +188,7 @@ export async function POST(
       notifyCollaborateur(collab.id, "basket-ready", {
         orderId: order.id,
         orderCode: order.orderCode,
-        supplierId: session.user.id,
+        supplierId: userId,
         supplierName: user.name,
         basket: assignedBasket,
       });
