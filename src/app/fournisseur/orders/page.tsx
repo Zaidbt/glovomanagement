@@ -404,19 +404,35 @@ export default function FournisseurOrdersPage() {
                     <TableCell>
                       {order.myProductsReady ? (
                         <div className="flex items-center gap-2">
-                          <Badge variant="default" className="bg-green-600">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Prêt
-                          </Badge>
-                          {order.myBasketNumber ? (
-                            <Badge variant="outline" className="bg-purple-50 border-purple-300">
-                              Panier {order.myBasketNumber}
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-orange-50 border-orange-300 text-orange-700">
-                              ⚠️ Sans panier
-                            </Badge>
-                          )}
+                          {/* Check if basket was picked up */}
+                          {(() => {
+                            const userId = (session?.user as { id?: string })?.id;
+                            const supplierStatus = userId && order.metadata?.supplierStatuses?.[userId];
+                            const isPickedUp = supplierStatus?.pickedUp || false;
+
+                            return isPickedUp ? (
+                              <Badge variant="outline" className="bg-gray-100 border-gray-400 text-gray-600">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Récupéré
+                              </Badge>
+                            ) : (
+                              <>
+                                <Badge variant="default" className="bg-green-600">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Prêt
+                                </Badge>
+                                {order.myBasketNumber ? (
+                                  <Badge variant="outline" className="bg-purple-50 border-purple-300">
+                                    Panier {order.myBasketNumber}
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="bg-orange-50 border-orange-300 text-orange-700">
+                                    ⚠️ Sans panier
+                                  </Badge>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       ) : (
                         <Badge variant="secondary">
@@ -544,43 +560,68 @@ export default function FournisseurOrdersPage() {
               </div>
 
               {/* Basket Info if ready */}
-              {selectedOrder.myProductsReady && (
-                <>
-                  {selectedOrder.myBasketNumber ? (
-                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
-                          {selectedOrder.myBasketNumber}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-purple-900">
-                            Vos produits sont dans le Panier {selectedOrder.myBasketNumber}
-                          </p>
-                          <p className="text-sm text-purple-700">
-                            Le collaborateur viendra récupérer ce panier
-                          </p>
-                        </div>
+              {selectedOrder.myProductsReady && (() => {
+                const userId = (session?.user as { id?: string })?.id;
+                const supplierStatus = userId && selectedOrder.metadata?.supplierStatuses?.[userId];
+                const isPickedUp = supplierStatus?.pickedUp || false;
+                const pickedUpAt = supplierStatus?.pickedUpAt;
+                const pickedUpByName = supplierStatus?.pickedUpByName;
+
+                return isPickedUp ? (
+                  <div className="bg-gray-50 border border-gray-300 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-gray-600 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                        <CheckCircle className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">
+                          Panier récupéré par le collaborateur
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Récupéré {pickedUpAt ? `le ${formatDate(pickedUpAt)}` : ''}
+                          {pickedUpByName ? ` par ${pickedUpByName}` : ''}
+                        </p>
                       </div>
                     </div>
-                  ) : (
-                    <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-4">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
-                          ⚠️
-                        </div>
-                        <div>
-                          <p className="font-semibold text-orange-900">
-                            Vos produits sont prêts mais sans panier assigné
-                          </p>
-                          <p className="text-sm text-orange-700">
-                            Tous les paniers sont pleins. Le collaborateur viendra chercher vos produits directement.
-                          </p>
+                  </div>
+                ) : (
+                  <>
+                    {selectedOrder.myBasketNumber ? (
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2">
+                          <div className="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                            {selectedOrder.myBasketNumber}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-purple-900">
+                              Vos produits sont dans le Panier {selectedOrder.myBasketNumber}
+                            </p>
+                            <p className="text-sm text-purple-700">
+                              Le collaborateur viendra récupérer ce panier
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </>
-              )}
+                    ) : (
+                      <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-4">
+                        <div className="flex items-center gap-2">
+                          <div className="bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                            ⚠️
+                          </div>
+                          <div>
+                            <p className="font-semibold text-orange-900">
+                              Vos produits sont prêts mais sans panier assigné
+                            </p>
+                            <p className="text-sm text-orange-700">
+                              Tous les paniers sont pleins. Le collaborateur viendra chercher vos produits directement.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
 
               {/* Products */}
               <div>

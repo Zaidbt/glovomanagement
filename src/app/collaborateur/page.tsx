@@ -517,7 +517,7 @@ export default function CollaborateurDashboard() {
                                   {status.supplierName && ` - ${status.supplierName}`}
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                  Prêt depuis: {formatDate(status.markedReadyAt)}
+                                  Prêt pour livraison depuis: {formatDate(status.markedReadyAt)}
                                 </p>
                               </div>
                             </div>
