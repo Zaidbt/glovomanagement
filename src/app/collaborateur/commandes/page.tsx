@@ -727,9 +727,107 @@ export default function CollaborateurCommandesPage() {
                 const hasNoBasketOrders = Object.values(statuses).some(
                   (s) => s.status === "READY" && !s.pickedUp && !s.basket
                 );
+                const hasCancelledSuppliers = Object.values(statuses).some(
+                  (s) => s.status === "CANCELLED"
+                );
+                const hasPartialSuppliers = Object.values(statuses).some(
+                  (s) => s.status === "PARTIAL"
+                );
 
                 return (
                   <div>
+                    {/* Cancelled Suppliers (all products unavailable) */}
+                    {hasCancelledSuppliers && (
+                      <>
+                        <h3 className="font-semibold mb-3 text-red-900">❌ Fournisseurs Annulés</h3>
+                        <div className="space-y-3 mb-6">
+                          {Object.entries(statuses).map(([supplierId, status]) => {
+                            if (status.status === "CANCELLED") {
+                              return (
+                                <div
+                                  key={supplierId}
+                                  className="p-4 bg-red-50 border-2 border-red-200 rounded-lg"
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <div className="bg-red-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg flex-shrink-0">
+                                      ❌
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="font-semibold text-red-900">
+                                        {status.supplierName || "Fournisseur"}
+                                      </p>
+                                      <p className="text-sm text-red-700">
+                                        AUCUN produit disponible - Commande annulée
+                                      </p>
+                                      <p className="text-xs text-red-600 mt-1">
+                                        Montant facturable: 0 DH (original: {((status as any).originalTotal || 0) / 100} DH)
+                                      </p>
+                                      <p className="text-xs text-red-600 mt-1 italic">
+                                        ⚠️ Modifiez la commande Glovo manuellement
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Partial Suppliers (some products unavailable) */}
+                    {hasPartialSuppliers && (
+                      <>
+                        <h3 className="font-semibold mb-3 text-orange-900">⚠️ Fournisseurs Partiels</h3>
+                        <div className="space-y-3 mb-6">
+                          {Object.entries(statuses).map(([supplierId, status]) => {
+                            if (status.status === "PARTIAL") {
+                              const unavailableProducts = (status as any).unavailableProducts || [];
+                              return (
+                                <div
+                                  key={supplierId}
+                                  className="p-4 bg-red-50 border-2 border-red-200 rounded-lg"
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <div className="bg-orange-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg flex-shrink-0">
+                                      ⚠️
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="font-semibold text-orange-900">
+                                        {status.supplierName || "Fournisseur"}
+                                      </p>
+                                      <p className="text-sm text-orange-700">
+                                        {unavailableProducts.length} produit(s) indisponible(s)
+                                      </p>
+                                      <div className="mt-2 space-y-1">
+                                        {unavailableProducts.map((sku: string) => {
+                                          const prod = selectedOrder.products.find(p => p.sku === sku);
+                                          return (
+                                            <p key={sku} className="text-xs text-red-700 line-through">
+                                              • {prod?.name || sku}
+                                            </p>
+                                          );
+                                        })}
+                                      </div>
+                                      <p className="text-xs text-orange-600 mt-2">
+                                        Montant facturable: {((status as any).billableAmount || 0) / 100} DH
+                                        (original: {((status as any).originalTotal || 0) / 100} DH)
+                                      </p>
+                                      <p className="text-xs text-orange-600 mt-1 italic">
+                                        ⚠️ Modifiez la commande Glovo pour retirer les produits indisponibles
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+                      </>
+                    )}
+
                     {hasUnpickedBaskets && (
                       <>
                         <h3 className="font-semibold mb-3">Paniers Prêts à Récupérer</h3>
