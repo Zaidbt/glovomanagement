@@ -149,9 +149,11 @@ export async function GET(request: NextRequest) {
         });
 
         // Check if supplier marked as ready (from metadata)
-        const metadata = order.metadata as Record<string, unknown> || {};
+        const metadata = (order.metadata as Record<string, unknown>) || {};
         const supplierStatuses = (metadata.supplierStatuses as Record<string, unknown>) || {};
         const myStatus = (supplierStatuses[userId] as Record<string, unknown>) || {};
+        const pickupCode = metadata.pickupCode as string | null | undefined;
+        const unavailableProducts = (metadata.unavailableProducts as Record<string, string[]>) || {};
 
         const myProductsReady = typeof myStatus === 'object'
           ? myStatus.status === 'READY'
@@ -160,6 +162,8 @@ export async function GET(request: NextRequest) {
         const myBasketNumber = typeof myStatus === 'object' && myProductsReady
           ? (myStatus.basket as number)
           : null;
+
+        console.log(`📋 Order ${order.orderCode} - pickupCode: ${pickupCode || 'NONE'}`);
 
         relevantOrders.push({
           id: order.id,
@@ -174,9 +178,9 @@ export async function GET(request: NextRequest) {
           courierPhone: order.courierPhone,
           products: enrichedProducts,
           metadata: {
-            pickupCode: (metadata.pickupCode as string) || null,
-            supplierStatuses: supplierStatuses as Record<string, unknown>,
-            unavailableProducts: (metadata.unavailableProducts as Record<string, string[]>) || {},
+            pickupCode: pickupCode || null,
+            supplierStatuses: supplierStatuses,
+            unavailableProducts: unavailableProducts,
           },
           myProductsCount: matchingProducts.length,
           totalProductsCount: orderProducts.length,
