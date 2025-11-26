@@ -5,11 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { verifyMobileToken } from "@/lib/auth-mobile";
 
 /**
- * POST /api/supplier/orders/[orderId]/product-unavailable
- * Mark a product as unavailable with robust handling
- * - If all products unavailable → CANCELLED status, billableAmount = 0
- * - If partial → PARTIAL status, recalculate billableAmount
- * - Prevents marking unavailable after marking ready
+ * POST /api/supplier/orders/[orderId]/undo-unavailable
+ * Undo marking a product as unavailable
+ * - Removes product from unavailable list
+ * - Recalculates supplier status and billable amount
+ * - Cannot undo if order already marked ready
  */
 export async function POST(
   request: NextRequest,
@@ -22,11 +22,7 @@ export async function POST(
     const mobileUser = await verifyMobileToken(request);
     const session = !mobileUser ? await getServerSession(authOptions) : null;
 
-    console.log("🔐 Auth check - mobileUser:", mobileUser ? `${mobileUser.username} (${mobileUser.role})` : "none");
-    console.log("🔐 Auth check - session:", session?.user ? "exists" : "none");
-
     if (!mobileUser && !session?.user) {
-      console.error("❌ Authentication failed - no mobile user and no session");
       return NextResponse.json(
         { success: false, error: "Non authentifié" },
         { status: 401 }
@@ -75,7 +71,6 @@ export async function POST(
       );
     }
 
-    // Check if supplier has already marked this order as ready
     const metadata = (order.metadata as Record<string, unknown>) || {};
     const supplierStatuses = (metadata.supplierStatuses as Record<string, {
       status: string;
@@ -87,12 +82,12 @@ export async function POST(
     const supplierStatus = supplierStatuses[userId];
     if (supplierStatus?.status === "READY") {
       return NextResponse.json(
-        { success: false, error: "Impossible de marquer indisponible après avoir marqué prêt" },
+        { success: false, error: "Impossible d'annuler après avoir marqué prêt" },
         { status: 400 }
       );
     }
 
-    // Find the product in database
+    // Find the product
     const product = await prisma.product.findFirst({
       where: { sku: productSku },
     });
@@ -127,29 +122,19 @@ export async function POST(
       );
     }
 
-    // Check if this product belongs to this supplier
-    const productToMark = myProducts.find(p => p.sku === productSku);
-    if (!productToMark) {
-      return NextResponse.json(
-        { success: false, error: "Ce produit ne vous appartient pas" },
-        { status: 403 }
-      );
-    }
+    console.log(`✅ Supplier ${user.name} undoing unavailable for product ${productSku} (${product.name})`);
 
-    console.log(`❌ Supplier ${user.name} marking product ${productSku} (${product.name}) as unavailable`);
-
-    // Update unavailable products list
+    // Remove from unavailable products list
     const unavailableProducts = (metadata.unavailableProducts as Record<string, string[]>) || {};
-    if (!unavailableProducts[productSku]) {
-      unavailableProducts[productSku] = [];
+    if (unavailableProducts[productSku]) {
+      unavailableProducts[productSku] = unavailableProducts[productSku].filter(id => id !== userId);
+      // Remove key if empty
+      if (unavailableProducts[productSku].length === 0) {
+        delete unavailableProducts[productSku];
+      }
     }
 
-    // Add supplier to unavailable list if not already there
-    if (!unavailableProducts[productSku].includes(userId)) {
-      unavailableProducts[productSku].push(userId);
-    }
-
-    // Get list of supplier's unavailable products
+    // Recalculate supplier's unavailable products
     const supplierUnavailableProducts = myProducts.filter(p =>
       unavailableProducts[p.sku]?.includes(userId)
     );
@@ -166,9 +151,18 @@ export async function POST(
     const billableAmount = allProductsUnavailable ? 0 : adjustedTotal;
 
     // Update supplier status
+    let newStatus = "PENDING";
+    if (unavailableCount === 0) {
+      newStatus = "PENDING"; // All products available again
+    } else if (allProductsUnavailable) {
+      newStatus = "CANCELLED";
+    } else {
+      newStatus = "PARTIAL";
+    }
+
     const updatedSupplierStatus = {
       ...supplierStatus,
-      status: allProductsUnavailable ? "CANCELLED" : "PARTIAL",
+      status: newStatus,
       allProductsUnavailable,
       unavailableProducts: supplierUnavailableProducts.map(p => p.sku),
       originalTotal,
@@ -194,21 +188,12 @@ export async function POST(
       },
     });
 
-    // Create event for COLLABORATEUR
-    const eventType = allProductsUnavailable ? "ORDER_CANCELLED_FOR_SUPPLIER" : "PRODUCT_UNAVAILABLE";
-    const eventTitle = allProductsUnavailable
-      ? "❌ Commande annulée - Fournisseur"
-      : "🚫 Produit indisponible";
-
-    const eventDescription = allProductsUnavailable
-      ? `${user.name} n'a AUCUN produit disponible pour la commande ${order.orderCode || orderId}. La commande est annulée pour ce fournisseur.`
-      : `${user.name} n'a pas le produit "${product.name}" pour la commande ${order.orderCode || orderId}. ${unavailableCount}/${totalMyProducts} produits indisponibles.`;
-
+    // Create event for tracking
     await prisma.event.create({
       data: {
-        type: eventType,
-        title: eventTitle,
-        description: eventDescription,
+        type: "PRODUCT_AVAILABLE_AGAIN",
+        title: "✅ Produit disponible à nouveau",
+        description: `${user.name} a annulé l'indisponibilité du produit "${product.name}" pour la commande ${order.orderCode || orderId}.`,
         metadata: {
           orderId: order.id,
           orderCode: order.orderCode,
@@ -217,40 +202,30 @@ export async function POST(
           supplierId: userId,
           supplierName: user.name,
           storeId: order.storeId,
-          allProductsUnavailable,
           unavailableCount,
           totalProducts: totalMyProducts,
-          originalTotal,
-          adjustedTotal,
           billableAmount,
-          needsGlovoModification: true,
         },
       },
     });
 
-    console.log(allProductsUnavailable
-      ? `✅ All products unavailable - Order CANCELLED for supplier ${user.name}`
-      : `✅ Product marked unavailable - ${unavailableCount}/${totalMyProducts} unavailable, billable: ${billableAmount/100}DH`
-    );
+    console.log(`✅ Undo successful - ${unavailableCount}/${totalMyProducts} unavailable, billable: ${billableAmount/100}DH`);
 
     return NextResponse.json({
       success: true,
-      message: allProductsUnavailable
-        ? "Tous vos produits sont indisponibles - Commande annulée"
-        : "Produit marqué comme indisponible",
-      status: allProductsUnavailable ? "CANCELLED" : "PARTIAL",
+      message: "Produit marqué comme disponible",
+      status: newStatus,
       productName: product.name,
-      allProductsUnavailable,
       unavailableCount,
       totalProducts: totalMyProducts,
       billableAmount,
     });
   } catch (error) {
-    console.error("💥 Error marking product unavailable:", error);
+    console.error("💥 Error undoing product unavailable:", error);
     return NextResponse.json(
       {
         success: false,
-        error: "Erreur mise à jour produit",
+        error: "Erreur lors de l'annulation",
         message: error instanceof Error ? error.message : "Erreur inconnue",
       },
       { status: 500 }
