@@ -19,7 +19,11 @@ export async function POST(
     const mobileUser = await verifyMobileToken(request);
     const session = !mobileUser ? await getServerSession(authOptions) : null;
 
+    console.log("🔐 Auth check - mobileUser:", mobileUser ? `${mobileUser.username} (${mobileUser.role})` : "none");
+    console.log("🔐 Auth check - session:", session?.user ? "exists" : "none");
+
     if (!mobileUser && !session?.user) {
+      console.error("❌ Authentication failed - no mobile user and no session");
       return NextResponse.json(
         { success: false, error: "Non authentifié" },
         { status: 401 }
