@@ -232,14 +232,22 @@ export default function CollaborateurCommandesPage() {
           description: basketNumber ? `Panier ${basketNumber} marqué comme récupéré` : "Produits marqués comme récupérés",
         });
 
-        // Refresh orders list
-        await fetchOrders();
-
         // Re-fetch the specific order to update modal
         const orderResponse = await fetch(`/api/orders/${orderId}`);
         if (orderResponse.ok) {
           const orderData = await orderResponse.json();
-          setSelectedOrder(orderData.order);
+          const updatedOrder = orderData.order;
+
+          // Update the order in the orders array without triggering loading state
+          setOrders(prevOrders =>
+            prevOrders.map(o => o.id === updatedOrder.id ? updatedOrder : o)
+          );
+          setFilteredOrders(prevOrders =>
+            prevOrders.map(o => o.id === updatedOrder.id ? updatedOrder : o)
+          );
+
+          // Update the selected order for the modal
+          setSelectedOrder(updatedOrder);
         }
 
         // Don't close dialog - let user see "Commande Prête" button if all baskets picked up
@@ -279,14 +287,22 @@ export default function CollaborateurCommandesPage() {
           description: `Commande ${order.orderCode || order.orderId} acceptée avec succès`,
         });
 
-        // Refresh orders list
-        await fetchOrders();
-
         // Re-fetch the specific order to update modal
         const orderResponse = await fetch(`/api/orders/${order.id}`);
         if (orderResponse.ok) {
           const orderData = await orderResponse.json();
-          setSelectedOrder(orderData.order);
+          const updatedOrder = orderData.order;
+
+          // Update the order in the orders array without triggering loading state
+          setOrders(prevOrders =>
+            prevOrders.map(o => o.id === updatedOrder.id ? updatedOrder : o)
+          );
+          setFilteredOrders(prevOrders =>
+            prevOrders.map(o => o.id === updatedOrder.id ? updatedOrder : o)
+          );
+
+          // Update the selected order for the modal
+          setSelectedOrder(updatedOrder);
         }
       } else {
         toast({
