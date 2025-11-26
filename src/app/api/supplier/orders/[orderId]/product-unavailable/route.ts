@@ -67,16 +67,20 @@ export async function POST(
     }
 
     // Get the order
+    console.log(`🔍 [PRODUCT UNAVAILABLE] Looking for order with id: ${orderId}`);
     const order = await prisma.order.findUnique({
       where: { id: orderId },
     });
 
     if (!order) {
+      console.error(`❌ [PRODUCT UNAVAILABLE] Order not found: ${orderId}`);
       return NextResponse.json(
         { success: false, error: "Commande non trouvée" },
         { status: 404 }
       );
     }
+
+    console.log(`✅ [PRODUCT UNAVAILABLE] Order found: ${order.orderCode || order.orderId}`);
 
     // Check if supplier has already marked this order as ready
     const metadata = (order.metadata as Record<string, unknown>) || {};
