@@ -53,6 +53,13 @@ interface SupplierStatus {
   markedReadyAt?: string;
   pickedUp?: boolean;
   supplierName?: string;
+  unavailableProducts?: string[];
+  originalTotal?: number;
+  adjustedTotal?: number;
+  billableAmount?: number;
+  allProductsUnavailable?: boolean;
+  lastUpdatedAt?: string;
+  lastUpdatedBy?: string;
 }
 
 interface Order {
@@ -760,7 +767,7 @@ export default function CollaborateurCommandesPage() {
                                         AUCUN produit disponible - Commande annulée
                                       </p>
                                       <p className="text-xs text-red-600 mt-1">
-                                        Montant facturable: 0 DH (original: {((status as any).originalTotal || 0) / 100} DH)
+                                        Montant facturable: 0 DH (original: {(status.originalTotal || 0) / 100} DH)
                                       </p>
                                       <p className="text-xs text-red-600 mt-1 italic">
                                         ⚠️ Modifiez la commande Glovo manuellement
@@ -783,7 +790,7 @@ export default function CollaborateurCommandesPage() {
                         <div className="space-y-3 mb-6">
                           {Object.entries(statuses).map(([supplierId, status]) => {
                             if (status.status === "PARTIAL") {
-                              const unavailableProducts = (status as any).unavailableProducts || [];
+                              const unavailableProducts = status.unavailableProducts || [];
                               return (
                                 <div
                                   key={supplierId}
@@ -811,8 +818,8 @@ export default function CollaborateurCommandesPage() {
                                         })}
                                       </div>
                                       <p className="text-xs text-orange-600 mt-2">
-                                        Montant facturable: {((status as any).billableAmount || 0) / 100} DH
-                                        (original: {((status as any).originalTotal || 0) / 100} DH)
+                                        Montant facturable: {(status.billableAmount || 0) / 100} DH
+                                        (original: {(status.originalTotal || 0) / 100} DH)
                                       </p>
                                       <p className="text-xs text-orange-600 mt-1 italic">
                                         ⚠️ Modifiez la commande Glovo pour retirer les produits indisponibles
