@@ -129,23 +129,56 @@ export async function POST(
       quantity: number;
       isMyProduct?: boolean;
       supplierId?: string;
+      purchased_product_id?: string;
     }>) || [];
 
-    // Find supplier's products
-    const myProducts = orderProducts.filter(p =>
-      p.supplierId === userId || p.isMyProduct
-    );
+    console.log(`🔍 [PRODUCT UNAVAILABLE] Order has ${orderProducts.length} products`);
+
+    // Get product SKUs from order (try multiple fields)
+    const productSKUs = orderProducts.map(p => p.id || p.sku || p.purchased_product_id).filter(Boolean);
+    console.log(`🔍 [PRODUCT UNAVAILABLE] Product SKUs in order:`, productSKUs);
+
+    // Find which products belong to this supplier from database
+    const supplierProductAssignments = await prisma.productSupplier.findMany({
+      where: {
+        supplierId: userId,
+        isActive: true,
+        product: {
+          sku: { in: productSKUs as string[] }
+        }
+      },
+      include: {
+        product: true
+      }
+    });
+
+    console.log(`🔍 [PRODUCT UNAVAILABLE] Found ${supplierProductAssignments.length} products assigned to this supplier`);
+
+    const myProductSKUs = new Set(supplierProductAssignments.map(pa => pa.product.sku));
+
+    // Filter order products to only include supplier's products
+    const myProducts = orderProducts.filter(p => {
+      const sku = p.id || p.sku || p.purchased_product_id;
+      return sku && myProductSKUs.has(sku);
+    });
+
+    console.log(`🔍 [PRODUCT UNAVAILABLE] Supplier owns ${myProducts.length} products in this order:`, myProducts.map(p => p.name));
 
     if (myProducts.length === 0) {
       return NextResponse.json(
-        { success: false, error: "Aucun produit trouvé pour ce fournisseur" },
+        { success: false, error: "Aucun produit trouvé pour ce fournisseur dans cette commande" },
         { status: 404 }
       );
     }
 
     // Check if this product belongs to this supplier
-    const productToMark = myProducts.find(p => p.sku === productSku);
+    const productToMark = myProducts.find(p => {
+      const sku = p.id || p.sku || p.purchased_product_id;
+      return sku === productSku;
+    });
+
     if (!productToMark) {
+      console.error(`❌ [PRODUCT UNAVAILABLE] Product ${productSku} not found in supplier's products`);
       return NextResponse.json(
         { success: false, error: "Ce produit ne vous appartient pas" },
         { status: 403 }
@@ -166,9 +199,10 @@ export async function POST(
     }
 
     // Get list of supplier's unavailable products
-    const supplierUnavailableProducts = myProducts.filter(p =>
-      unavailableProducts[p.sku]?.includes(userId)
-    );
+    const supplierUnavailableProducts = myProducts.filter(p => {
+      const sku = p.id || p.sku || p.purchased_product_id;
+      return sku && unavailableProducts[sku]?.includes(userId);
+    });
 
     // Calculate counts
     const totalMyProducts = myProducts.length;
@@ -186,7 +220,7 @@ export async function POST(
       ...supplierStatus,
       status: allProductsUnavailable ? "CANCELLED" : "PARTIAL",
       allProductsUnavailable,
-      unavailableProducts: supplierUnavailableProducts.map(p => p.sku),
+      unavailableProducts: supplierUnavailableProducts.map(p => p.id || p.sku || p.purchased_product_id),
       originalTotal,
       adjustedTotal,
       billableAmount,
