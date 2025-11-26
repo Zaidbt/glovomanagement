@@ -239,22 +239,14 @@ export default function CollaborateurCommandesPage() {
           description: basketNumber ? `Panier ${basketNumber} marqué comme récupéré` : "Produits marqués comme récupérés",
         });
 
-        // Re-fetch the specific order to update modal
+        // Refresh orders list like handleMarkOrderReady does
+        await fetchOrders();
+
+        // Re-fetch the specific order to update modal with fresh data
         const orderResponse = await fetch(`/api/orders/${orderId}`);
         if (orderResponse.ok) {
           const orderData = await orderResponse.json();
-          const updatedOrder = orderData.order;
-
-          // Update the order in the orders array without triggering loading state
-          setOrders(prevOrders =>
-            prevOrders.map(o => o.id === updatedOrder.id ? updatedOrder : o)
-          );
-          setFilteredOrders(prevOrders =>
-            prevOrders.map(o => o.id === updatedOrder.id ? updatedOrder : o)
-          );
-
-          // Update the selected order for the modal
-          setSelectedOrder(updatedOrder);
+          setSelectedOrder(orderData.order);
         }
 
         // Don't close dialog - let user see "Commande Prête" button if all baskets picked up
@@ -294,23 +286,17 @@ export default function CollaborateurCommandesPage() {
           description: `Commande ${order.orderCode || order.orderId} acceptée avec succès`,
         });
 
-        // Re-fetch the specific order to update modal
+        // Refresh orders list like handleMarkOrderReady does
+        await fetchOrders();
+
+        // Re-fetch the specific order to update modal with fresh data
         const orderResponse = await fetch(`/api/orders/${order.id}`);
         if (orderResponse.ok) {
           const orderData = await orderResponse.json();
-          const updatedOrder = orderData.order;
-
-          // Update the order in the orders array without triggering loading state
-          setOrders(prevOrders =>
-            prevOrders.map(o => o.id === updatedOrder.id ? updatedOrder : o)
-          );
-          setFilteredOrders(prevOrders =>
-            prevOrders.map(o => o.id === updatedOrder.id ? updatedOrder : o)
-          );
-
-          // Update the selected order for the modal
-          setSelectedOrder(updatedOrder);
+          setSelectedOrder(orderData.order);
         }
+
+        // Don't close dialog to let user see the updated status
       } else {
         toast({
           title: "Erreur",

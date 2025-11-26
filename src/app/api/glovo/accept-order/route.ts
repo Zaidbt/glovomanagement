@@ -94,6 +94,10 @@ export async function POST(request: NextRequest) {
     if (glovoResponse.ok || glovoResponse.status === 202 || glovoResponse.status === 204) {
       console.log("✅ [ACCEPT ORDER] Order accepted by Glovo API!");
 
+      // Generate pickup code for courier (4-digit code)
+      const pickupCode = Math.floor(1000 + Math.random() * 9000).toString();
+      console.log(`🔢 Generated pickup code: ${pickupCode}`);
+
       // Update order status in database
       await prisma.order.update({
         where: { id: order.id },
@@ -103,6 +107,7 @@ export async function POST(request: NextRequest) {
             ...(order.metadata as object),
             acceptedAt: new Date().toISOString(),
             committedPreparationTime: prepTime,
+            pickupCode: pickupCode,
           },
         },
       });

@@ -17,6 +17,7 @@ export async function POST(
 ) {
   try {
     const { orderId } = await params;
+    console.log(`🔴 [PRODUCT UNAVAILABLE] Request received for orderId: ${orderId}`);
 
     // Try mobile auth first, then web session
     const mobileUser = await verifyMobileToken(request);
@@ -55,8 +56,10 @@ export async function POST(
 
     const body = await request.json();
     const { productSku } = body;
+    console.log(`🔴 [PRODUCT UNAVAILABLE] Request body:`, { productSku, userId });
 
     if (!productSku) {
+      console.error(`🔴 [PRODUCT UNAVAILABLE] Missing productSku in request`);
       return NextResponse.json(
         { success: false, error: "SKU produit requis" },
         { status: 400 }
