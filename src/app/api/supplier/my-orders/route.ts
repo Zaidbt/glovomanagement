@@ -152,7 +152,6 @@ export async function GET(request: NextRequest) {
         const metadata = (order.metadata as Record<string, unknown>) || {};
         const supplierStatuses = (metadata.supplierStatuses as Record<string, unknown>) || {};
         const myStatus = (supplierStatuses[userId] as Record<string, unknown>) || {};
-        const pickupCode = metadata.pickupCode as string | null | undefined;
         const unavailableProducts = (metadata.unavailableProducts as Record<string, string[]>) || {};
 
         const myProductsReady = typeof myStatus === 'object'
@@ -163,6 +162,8 @@ export async function GET(request: NextRequest) {
           ? (myStatus.basket as number)
           : null;
 
+        // Use order.orderCode (from Glovo) as the pickup code
+        const pickupCode = order.orderCode || null;
         console.log(`📋 Order ${order.orderCode} - pickupCode: ${pickupCode || 'NONE'}`);
 
         relevantOrders.push({
@@ -178,7 +179,7 @@ export async function GET(request: NextRequest) {
           courierPhone: order.courierPhone,
           products: enrichedProducts,
           metadata: {
-            pickupCode: pickupCode || null,
+            pickupCode: pickupCode,
             supplierStatuses: supplierStatuses,
             unavailableProducts: unavailableProducts,
           },
