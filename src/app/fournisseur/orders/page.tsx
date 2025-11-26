@@ -62,6 +62,8 @@ interface Order {
       basket?: number;
       markedReadyAt?: string;
       pickedUp?: boolean;
+      pickedUpAt?: string;
+      pickedUpByName?: string;
     }>;
     [key: string]: unknown;
   };
@@ -408,7 +410,7 @@ export default function FournisseurOrdersPage() {
                           {(() => {
                             const userId = (session?.user as { id?: string })?.id;
                             const supplierStatus = userId && order.metadata?.supplierStatuses?.[userId];
-                            const isPickedUp = supplierStatus?.pickedUp || false;
+                            const isPickedUp = (typeof supplierStatus === 'object' && supplierStatus?.pickedUp) || false;
 
                             return isPickedUp ? (
                               <Badge variant="outline" className="bg-gray-100 border-gray-400 text-gray-600">
@@ -563,9 +565,9 @@ export default function FournisseurOrdersPage() {
               {selectedOrder.myProductsReady && (() => {
                 const userId = (session?.user as { id?: string })?.id;
                 const supplierStatus = userId && selectedOrder.metadata?.supplierStatuses?.[userId];
-                const isPickedUp = supplierStatus?.pickedUp || false;
-                const pickedUpAt = supplierStatus?.pickedUpAt;
-                const pickedUpByName = supplierStatus?.pickedUpByName;
+                const isPickedUp = (typeof supplierStatus === 'object' && supplierStatus?.pickedUp) || false;
+                const pickedUpAt = typeof supplierStatus === 'object' ? supplierStatus?.pickedUpAt : undefined;
+                const pickedUpByName = typeof supplierStatus === 'object' ? supplierStatus?.pickedUpByName : undefined;
 
                 return isPickedUp ? (
                   <div className="bg-gray-50 border border-gray-300 rounded-lg p-4">
