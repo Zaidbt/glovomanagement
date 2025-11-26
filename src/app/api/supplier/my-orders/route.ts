@@ -176,6 +176,7 @@ export async function GET(request: NextRequest) {
           metadata: {
             pickupCode: (metadata.pickupCode as string) || null,
             supplierStatuses: supplierStatuses as Record<string, unknown>,
+            unavailableProducts: (metadata.unavailableProducts as Record<string, string[]>) || {},
           },
           myProductsCount: matchingProducts.length,
           totalProductsCount: orderProducts.length,
