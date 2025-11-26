@@ -157,12 +157,7 @@ export async function GET(request: NextRequest) {
         // Check supplier status
         const supplierStatusValue = typeof myStatus === 'object' ? (myStatus.status as string) : (myStatus as string);
 
-        // Skip orders where supplier has CANCELLED status (all products unavailable)
-        if (supplierStatusValue === 'CANCELLED') {
-          console.log(`⏭️ Skipping order ${order.orderCode} - supplier has CANCELLED status`);
-          continue;
-        }
-
+        // Don't skip CANCELLED orders - let mobile display them with cancelled styling
         const myProductsReady = supplierStatusValue === 'READY';
 
         const myBasketNumber = typeof myStatus === 'object' && myProductsReady
