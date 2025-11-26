@@ -231,7 +231,17 @@ export default function CollaborateurCommandesPage() {
           title: "✅ Panier récupéré",
           description: basketNumber ? `Panier ${basketNumber} marqué comme récupéré` : "Produits marqués comme récupérés",
         });
-        fetchOrders();
+
+        // Refresh orders list
+        await fetchOrders();
+
+        // Re-fetch the specific order to update modal
+        const orderResponse = await fetch(`/api/orders/${orderId}`);
+        if (orderResponse.ok) {
+          const orderData = await orderResponse.json();
+          setSelectedOrder(orderData.order);
+        }
+
         // Don't close dialog - let user see "Commande Prête" button if all baskets picked up
       } else {
         toast({
@@ -268,7 +278,16 @@ export default function CollaborateurCommandesPage() {
           title: "✅ Commande acceptée",
           description: `Commande ${order.orderCode || order.orderId} acceptée avec succès`,
         });
-        fetchOrders();
+
+        // Refresh orders list
+        await fetchOrders();
+
+        // Re-fetch the specific order to update modal
+        const orderResponse = await fetch(`/api/orders/${order.id}`);
+        if (orderResponse.ok) {
+          const orderData = await orderResponse.json();
+          setSelectedOrder(orderData.order);
+        }
       } else {
         toast({
           title: "Erreur",
