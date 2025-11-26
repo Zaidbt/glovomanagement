@@ -162,9 +162,9 @@ export async function GET(request: NextRequest) {
           ? (myStatus.basket as number)
           : null;
 
-        // Use order.orderCode (from Glovo) as the pickup code
-        const pickupCode = order.orderCode || null;
-        console.log(`📋 Order ${order.orderCode} - pickupCode: ${pickupCode || 'NONE'}`);
+        // Use pick_up_code from Glovo (3-digit code) - NOT order_id
+        const pickupCode = (metadata.pick_up_code as string) || null;
+        console.log(`📋 Order ${order.orderCode} - pickupCode: ${pickupCode || 'NONE'} (from metadata.pick_up_code)`);
 
         relevantOrders.push({
           id: order.id,

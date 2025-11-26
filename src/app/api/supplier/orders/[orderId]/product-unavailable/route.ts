@@ -83,16 +83,23 @@ export async function POST(
     console.log(`✅ [PRODUCT UNAVAILABLE] Order found: ${order.orderCode || order.orderId}`);
 
     // Check if supplier has already marked this order as ready
+    console.log(`🔍 [PRODUCT UNAVAILABLE] Parsing order metadata...`);
     const metadata = (order.metadata as Record<string, unknown>) || {};
+    console.log(`🔍 [PRODUCT UNAVAILABLE] Metadata keys:`, Object.keys(metadata));
+
     const supplierStatuses = (metadata.supplierStatuses as Record<string, {
       status: string;
       basket?: number;
       markedReadyAt?: string;
       pickedUp?: boolean;
     }>) || {};
+    console.log(`🔍 [PRODUCT UNAVAILABLE] Supplier statuses:`, Object.keys(supplierStatuses));
 
     const supplierStatus = supplierStatuses[userId];
+    console.log(`🔍 [PRODUCT UNAVAILABLE] Current supplier (${userId}) status:`, supplierStatus);
+
     if (supplierStatus?.status === "READY") {
+      console.error(`❌ [PRODUCT UNAVAILABLE] Cannot mark unavailable - supplier already marked READY`);
       return NextResponse.json(
         { success: false, error: "Impossible de marquer indisponible après avoir marqué prêt" },
         { status: 400 }
@@ -100,9 +107,11 @@ export async function POST(
     }
 
     // Find the product in database
+    console.log(`🔍 [PRODUCT UNAVAILABLE] Looking for product with SKU: ${productSku}`);
     const product = await prisma.product.findFirst({
       where: { sku: productSku },
     });
+    console.log(`🔍 [PRODUCT UNAVAILABLE] Product found:`, product ? `${product.name} (${product.sku})` : 'NOT FOUND');
 
     if (!product) {
       return NextResponse.json(
