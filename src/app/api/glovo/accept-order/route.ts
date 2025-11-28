@@ -85,14 +85,11 @@ export async function POST(request: NextRequest) {
       glovoData = { rawResponse: responseText };
     }
 
-    console.log("📥 [ACCEPT ORDER] Glovo API response:", {
-      status: glovoResponse.status,
-      data: glovoData,
-    });
-
     // Check if acceptance was successful
+    // Note: Status 202 with "invalid parameters" is OK per Glovo docs:
+    // "202 Successful operation (order accepted with invalid committed preparation time)"
     if (glovoResponse.ok || glovoResponse.status === 202 || glovoResponse.status === 204) {
-      console.log("✅ [ACCEPT ORDER] Order accepted by Glovo API!");
+      console.log("✅ [ACCEPT ORDER] Order accepted by Glovo API (status:", glovoResponse.status, ")");
 
       // Update order status in database
       await prisma.order.update({

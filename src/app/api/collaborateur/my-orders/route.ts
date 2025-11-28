@@ -71,10 +71,6 @@ export async function GET(request: NextRequest) {
 
     const storeName = user.collaborateurStores[0]?.store?.name || "Unknown";
 
-    console.log(
-      `📦 [COLLABORATEUR] Fetching orders for: ${user.name} (Store: ${storeName})`
-    );
-
     // Get orders from collaborateur's store
     const orders = await prisma.order.findMany({
       where: {
@@ -281,10 +277,6 @@ export async function GET(request: NextRequest) {
     const readyOrders = enrichedOrders.filter(
       (o) => o.summary.allSuppliersReady && !o.summary.allSuppliersPickedUp
     ).length;
-
-    console.log(
-      `✅ [COLLABORATEUR] Stats: ${newOrders} new, ${inProgressOrders} in progress, ${readyOrders} ready`
-    );
 
     return NextResponse.json({
       success: true,
