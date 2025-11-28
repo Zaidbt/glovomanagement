@@ -127,7 +127,7 @@ export async function POST(
     if (isTestStore) {
       // Test store uses staging API with shared token
       finalApiUrl = process.env.GLOVO_TEST_API_URL || "https://stageapi.glovoapp.com";
-      finalApiToken = process.env.GLOVO_SHARED_TOKEN || process.env.GLOVO_TEST_TOKEN;
+      finalApiToken = process.env.GLOVO_SHARED_TOKEN || process.env.GLOVO_TEST_TOKEN || '';
       
       // Test stores use shared token (no Bearer prefix)
       if (finalApiToken) {

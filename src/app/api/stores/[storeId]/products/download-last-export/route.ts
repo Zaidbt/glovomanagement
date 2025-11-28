@@ -63,10 +63,10 @@ export async function GET(
       );
     }
 
-    const metadata = (store.metadata as any) || {};
-    const lastExport = metadata.lastCatalogExport;
-
-    if (!lastExport || !lastExport.excelPath) {
+    // Read export info from JSON file
+    const exportInfoPath = path.join(process.cwd(), 'data', 'catalog-exports', `export-info-${storeId}.json`);
+    
+    if (!fs.existsSync(exportInfoPath)) {
       return NextResponse.json(
         {
           success: false,
@@ -76,10 +76,28 @@ export async function GET(
       );
     }
 
+    const exportInfo = JSON.parse(fs.readFileSync(exportInfoPath, 'utf-8')) as {
+      catalogUrl?: string;
+      excelPath?: string;
+      exportedAt?: string;
+      productCount?: number;
+      storeId?: string;
+    };
+
+    if (!exportInfo.excelPath) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Informations d'export invalides.",
+        },
+        { status: 404 }
+      );
+    }
+
     // Check if file exists
-    const excelPath = path.isAbsolute(lastExport.excelPath)
-      ? lastExport.excelPath
-      : path.join(process.cwd(), lastExport.excelPath);
+    const excelPath = path.isAbsolute(exportInfo.excelPath)
+      ? exportInfo.excelPath
+      : path.join(process.cwd(), exportInfo.excelPath);
 
     if (!fs.existsSync(excelPath)) {
       return NextResponse.json(
@@ -93,7 +111,8 @@ export async function GET(
 
     // Read and return the file
     const fileBuffer = fs.readFileSync(excelPath);
-    const fileName = `glovo-catalog-${store.name}-${new Date(lastExport.exportedAt).toISOString().split('T')[0]}.xlsx`;
+    const exportedDate = exportInfo.exportedAt ? new Date(exportInfo.exportedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+    const fileName = `glovo-catalog-${store.name}-${exportedDate}.xlsx`;
 
     return new NextResponse(fileBuffer, {
       headers: {

@@ -127,26 +127,33 @@ export async function POST(request: NextRequest) {
             console.error("❌ Erreur téléchargement catalogue:", catalogResponse.status);
           } else {
             const catalogText = await catalogResponse.text();
-            let catalogData: any[];
+            let catalogData: Array<Record<string, unknown>>;
 
             try {
-              catalogData = JSON.parse(catalogText);
-              if (catalogData && typeof catalogData === 'object' && !Array.isArray(catalogData)) {
-                if ('products' in catalogData && Array.isArray(catalogData.products)) {
-                  catalogData = catalogData.products;
+              const parsed = JSON.parse(catalogText) as unknown;
+              if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                const parsedObj = parsed as Record<string, unknown>;
+                if ('products' in parsedObj && Array.isArray(parsedObj.products)) {
+                  catalogData = parsedObj.products as Array<Record<string, unknown>>;
                 } else {
-                  const arrays = Object.values(catalogData).filter(v => Array.isArray(v));
+                  const arrays = Object.values(parsedObj).filter(v => Array.isArray(v));
                   if (arrays.length > 0) {
-                    catalogData = arrays[0] as any[];
+                    catalogData = arrays[0] as Array<Record<string, unknown>>;
+                  } else {
+                    catalogData = [];
                   }
                 }
+              } else if (Array.isArray(parsed)) {
+                catalogData = parsed as Array<Record<string, unknown>>;
+              } else {
+                catalogData = [];
               }
             } catch {
               const lines = catalogText.split('\n').filter(line => line.trim());
               const headers = lines[0]?.split(',').map(h => h.trim()) || [];
               catalogData = lines.slice(1).map(line => {
                 const values = line.split(',').map(v => v.trim());
-                const obj: any = {};
+                const obj: Record<string, unknown> = {};
                 headers.forEach((header, i) => {
                   obj[header] = values[i] || '';
                 });
@@ -155,26 +162,64 @@ export async function POST(request: NextRequest) {
             }
 
             if (Array.isArray(catalogData) && catalogData.length > 0) {
+              // Helper to safely get nested values
+              const getValue = (obj: unknown, path: string[]): unknown => {
+                let current: unknown = obj;
+                for (const key of path) {
+                  if (current && typeof current === 'object' && key in current) {
+                    current = (current as Record<string, unknown>)[key];
+                  } else {
+                    return undefined;
+                  }
+                }
+                return current;
+              };
+
               // Convert to Excel format matching import format
-              const excelData = catalogData.map((product: any) => {
-                const sku = product.sku || product.id || product.SKU || '';
-                const name = product.title || product.name || product.translations?.fr_MA || product.translations?.[0]?.text || '';
-                const priceRaw = product.price || product.price?.amount || 0;
-                const price = typeof priceRaw === 'number' ? priceRaw : parseFloat(priceRaw) || 0;
-                const active = product.active !== undefined ? product.active : (product.is_active !== undefined ? product.is_active : true);
+              const excelData = catalogData.map((product: Record<string, unknown>) => {
+                const sku = String(product.sku || product.id || product.SKU || '');
+                const name = String(
+                  product.title || 
+                  product.name || 
+                  getValue(product, ['translations', 'fr_MA']) ||
+                  (Array.isArray(product.translations) && product.translations[0] && typeof product.translations[0] === 'object' 
+                    ? (product.translations[0] as Record<string, unknown>).text 
+                    : undefined) ||
+                  ''
+                );
+                const priceRaw = product.price || (typeof product.price === 'object' && product.price !== null 
+                  ? (product.price as Record<string, unknown>).amount 
+                  : undefined) || 0;
+                const price = typeof priceRaw === 'number' ? priceRaw : parseFloat(String(priceRaw)) || 0;
+                const active = product.active !== undefined ? Boolean(product.active) : (product.is_active !== undefined ? Boolean(product.is_active) : true);
                 
-                const category1 = product.categories?.[0]?.details?.name?.fr_MA || 
-                                 product.categories?.[0]?.name?.translations?.[0]?.text ||
-                                 product.categories?.[0]?.name ||
-                                 product.category1 || 
-                                 '';
-                const category2 = product.categories?.[1]?.details?.name?.fr_MA || 
-                                 product.categories?.[1]?.name?.translations?.[0]?.text ||
-                                 product.categories?.[1]?.name ||
-                                 product.category2 || 
-                                 '';
-                const barcode = product.barcodes?.[0] || product.barcode || '';
-                const imageUrl = product.images?.[0] || product.image_url || product.imageUrl || '';
+                const categories = Array.isArray(product.categories) ? product.categories : [];
+                const cat1 = categories[0];
+                const cat2 = categories[1];
+                const category1 = String(
+                  (cat1 && typeof cat1 === 'object' 
+                    ? getValue(cat1, ['details', 'name', 'fr_MA']) ||
+                      (Array.isArray((cat1 as Record<string, unknown>).name) 
+                        ? getValue(cat1, ['name', '0', 'translations', '0', 'text'])
+                        : (cat1 as Record<string, unknown>).name)
+                    : undefined) ||
+                  product.category1 || 
+                  ''
+                );
+                const category2 = String(
+                  (cat2 && typeof cat2 === 'object' 
+                    ? getValue(cat2, ['details', 'name', 'fr_MA']) ||
+                      (Array.isArray((cat2 as Record<string, unknown>).name) 
+                        ? getValue(cat2, ['name', '0', 'translations', '0', 'text'])
+                        : (cat2 as Record<string, unknown>).name)
+                    : undefined) ||
+                  product.category2 || 
+                  ''
+                );
+                const barcodes = Array.isArray(product.barcodes) ? product.barcodes : [];
+                const barcode = String(barcodes[0] || product.barcode || '');
+                const images = Array.isArray(product.images) ? product.images : [];
+                const imageUrl = String(images[0] || product.image_url || product.imageUrl || '');
 
                 return {
                   SKU: sku,
@@ -195,21 +240,16 @@ export async function POST(request: NextRequest) {
               const excelPath = path.join(process.cwd(), 'data', 'catalog-exports', `catalog-${store.id}-${Date.now()}.xlsx`);
               XLSX.writeFile(workbook, excelPath);
 
-              // Store the catalog URL and Excel path in store metadata for later download
-              await prisma.store.update({
-                where: { id: store.id },
-                data: {
-                  metadata: {
-                    ...((store.metadata as any) || {}),
-                    lastCatalogExport: {
-                      catalogUrl: catalogUrl,
-                      excelPath: excelPath,
-                      exportedAt: new Date().toISOString(),
-                      productCount: excelData.length,
-                    },
-                  },
-                },
-              });
+              // Save export info to a JSON file for later retrieval
+              const exportInfoPath = path.join(process.cwd(), 'data', 'catalog-exports', `export-info-${store.id}.json`);
+              const exportInfo = {
+                catalogUrl: catalogUrl,
+                excelPath: excelPath,
+                exportedAt: new Date().toISOString(),
+                productCount: excelData.length,
+                storeId: store.id,
+              };
+              fs.writeFileSync(exportInfoPath, JSON.stringify(exportInfo, null, 2));
 
               console.log(`✅ Catalogue converti en Excel: ${excelPath} (${excelData.length} produits)`);
             }
