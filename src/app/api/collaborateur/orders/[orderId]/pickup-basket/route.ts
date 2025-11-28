@@ -89,8 +89,10 @@ export async function POST(
 
     // Update metadata to mark basket as picked up
     const metadata = (order.metadata as Record<string, unknown>) || {};
-    const supplierStatuses = (metadata.supplierStatuses as Record<string, unknown>) || {};
-    const supplierStatus = (supplierStatuses[supplierId] as Record<string, unknown>) || {};
+    const supplierStatuses =
+      (metadata.supplierStatuses as Record<string, unknown>) || {};
+    const supplierStatus =
+      (supplierStatuses[supplierId] as Record<string, unknown>) || {};
 
     if (!supplierStatus || supplierStatus.status !== "READY") {
       return NextResponse.json(
@@ -103,9 +105,11 @@ export async function POST(
 
     // Mark as picked up
     supplierStatus.pickedUp = true;
-    supplierStatus.pickedUpAt = new Date().toISOString();
-    supplierStatus.pickedUpBy = session.user.id;
-    supplierStatus.pickedUpByName = user.name || session.user.name;
+    const pickedUpAt = new Date().toISOString();
+    supplierStatus.pickedUpAt = pickedUpAt;
+    const pickedUpById = mobileUser?.userId || session?.user?.id || userId;
+    supplierStatus.pickedUpBy = pickedUpById;
+    supplierStatus.pickedUpByName = user.name || session?.user?.name;
 
     supplierStatuses[supplierId] = supplierStatus;
     metadata.supplierStatuses = supplierStatuses;
@@ -115,7 +119,10 @@ export async function POST(
     // Verify order belongs to collaborateur's store
     if (order.storeId !== collaborateurStoreId) {
       return NextResponse.json(
-        { success: false, error: "Cette commande n'appartient pas à votre store" },
+        {
+          success: false,
+          error: "Cette commande n'appartient pas à votre store",
+        },
         { status: 403 }
       );
     }
@@ -142,7 +149,9 @@ export async function POST(
     });
 
     console.log(
-      `✅ Basket ${basketNumber} picked up for order ${order.orderCode || orderId} by ${user.name}`
+      `✅ Basket ${basketNumber} picked up for order ${
+        order.orderCode || orderId
+      } by ${user.name}`
     );
 
     // Create event
@@ -150,7 +159,9 @@ export async function POST(
       data: {
         type: "BASKET_PICKED_UP",
         title: "🧺 Panier récupéré",
-        description: `${user.name} a récupéré le panier ${basketNumber || "N/A"} de ${supplier.name}`,
+        description: `${user.name} a récupéré le panier ${
+          basketNumber || "N/A"
+        } de ${supplier.name}`,
         metadata: {
           orderId: order.id,
           orderCode: order.orderCode,
@@ -158,7 +169,7 @@ export async function POST(
           supplierName: supplier.name,
           basketNumber,
           collaborateurName: user.name,
-          pickedUpAt: supplierStatus.pickedUpAt,
+          pickedUpAt,
         },
         orderId: order.id,
         storeId: order.storeId,
@@ -171,21 +182,27 @@ export async function POST(
       orderCode: order.orderCode,
       basketNumber: basketNumber,
       collaborateurName: user.name,
-      pickedUpAt: supplierStatus.pickedUpAt,
+      pickedUpAt,
     });
 
     // Check if all baskets picked up
     const allSuppliers = Object.values(supplierStatuses);
-    const readySuppliers = allSuppliers.filter((s: unknown) => (s as {status: string}).status === "READY");
-    const pickedUpSuppliers = allSuppliers.filter((s: unknown) => (s as {pickedUp?: boolean}).pickedUp === true);
-    const allPickedUp = readySuppliers.length > 0 && pickedUpSuppliers.length === readySuppliers.length;
+    const readySuppliers = allSuppliers.filter(
+      (s: unknown) => (s as { status: string }).status === "READY"
+    );
+    const pickedUpSuppliers = allSuppliers.filter(
+      (s: unknown) => (s as { pickedUp?: boolean }).pickedUp === true
+    );
+    const allPickedUp =
+      readySuppliers.length > 0 &&
+      pickedUpSuppliers.length === readySuppliers.length;
 
     return NextResponse.json({
       success: true,
       message: `Panier ${basketNumber || "N/A"} récupéré avec succès`,
       basketNumber,
       supplierName: supplier.name,
-      pickedUpAt: supplierStatus.pickedUpAt,
+      pickedUpAt,
       allPickedUp,
       progress: {
         pickedUp: pickedUpSuppliers.length,

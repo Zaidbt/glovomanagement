@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { verifyMobileToken } from "@/lib/auth-mobile";
 import { notifyAllSuppliers } from "@/lib/socket";
 
-const GLOVO_API_BASE_URL = process.env.GLOVO_API_BASE_URL || "https://stageapi.glovoapp.com";
+const GLOVO_API_BASE_URL =
+  process.env.GLOVO_API_BASE_URL || "https://stageapi.glovoapp.com";
 const GLOVO_SHARED_TOKEN = process.env.GLOVO_SHARED_TOKEN || "";
 
 /**
@@ -52,7 +53,7 @@ export async function POST(
               select: {
                 id: true,
                 name: true,
-                externalId: true,
+                glovoStoreId: true,
               },
             },
           },
@@ -90,12 +91,15 @@ export async function POST(
     // Verify order belongs to collaborateur's store
     if (order.storeId !== collaborateurStoreId) {
       return NextResponse.json(
-        { success: false, error: "Cette commande n'appartient pas à votre store" },
+        {
+          success: false,
+          error: "Cette commande n'appartient pas à votre store",
+        },
         { status: 403 }
       );
     }
 
-    const storeExternalId = user.collaborateurStores[0]?.store?.externalId;
+    const storeExternalId = user.collaborateurStores[0]?.store?.glovoStoreId;
     if (!storeExternalId) {
       return NextResponse.json(
         { success: false, error: "Store external ID non trouvé" },
@@ -104,7 +108,9 @@ export async function POST(
     }
 
     // Call Glovo API to cancel order
-    console.log(`🔴 [CANCEL] Cancelling order ${order.orderCode} via Glovo API`);
+    console.log(
+      `🔴 [CANCEL] Cancelling order ${order.orderCode} via Glovo API`
+    );
 
     const glovoResponse = await fetch(
       `${GLOVO_API_BASE_URL}/webhook/stores/${storeExternalId}/orders/${order.orderId}/cancel`,

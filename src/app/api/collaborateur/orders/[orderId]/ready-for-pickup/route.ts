@@ -15,7 +15,7 @@ export async function POST(
 ) {
   try {
     const { orderId } = await params;
-    console.log(`=æ [READY FOR PICKUP] Request for orderId: ${orderId}`);
+    console.log(`[READY FOR PICKUP] Request for orderId: ${orderId}`);
 
     // Try mobile auth first, then web session
     const mobileUser = await verifyMobileToken(request);
@@ -23,7 +23,7 @@ export async function POST(
 
     if (!mobileUser && !session?.user) {
       return NextResponse.json(
-        { success: false, error: "Non authentifié" },
+        { success: false, error: "Non authentifie" },
         { status: 401 }
       );
     }
@@ -53,7 +53,7 @@ export async function POST(
 
     if (!user || user.role !== "COLLABORATEUR") {
       return NextResponse.json(
-        { success: false, error: "Accès refusé - Collaborateur uniquement" },
+        { success: false, error: "Acces refuse - Collaborateur uniquement" },
         { status: 403 }
       );
     }
@@ -61,7 +61,7 @@ export async function POST(
     const collaborateurStoreId = user.collaborateurStores[0]?.storeId;
     if (!collaborateurStoreId) {
       return NextResponse.json(
-        { success: false, error: "Aucun store assigné" },
+        { success: false, error: "Aucun store assigne" },
         { status: 400 }
       );
     }
@@ -76,7 +76,7 @@ export async function POST(
 
     if (!order) {
       return NextResponse.json(
-        { success: false, error: "Commande non trouvée" },
+        { success: false, error: "Commande non trouvee" },
         { status: 404 }
       );
     }
@@ -84,22 +84,26 @@ export async function POST(
     // Verify order belongs to collaborateur's store
     if (order.storeId !== collaborateurStoreId) {
       return NextResponse.json(
-        { success: false, error: "Cette commande n'appartient pas à votre store" },
+        {
+          success: false,
+          error: "Cette commande n'appartient pas a votre store",
+        },
         { status: 403 }
       );
     }
 
     // Check if all baskets have been picked up
     const metadata = (order.metadata as Record<string, unknown>) || {};
-    const supplierStatuses = (metadata.supplierStatuses as Record<
-      string,
-      {
-        status: string;
-        basket?: number | null;
-        markedReadyAt?: string;
-        pickedUp?: boolean;
-      }
-    >) || {};
+    const supplierStatuses =
+      (metadata.supplierStatuses as Record<
+        string,
+        {
+          status: string;
+          basket?: number | null;
+          markedReadyAt?: string;
+          pickedUp?: boolean;
+        }
+      >) || {};
 
     const allSuppliers = Object.values(supplierStatuses);
     const readySuppliers = allSuppliers.filter((s) => s.status === "READY");
@@ -109,7 +113,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          error: "Aucun fournisseur n'a marqué ses produits comme prêts",
+          error: "Aucun fournisseur n'a marque ses produits comme prets",
         },
         { status: 400 }
       );
@@ -119,7 +123,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          error: `Tous les paniers ne sont pas encore récupérés (${pickedUpSuppliers.length}/${readySuppliers.length})`,
+          error: `Tous les paniers ne sont pas encore recuperes (${pickedUpSuppliers.length}/${readySuppliers.length})`,
           progress: {
             pickedUp: pickedUpSuppliers.length,
             total: readySuppliers.length,
@@ -130,9 +134,11 @@ export async function POST(
     }
 
     // Call Glovo API to mark ready for pickup
-    const GLOVO_API_BASE_URL = process.env.GLOVO_API_BASE_URL || "https://stageapi.glovoapp.com";
+    const GLOVO_API_BASE_URL =
+      process.env.GLOVO_API_BASE_URL || "https://stageapi.glovoapp.com";
     const GLOVO_SHARED_TOKEN = process.env.GLOVO_SHARED_TOKEN;
-    const storeExternalId = order.store.glovoStoreId || process.env.GLOVO_STORE_EXTERNAL_ID;
+    const storeExternalId =
+      order.store.glovoStoreId || process.env.GLOVO_STORE_EXTERNAL_ID;
 
     if (!GLOVO_SHARED_TOKEN || !storeExternalId) {
       return NextResponse.json(
@@ -141,7 +147,9 @@ export async function POST(
       );
     }
 
-    console.log(`=á [READY FOR PICKUP] Calling Glovo API for order ${order.orderId}`);
+    console.log(
+      `[READY FOR PICKUP] Calling Glovo API for order ${order.orderId}`
+    );
 
     const glovoResponse = await fetch(
       `${GLOVO_API_BASE_URL}/webhook/stores/${storeExternalId}/orders/${order.orderId}/ready`,
@@ -157,7 +165,11 @@ export async function POST(
     const glovoData = await glovoResponse.json().catch(() => ({}));
 
     if (!glovoResponse.ok) {
-      console.error(`L [READY FOR PICKUP] Glovo API error:`, glovoResponse.status, glovoData);
+      console.error(
+        `[READY FOR PICKUP] Glovo API error:`,
+        glovoResponse.status,
+        glovoData
+      );
       return NextResponse.json(
         {
           success: false,
@@ -169,10 +181,13 @@ export async function POST(
       );
     }
 
-    console.log(` [READY FOR PICKUP] Order ${order.orderCode} marked ready for pickup`);
+    console.log(
+      `[READY FOR PICKUP] Order ${order.orderCode} marked ready for pickup`
+    );
 
     // Update order metadata
-    metadata.readyForPickupAt = new Date().toISOString();
+    const readyForPickupAt = new Date().toISOString();
+    metadata.readyForPickupAt = readyForPickupAt;
     metadata.readyForPickupBy = user.name;
     metadata.readyForPickupById = userId;
     metadata.lastUpdatedAt = new Date().toISOString();
@@ -190,13 +205,13 @@ export async function POST(
     await prisma.event.create({
       data: {
         type: "ORDER_READY_FOR_PICKUP",
-        title: "=æ Commande prête pour pickup",
-        description: `${user.name} a marqué la commande ${order.orderCode} comme prête pour le livreur`,
+        title: "Commande prete pour pickup",
+        description: `${user.name} a marque la commande ${order.orderCode} comme prete pour le livreur`,
         metadata: {
           orderId: order.id,
           orderCode: order.orderCode,
           collaborateurName: user.name,
-          readyForPickupAt: metadata.readyForPickupAt,
+          readyForPickupAt,
           totalBaskets: readySuppliers.length,
         },
         orderId: order.id,
@@ -206,13 +221,13 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: "Commande marquée prête pour pickup",
+      message: "Commande marquee prete pour pickup",
       orderCode: order.orderCode,
-      readyForPickupAt: metadata.readyForPickupAt,
+      readyForPickupAt,
       glovoResponse: glovoData,
     });
   } catch (error) {
-    console.error("=¥ [READY FOR PICKUP] Error:", error);
+    console.error("[READY FOR PICKUP] Error:", error);
     return NextResponse.json(
       {
         success: false,
