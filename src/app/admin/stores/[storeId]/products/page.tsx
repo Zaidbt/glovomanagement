@@ -257,26 +257,69 @@ export default function StoreProductsPage() {
       setErrorMessage("");
       setSuccessMessage("");
 
-      const response = await fetch(`/api/stores/${storeId}/products/download-catalog`, {
+      // First, initiate the export from Glovo
+      const initiateResponse = await fetch(`/api/stores/${storeId}/products/download-catalog`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
       });
 
-      const data = await response.json();
+      const initiateData = await initiateResponse.json();
 
-      if (response.ok) {
-        setSuccessMessage(
-          data.message ||
-            "Export du catalogue initié. Le fichier sera envoyé à votre webhook une fois prêt."
-        );
-      } else {
-        setErrorMessage(data.error || "Erreur lors de l'export du catalogue");
+      if (!initiateResponse.ok) {
+        setErrorMessage(initiateData.error || "Erreur lors de l'initiation de l'export");
+        return;
       }
+
+      setSuccessMessage(
+        "Export initié. Le fichier sera disponible dans quelques instants. Veuillez réessayer dans quelques secondes."
+      );
+
+      // Note: The actual file will be available via webhook and stored automatically
+      // User can click again to download once webhook has processed it
     } catch (error) {
       console.error("Error downloading catalog:", error);
       setErrorMessage("Erreur lors de l'export du catalogue");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleDownloadLastExport = async () => {
+    try {
+      setDownloading(true);
+      setErrorMessage("");
+      setSuccessMessage("");
+
+      const response = await fetch(`/api/stores/${storeId}/products/download-last-export`);
+
+      if (response.ok) {
+        // Get filename from Content-Disposition header
+        const contentDisposition = response.headers.get("Content-Disposition");
+        const filename = contentDisposition
+          ? contentDisposition.split("filename=")[1]?.replace(/"/g, "") || "catalog.xlsx"
+          : "catalog.xlsx";
+
+        // Download the file
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        setSuccessMessage("Catalogue téléchargé avec succès!");
+      } else {
+        const data = await response.json();
+        setErrorMessage(data.error || "Aucun export disponible. Veuillez d'abord initier un export.");
+      }
+    } catch (error) {
+      console.error("Error downloading last export:", error);
+      setErrorMessage("Erreur lors du téléchargement");
     } finally {
       setDownloading(false);
     }
@@ -434,15 +477,28 @@ export default function StoreProductsPage() {
           </Button>
           {/* Bouton Télécharger - seulement pour les stores réels (avec glovoStoreId) */}
           {store?.glovoStoreId && store.glovoStoreId !== "store-01" && !store.glovoStoreId.includes("test") && (
-            <Button
-              variant="outline"
-              onClick={handleDownloadCatalog}
-              disabled={downloading}
-              className="border-green-500 text-green-600 hover:bg-green-50"
-            >
-              <Download className={`w-4 h-4 mr-2 ${downloading ? "animate-spin" : ""}`} />
-              {downloading ? "Téléchargement..." : "Télécharger"}
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                onClick={handleDownloadCatalog}
+                disabled={downloading}
+                className="border-green-500 text-green-600 hover:bg-green-50"
+                title="Initier l'export depuis Glovo"
+              >
+                <Download className={`w-4 h-4 mr-2 ${downloading ? "animate-spin" : ""}`} />
+                {downloading ? "Export..." : "Exporter Glovo"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleDownloadLastExport}
+                disabled={downloading}
+                className="border-purple-500 text-purple-600 hover:bg-purple-50"
+                title="Télécharger le dernier export converti"
+              >
+                <Download className={`w-4 h-4 mr-2 ${downloading ? "animate-spin" : ""}`} />
+                {downloading ? "Téléchargement..." : "Télécharger"}
+              </Button>
+            </>
           )}
           {/* Bouton Synchroniser - seulement pour les stores réels */}
           {store?.glovoStoreId && store.glovoStoreId !== "store-01" && !store.glovoStoreId.includes("test") && (

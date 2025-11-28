@@ -4,6 +4,7 @@ import { eventTracker } from "@/lib/event-tracker";
 import { OrderStatus } from "@/types/order-status";
 import fs from "fs";
 import path from "path";
+import * as XLSX from "xlsx";
 
 const prisma = new PrismaClient();
 
@@ -88,12 +89,24 @@ export async function POST(request: NextRequest) {
       console.log("   job_status:", body.job_status);
       console.log("   vendor_id:", body.vendor_id);
 
-      // Save catalog export info for manual review
+      const catalogUrl = body.catalog_url || body.download_url;
+      const vendorId = body.vendor_id;
+
+      // Find store by glovoStoreId
+      let store = null;
+      if (vendorId) {
+        store = await prisma.store.findFirst({
+          where: { glovoStoreId: vendorId },
+        });
+      }
+
+      // Save catalog export info
       const exportData = {
         received_at: new Date().toISOString(),
         job_id: body.job_id,
-        catalog_url: body.catalog_url || body.download_url,
-        vendor_id: body.vendor_id,
+        catalog_url: catalogUrl,
+        vendor_id: vendorId,
+        store_id: store?.id || null,
         full_payload: body,
       };
 
@@ -102,6 +115,110 @@ export async function POST(request: NextRequest) {
       fs.writeFileSync(exportPath, JSON.stringify(exportData, null, 2));
 
       console.log("✅ [ORDERS WEBHOOK] Catalog export enregistré:", exportPath);
+
+      // If catalog_url is available and store found, download and convert to Excel
+      if (catalogUrl && store) {
+        try {
+          console.log("📥 Téléchargement et conversion du catalogue en Excel...");
+          
+          // Download catalog
+          const catalogResponse = await fetch(catalogUrl);
+          if (!catalogResponse.ok) {
+            console.error("❌ Erreur téléchargement catalogue:", catalogResponse.status);
+          } else {
+            const catalogText = await catalogResponse.text();
+            let catalogData: any[];
+
+            try {
+              catalogData = JSON.parse(catalogText);
+              if (catalogData && typeof catalogData === 'object' && !Array.isArray(catalogData)) {
+                if ('products' in catalogData && Array.isArray(catalogData.products)) {
+                  catalogData = catalogData.products;
+                } else {
+                  const arrays = Object.values(catalogData).filter(v => Array.isArray(v));
+                  if (arrays.length > 0) {
+                    catalogData = arrays[0] as any[];
+                  }
+                }
+              }
+            } catch {
+              const lines = catalogText.split('\n').filter(line => line.trim());
+              const headers = lines[0]?.split(',').map(h => h.trim()) || [];
+              catalogData = lines.slice(1).map(line => {
+                const values = line.split(',').map(v => v.trim());
+                const obj: any = {};
+                headers.forEach((header, i) => {
+                  obj[header] = values[i] || '';
+                });
+                return obj;
+              });
+            }
+
+            if (Array.isArray(catalogData) && catalogData.length > 0) {
+              // Convert to Excel format matching import format
+              const excelData = catalogData.map((product: any) => {
+                const sku = product.sku || product.id || product.SKU || '';
+                const name = product.title || product.name || product.translations?.fr_MA || product.translations?.[0]?.text || '';
+                const priceRaw = product.price || product.price?.amount || 0;
+                const price = typeof priceRaw === 'number' ? priceRaw : parseFloat(priceRaw) || 0;
+                const active = product.active !== undefined ? product.active : (product.is_active !== undefined ? product.is_active : true);
+                
+                const category1 = product.categories?.[0]?.details?.name?.fr_MA || 
+                                 product.categories?.[0]?.name?.translations?.[0]?.text ||
+                                 product.categories?.[0]?.name ||
+                                 product.category1 || 
+                                 '';
+                const category2 = product.categories?.[1]?.details?.name?.fr_MA || 
+                                 product.categories?.[1]?.name?.translations?.[0]?.text ||
+                                 product.categories?.[1]?.name ||
+                                 product.category2 || 
+                                 '';
+                const barcode = product.barcodes?.[0] || product.barcode || '';
+                const imageUrl = product.images?.[0] || product.image_url || product.imageUrl || '';
+
+                return {
+                  SKU: sku,
+                  NAME: name,
+                  PRICE: price,
+                  ACTIVE: active ? 'true' : 'false',
+                  category1: category1,
+                  category2: category2,
+                  barcode: barcode,
+                  imageUrl: imageUrl,
+                };
+              });
+
+              const workbook = XLSX.utils.book_new();
+              const worksheet = XLSX.utils.json_to_sheet(excelData);
+              XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+
+              const excelPath = path.join(process.cwd(), 'data', 'catalog-exports', `catalog-${store.id}-${Date.now()}.xlsx`);
+              XLSX.writeFile(workbook, excelPath);
+
+              // Store the catalog URL and Excel path in store metadata for later download
+              await prisma.store.update({
+                where: { id: store.id },
+                data: {
+                  metadata: {
+                    ...((store.metadata as any) || {}),
+                    lastCatalogExport: {
+                      catalogUrl: catalogUrl,
+                      excelPath: excelPath,
+                      exportedAt: new Date().toISOString(),
+                      productCount: excelData.length,
+                    },
+                  },
+                },
+              });
+
+              console.log(`✅ Catalogue converti en Excel: ${excelPath} (${excelData.length} produits)`);
+            }
+          }
+        } catch (error) {
+          console.error("❌ Erreur lors de la conversion:", error);
+        }
+      }
+
       console.log("╚══════════════════════════════════════════════════════════╝\n");
 
       return NextResponse.json({
