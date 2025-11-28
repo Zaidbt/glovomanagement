@@ -116,20 +116,47 @@ export async function POST(
     const vendorId = store.glovoStoreId;
     const { replaceExisting } = await request.json().catch(() => ({ replaceExisting: false }));
 
+    // Detect if this is a test store (store-01 or similar)
+    const isTestStore = vendorId === "store-01" || vendorId?.startsWith("store-") || vendorId?.includes("test");
+    
+    // Use test credentials if it's a test store
+    let finalApiUrl = apiUrl;
+    let finalApiToken = apiToken;
+    let authHeader = `Bearer ${apiToken}`;
+    
+    if (isTestStore) {
+      // Test store uses staging API with shared token
+      finalApiUrl = process.env.GLOVO_TEST_API_URL || "https://stageapi.glovoapp.com";
+      finalApiToken = process.env.GLOVO_SHARED_TOKEN || process.env.GLOVO_TEST_TOKEN;
+      
+      // Test stores use shared token (no Bearer prefix)
+      if (finalApiToken) {
+        authHeader = finalApiToken;
+      }
+      
+      console.log("🧪 [TEST STORE] Using test/staging credentials:", {
+        vendorId,
+        apiUrl: finalApiUrl,
+        hasToken: !!finalApiToken,
+      });
+    }
+
     console.log("🔄 Starting Glovo product sync:", {
       storeId,
       vendorId,
       chainId,
+      isTestStore,
+      apiUrl: finalApiUrl,
       replaceExisting,
     });
 
     // Fetch first page to get total_pages
-    const firstPageUrl = `${apiUrl}/v2/chains/${chainId}/vendors/${vendorId}/catalog?page=1&page_size=50`;
+    const firstPageUrl = `${finalApiUrl}/v2/chains/${chainId}/vendors/${vendorId}/catalog?page=1&page_size=50`;
     console.log("📡 Fetching first page:", firstPageUrl);
 
     const firstPageResponse = await fetch(firstPageUrl, {
       headers: {
-        "Authorization": `Bearer ${apiToken}`,
+        "Authorization": authHeader,
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
@@ -138,6 +165,38 @@ export async function POST(
     if (!firstPageResponse.ok) {
       const errorText = await firstPageResponse.text();
       console.error("❌ Glovo API error:", firstPageResponse.status, errorText);
+      
+      // Special handling for 403 errors
+      if (firstPageResponse.status === 403) {
+        let errorMessage = "Accès refusé par l'API Glovo (403 Forbidden)";
+        
+        if (isTestStore) {
+          errorMessage += "\n\n⚠️ Store de test détecté. L'API Partners v2 (/v2/chains/.../vendors/.../catalog) pourrait ne pas être disponible pour les stores de test dans l'environnement staging.";
+          errorMessage += "\n\nVérifiez que:";
+          errorMessage += "\n- Le GLOVO_SHARED_TOKEN est configuré correctement";
+          errorMessage += "\n- Le GLOVO_CHAIN_ID est valide pour l'environnement staging";
+          errorMessage += "\n- Le vendor ID du store de test existe dans l'API Partners v2";
+        } else {
+          errorMessage += "\n\nVérifiez que:";
+          errorMessage += "\n- Le GLOVO_API_TOKEN a les permissions nécessaires";
+          errorMessage += "\n- Le GLOVO_CHAIN_ID est correct";
+          errorMessage += "\n- Le vendor ID existe et est accessible avec ces credentials";
+        }
+        
+        return NextResponse.json(
+          {
+            success: false,
+            error: errorMessage,
+            details: errorText,
+            isTestStore,
+            apiUrl: finalApiUrl,
+            vendorId,
+            chainId,
+          },
+          { status: 403 }
+        );
+      }
+      
       return NextResponse.json(
         {
           success: false,
@@ -158,11 +217,11 @@ export async function POST(
     // Fetch remaining pages
     for (let page = 2; page <= totalPages; page++) {
       console.log(`📥 Fetching page ${page}/${totalPages}...`);
-      const pageUrl = `${apiUrl}/v2/chains/${chainId}/vendors/${vendorId}/catalog?page=${page}&page_size=50`;
+      const pageUrl = `${finalApiUrl}/v2/chains/${chainId}/vendors/${vendorId}/catalog?page=${page}&page_size=50`;
 
       const pageResponse = await fetch(pageUrl, {
         headers: {
-          "Authorization": `Bearer ${apiToken}`,
+          "Authorization": authHeader,
           "Content-Type": "application/json",
           "Accept": "application/json",
         },
