@@ -4,7 +4,6 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { verifyMobileToken } from "@/lib/auth-mobile";
 import { sendAutomaticMessageOnDispatch } from "@/lib/automatic-messaging";
-import { OrderStatus, mapToGlovoStatus } from "@/types/order-status";
 
 /**
  * POST /api/collaborateur/orders/[orderId]/ready-for-pickup
@@ -135,70 +134,28 @@ export async function POST(
       );
     }
 
-    // Call Glovo API to mark ready for pickup (using Integration API like mark-ready)
+    // Call Glovo API to mark ready for pickup (using Integration API v0 as per documentation)
     try {
-      const chainId = process.env.GLOVO_CHAIN_ID;
-      const apiUrl = process.env.GLOVO_API_URL || "https://glovo.partner.deliveryhero.io";
-      const apiToken = process.env.GLOVO_API_TOKEN;
+      const apiBaseUrl = process.env.GLOVO_API_BASE_URL || "https://api.glovoapp.com";
+      const sharedToken = process.env.GLOVO_SHARED_TOKEN;
+      const storeExternalId = order.store.glovoStoreId || process.env.GLOVO_STORE_EXTERNAL_ID;
 
-      if (!chainId || !apiToken) {
-        console.warn("⚠️ [READY FOR PICKUP] GLOVO_CHAIN_ID or GLOVO_API_TOKEN not configured, skipping Glovo API call");
+      if (!sharedToken || !storeExternalId) {
+        console.warn("⚠️ [READY FOR PICKUP] GLOVO_SHARED_TOKEN or store external ID not configured, skipping Glovo API call");
       } else {
-        const glovoApiUrl = `${apiUrl}/v2/chains/${chainId}/orders/${order.orderId}`;
-        const glovoStatus = mapToGlovoStatus(OrderStatus.READY, "LOGISTICS_DELIVERY");
-
-        // Build items array with status (required by Glovo API Integration v2)
-        // Each item must have: _id (UUID), purchased_product_id, sku, status, pricing
-        // Status values: IN_CART (ready), NOT_FOUND, REPLACED, ADDITION
-        const products = (order.products as Array<{
-          _id?: string;
-          id?: string;
-          sku?: string;
-          purchased_product_id?: string;
-          name?: string;
-          quantity?: number;
-          price?: number;
-        }>) || [];
-
-        const items = products.map((product, index) => {
-          // Use _id if available (Glovo UUID), otherwise generate or use id/sku
-          const itemId = product._id || product.id || product.sku || `item-${index}`;
-          const purchasedId = product.purchased_product_id || product._id || product.id || product.sku || `purchased-${index}`;
-          const sku = product.sku || product.id || "";
-          const quantity = product.quantity || 1;
-          const unitPrice = product.price || 0;
-
-          return {
-            _id: itemId, // UUID of the item (required)
-            purchased_product_id: purchasedId, // Required for order modifications
-            sku: sku, // Product SKU
-            name: product.name || "",
-            quantity: quantity,
-            status: "IN_CART", // All items are ready for pickup
-            pricing: {
-              unit_price: unitPrice,
-              total_price: unitPrice * quantity,
-            },
-          };
-        });
-
-        // Build request body - order_id is in URL, not needed in body
-        // Items are required when updating status to READY_FOR_PICKUP
-        const requestBody = {
-          status: glovoStatus,
-          items: items.length > 0 ? items : [],
-        };
+        // Use the correct endpoint from documentation: /api/v0/integrations/orders/{orderId}/ready_for_pickup
+        const glovoApiUrl = `${apiBaseUrl}/api/v0/integrations/orders/${order.orderId}/ready_for_pickup`;
 
         console.log(`📡 [READY FOR PICKUP] Calling Glovo API: PUT ${glovoApiUrl}`);
-        console.log(`📤 [READY FOR PICKUP] Request body:`, JSON.stringify(requestBody, null, 2));
 
         const glovoResponse = await fetch(glovoApiUrl, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${apiToken}`,
+            Authorization: sharedToken, // Secret token directly (no Bearer prefix)
+            "Glovo-Store-Address-External-Id": storeExternalId,
           },
-          body: JSON.stringify(requestBody),
+          // No body needed according to curl example in documentation
         });
 
         const responseText = await glovoResponse.text();
@@ -210,7 +167,7 @@ export async function POST(
         }
 
         if (glovoResponse.ok || glovoResponse.status === 202 || glovoResponse.status === 204) {
-          console.log(`✅ [READY FOR PICKUP] Glovo API: Order ${order.orderId} marked as ${glovoStatus}`);
+          console.log(`✅ [READY FOR PICKUP] Glovo API: Order ${order.orderId} marked ready for pickup`);
         } else {
           console.error(`❌ [READY FOR PICKUP] Glovo API error (${glovoResponse.status}):`, glovoData);
           // Don't fail the entire operation if Glovo API fails
