@@ -26,11 +26,6 @@ export async function sendAutomaticMessageOnDispatch(
   order: OrderData
 ): Promise<boolean> {
   try {
-    console.log(
-      "📱 Sending automatic message for dispatched order:",
-      order.orderId
-    );
-
     // Check if customer has valid phone number
     if (
       !order.customerPhone ||
@@ -97,11 +92,6 @@ export async function sendAutomaticMessageOnDispatch(
     });
 
     if (response.ok) {
-      console.log(
-        "✅ Automatic message sent successfully to:",
-        order.customerPhone
-      );
-
       // Track the event
       await prisma.event.create({
         data: {

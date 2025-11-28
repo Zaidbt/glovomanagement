@@ -18,8 +18,6 @@ export async function POST(request: NextRequest) {
       MediaContentType0: formData.get("MediaContentType0"),
     };
 
-    console.log("📱 Webhook Twilio reçu:", body);
-
     // Extraire les informations du message
     const {
       MessageSid,
@@ -45,10 +43,6 @@ export async function POST(request: NextRequest) {
         twilioNumber: cleanTo,
       },
     });
-
-    if (!store) {
-      console.warn(`⚠️ No store found for Twilio number: ${cleanTo}`);
-    }
 
     // Save message to database if it's an inbound message
     if (fromString.startsWith("whatsapp:") && store) {
@@ -151,8 +145,6 @@ export async function POST(request: NextRequest) {
         status: MessageStatus,
       },
     });
-
-    console.log("✅ Message Twilio traité:", messageData);
 
     // Répondre à Twilio (important pour éviter les retry)
     return NextResponse.json({ success: true });

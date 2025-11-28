@@ -183,6 +183,7 @@ export async function POST(
         });
 
         const requestBody = {
+          order_id: order.orderId, // Required by Glovo API
           status: glovoStatus,
           items: items.length > 0 ? items : [],
         };

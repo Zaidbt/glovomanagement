@@ -148,12 +148,6 @@ export async function POST(
       },
     });
 
-    console.log(
-      `✅ Basket ${basketNumber} picked up for order ${
-        order.orderCode || orderId
-      } by ${user.name}`
-    );
-
     // Create event
     await prisma.event.create({
       data: {

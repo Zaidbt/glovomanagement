@@ -16,26 +16,17 @@ export async function POST(
   try {
     const { orderId } = await params;
 
-    console.log("🚀 Mark Ready Request for order:", orderId);
-
     // Try session auth first (web)
     const session = await getServerSession(authOptions);
     let userId: string | null = null;
 
-    console.log("🌐 Session auth result:", session?.user?.id ? "SUCCESS" : "NONE");
-
     if (session?.user?.id) {
       userId = session.user.id;
-      console.log("✅ Using session auth for user:", userId);
     } else {
       // Try mobile JWT token
-      console.log("📱 Attempting mobile JWT auth...");
       const mobileUser = await verifyMobileToken(request);
       if (mobileUser) {
         userId = mobileUser.userId;
-        console.log("✅ Using mobile JWT auth for user:", userId);
-      } else {
-        console.log("❌ Mobile JWT auth failed");
       }
     }
 
@@ -130,12 +121,6 @@ export async function POST(
       }
     }
 
-    if (assignedBasket === null) {
-      console.log(`⚠️ Commande marquée READY sans panier pour ${user.name}`);
-    } else {
-      console.log(`🧺 Assigning basket ${assignedBasket} for supplier ${user.name}`);
-    }
-
     // Update metadata to mark supplier's products as ready with basket
     const metadata = (order.metadata as Record<string, unknown>) || {};
     const supplierStatuses = (metadata.supplierStatuses as Record<string, unknown>) || {};
@@ -193,8 +178,6 @@ export async function POST(
         basket: assignedBasket,
       });
     });
-
-    console.log(`📤 Notified ${collaborateurs.length} collaborateurs via WebSocket`);
 
     return NextResponse.json({
       success: true,

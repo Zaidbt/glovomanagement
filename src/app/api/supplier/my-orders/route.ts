@@ -62,8 +62,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log(`📦 Fetching orders for supplier: ${user.name} (ID: ${userId}) - Store: ${supplierStoreId}`);
-
     // Get all products assigned to this supplier (only from their store)
     const supplierProducts = await prisma.productSupplier.findMany({
       where: {
@@ -89,7 +87,6 @@ export async function GET(request: NextRequest) {
     });
 
     const myProductSKUs = new Set(supplierProducts.map((sp) => sp.product.sku));
-    console.log(`👤 Supplier has ${myProductSKUs.size} products in store ${supplierStoreId}`);
 
     // Get only ACCEPTED orders from supplier's store (not CREATED - collaborateur must accept first)
     const allOrders = await prisma.order.findMany({
@@ -104,8 +101,6 @@ export async function GET(request: NextRequest) {
       },
       take: 100, // Last 100 orders
     });
-
-    console.log(`📋 Total ACCEPTED orders in store ${supplierStoreId}: ${allOrders.length}`);
 
     // Filter orders that contain at least one of supplier's products
     const relevantOrders = [];

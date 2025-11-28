@@ -186,8 +186,6 @@ export async function POST(request: NextRequest) {
             storeId: order.storeId,
           });
         });
-
-        console.log(`📤 Notified ${uniqueSuppliers.size} priority=1 suppliers via WebSocket for store ${order.storeId}`);
       }
 
       return NextResponse.json({
