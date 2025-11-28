@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { verifyMobileToken } from "@/lib/auth-mobile";
+import { sendAutomaticMessageOnDispatch } from "@/lib/automatic-messaging";
+import { OrderStatus, mapToGlovoStatus } from "@/types/order-status";
 
 /**
  * POST /api/collaborateur/orders/[orderId]/ready-for-pickup
@@ -15,7 +17,9 @@ export async function POST(
 ) {
   try {
     const { orderId } = await params;
-    console.log(`[READY FOR PICKUP] Request for orderId: ${orderId}`);
+    console.log(`🚀 [READY FOR PICKUP] ==========================================`);
+    console.log(`[READY FOR PICKUP] Request received for orderId: ${orderId}`);
+    console.log(`[READY FOR PICKUP] Timestamp: ${new Date().toISOString()}`);
 
     // Try mobile auth first, then web session
     const mobileUser = await verifyMobileToken(request);
@@ -133,57 +137,87 @@ export async function POST(
       );
     }
 
-    // Call Glovo API to mark ready for pickup
-    const GLOVO_API_BASE_URL =
-      process.env.GLOVO_API_BASE_URL || "https://stageapi.glovoapp.com";
-    const GLOVO_SHARED_TOKEN = process.env.GLOVO_SHARED_TOKEN;
-    const storeExternalId =
-      order.store.glovoStoreId || process.env.GLOVO_STORE_EXTERNAL_ID;
+    // Call Glovo API to mark ready for pickup (using Integration API like mark-ready)
+    console.log(`🔍 [READY FOR PICKUP] Checking Glovo API configuration...`);
+    console.log(`   - GLOVO_CHAIN_ID: ${process.env.GLOVO_CHAIN_ID ? '✅ Set' : '❌ Missing'}`);
+    console.log(`   - GLOVO_API_URL: ${process.env.GLOVO_API_URL || 'Using default: https://glovo.partner.deliveryhero.io'}`);
+    console.log(`   - GLOVO_API_TOKEN: ${process.env.GLOVO_API_TOKEN ? '✅ Set (length: ' + process.env.GLOVO_API_TOKEN.length + ')' : '❌ Missing'}`);
+    console.log(`   - Order ID: ${order.orderId}`);
+    console.log(`   - Order Code: ${order.orderCode}`);
 
-    if (!GLOVO_SHARED_TOKEN || !storeExternalId) {
-      return NextResponse.json(
-        { success: false, error: "Configuration Glovo manquante" },
-        { status: 500 }
-      );
-    }
+    try {
+      const chainId = process.env.GLOVO_CHAIN_ID;
+      const apiUrl = process.env.GLOVO_API_URL || "https://glovo.partner.deliveryhero.io";
+      const apiToken = process.env.GLOVO_API_TOKEN;
 
-    console.log(
-      `[READY FOR PICKUP] Calling Glovo API for order ${order.orderId}`
-    );
+      if (!chainId || !apiToken) {
+        console.warn("⚠️ [READY FOR PICKUP] GLOVO_CHAIN_ID or GLOVO_API_TOKEN not configured, skipping Glovo API call");
+        console.warn(`   Missing: ${!chainId ? 'GLOVO_CHAIN_ID ' : ''}${!apiToken ? 'GLOVO_API_TOKEN' : ''}`);
+      } else {
+        const glovoApiUrl = `${apiUrl}/v2/chains/${chainId}/orders/${order.orderId}`;
 
-    const glovoResponse = await fetch(
-      `${GLOVO_API_BASE_URL}/webhook/stores/${storeExternalId}/orders/${order.orderId}/ready`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: GLOVO_SHARED_TOKEN,
-          "Content-Type": "application/json",
-        },
+        // Map internal READY_FOR_PICKUP status to Glovo's status
+        const glovoStatus = mapToGlovoStatus(OrderStatus.READY, "LOGISTICS_DELIVERY");
+
+        console.log(`📡 [READY FOR PICKUP] Calling Glovo Integration API:`);
+        console.log(`   URL: PUT ${glovoApiUrl}`);
+        console.log(`   Status: ${glovoStatus}`);
+        console.log(`   Chain ID: ${chainId}`);
+        console.log(`   Order ID: ${order.orderId}`);
+
+        const requestBody = {
+          status: glovoStatus,
+        };
+
+        console.log(`   Request body:`, JSON.stringify(requestBody));
+
+        const glovoResponse = await fetch(glovoApiUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiToken}`,
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        const responseText = await glovoResponse.text();
+        let glovoData;
+        try {
+          glovoData = responseText ? JSON.parse(responseText) : {};
+        } catch {
+          glovoData = { rawResponse: responseText };
+        }
+
+        console.log(`📥 [READY FOR PICKUP] Glovo API Response:`);
+        console.log(`   Status: ${glovoResponse.status} ${glovoResponse.statusText}`);
+        console.log(`   Response data:`, JSON.stringify(glovoData, null, 2));
+
+        if (glovoResponse.ok || glovoResponse.status === 202 || glovoResponse.status === 204) {
+          console.log(
+            `✅ [READY FOR PICKUP] Glovo API: Order ${order.orderId} marked as ${glovoStatus} successfully`
+          );
+        } else {
+          console.error(
+            `❌ [READY FOR PICKUP] Glovo API error (status ${glovoResponse.status}):`,
+            glovoData
+          );
+          // Don't fail the entire operation if Glovo API fails
+        }
       }
-    );
-
-    const glovoData = await glovoResponse.json().catch(() => ({}));
-
-    if (!glovoResponse.ok) {
-      console.error(
-        `[READY FOR PICKUP] Glovo API error:`,
-        glovoResponse.status,
-        glovoData
-      );
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Erreur API Glovo",
-          status: glovoResponse.status,
-          details: glovoData,
-        },
-        { status: glovoResponse.status }
-      );
+    } catch (glovoError) {
+      console.error("❌ [READY FOR PICKUP] Error calling Glovo API:", glovoError);
+      if (glovoError instanceof Error) {
+        console.error(`   Error message: ${glovoError.message}`);
+        console.error(`   Error stack: ${glovoError.stack}`);
+      }
+      // Don't fail the entire operation
     }
 
-    console.log(
-      `[READY FOR PICKUP] Order ${order.orderCode} marked ready for pickup`
-    );
+    console.log(`📝 [READY FOR PICKUP] Updating order in database...`);
+    console.log(`   Order ID: ${order.id}`);
+    console.log(`   Order Code: ${order.orderCode}`);
+    console.log(`   Current Status: ${order.status}`);
+    console.log(`   New Status: READY_FOR_PICKUP`);
 
     // Update order metadata
     const readyForPickupAt = new Date().toISOString();
@@ -200,6 +234,36 @@ export async function POST(
         metadata: metadata as never,
       },
     });
+
+    console.log(`✅ [READY FOR PICKUP] Order updated in database successfully`);
+
+    // Send WhatsApp message to customer
+    try {
+      console.log("📱 [READY FOR PICKUP] Sending WhatsApp message to customer...");
+
+      const messageSent = await sendAutomaticMessageOnDispatch({
+        id: order.id,
+        orderId: order.orderId,
+        orderCode: order.orderCode || undefined,
+        customerName: order.customerName || undefined,
+        customerPhone: order.customerPhone || undefined,
+        estimatedTotalPrice: order.estimatedTotalPrice || undefined,
+        currency: order.currency || undefined,
+        estimatedPickupTime: order.estimatedPickupTime || undefined,
+        storeId: order.storeId,
+      });
+
+      if (messageSent) {
+        console.log("✅ [READY FOR PICKUP] WhatsApp message sent successfully to customer");
+      } else {
+        console.log(
+          "ℹ️ [READY FOR PICKUP] WhatsApp message not sent (no valid phone number or credential)"
+        );
+      }
+    } catch (messageError) {
+      console.error("❌ [READY FOR PICKUP] Error sending WhatsApp message:", messageError);
+      // Don't fail the operation if message sending fails
+    }
 
     // Create event
     await prisma.event.create({
@@ -219,15 +283,25 @@ export async function POST(
       },
     });
 
+    console.log(`✅ [READY FOR PICKUP] ==========================================`);
+    console.log(`[READY FOR PICKUP] SUCCESS - Order ${order.orderCode} marked ready for pickup`);
+    console.log(`[READY FOR PICKUP] Ready at: ${readyForPickupAt}`);
+    console.log(`[READY FOR PICKUP] ==========================================`);
+
     return NextResponse.json({
       success: true,
       message: "Commande marquee prete pour pickup",
       orderCode: order.orderCode,
       readyForPickupAt,
-      glovoResponse: glovoData,
     });
   } catch (error) {
-    console.error("[READY FOR PICKUP] Error:", error);
+    console.error("❌ [READY FOR PICKUP] ==========================================");
+    console.error("[READY FOR PICKUP] ERROR:", error);
+    if (error instanceof Error) {
+      console.error(`   Message: ${error.message}`);
+      console.error(`   Stack: ${error.stack}`);
+    }
+    console.error("❌ [READY FOR PICKUP] ==========================================");
     return NextResponse.json(
       {
         success: false,
