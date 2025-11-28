@@ -182,13 +182,15 @@ export async function POST(
           };
         });
 
+        // Build request body - order_id is in URL, not needed in body
+        // Items are required when updating status to READY_FOR_PICKUP
         const requestBody = {
-          order_id: order.orderId, // Required by Glovo API
           status: glovoStatus,
           items: items.length > 0 ? items : [],
         };
 
         console.log(`📡 [READY FOR PICKUP] Calling Glovo API: PUT ${glovoApiUrl}`);
+        console.log(`📤 [READY FOR PICKUP] Request body:`, JSON.stringify(requestBody, null, 2));
 
         const glovoResponse = await fetch(glovoApiUrl, {
           method: "PUT",
