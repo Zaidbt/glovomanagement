@@ -149,13 +149,6 @@ export async function GET(request: NextRequest) {
             (sp) => sp.product.sku === productSKU
           )?.product;
 
-          // Debug imageUrl
-          if (isMyProduct && !dbProduct?.imageUrl) {
-            console.log(`⚠️ Product ${productSKU} (${p.name}) has no imageUrl in DB`);
-          } else if (isMyProduct && dbProduct?.imageUrl) {
-            console.log(`✅ Product ${productSKU} has imageUrl: ${dbProduct.imageUrl}`);
-          }
-
           return {
             id: p.id || p.sku || "unknown",
             sku: productSKU,
@@ -185,7 +178,6 @@ export async function GET(request: NextRequest) {
 
         // Use pick_up_code from Glovo (3-digit code) - NOT order_id
         const pickupCode = (metadata.pick_up_code as string) || null;
-        console.log(`📋 Order ${order.orderCode} - pickupCode: ${pickupCode || 'NONE'} (from metadata.pick_up_code)`);
 
         relevantOrders.push({
           id: order.id,
@@ -211,8 +203,6 @@ export async function GET(request: NextRequest) {
         });
       }
     }
-
-    console.log(`✅ Found ${relevantOrders.length} relevant orders for supplier ${user.name}`);
 
     return NextResponse.json({
       success: true,

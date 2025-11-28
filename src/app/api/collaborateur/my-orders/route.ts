@@ -86,8 +86,6 @@ export async function GET(request: NextRequest) {
       take: 100, // Last 100 orders
     });
 
-    console.log(`📋 [COLLABORATEUR] Found ${orders.length} orders for store ${storeName}`);
-
     // Enrich orders with supplier information
     const enrichedOrders = await Promise.all(
       orders.map(async (order) => {
