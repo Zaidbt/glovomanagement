@@ -31,13 +31,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Verify user is a fournisseur
+    // Verify user is a fournisseur and get their assigned store
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
         role: true,
         name: true,
+        fournisseurStores: {
+          select: {
+            storeId: true,
+          },
+        },
       },
     });
 
@@ -48,13 +53,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log(`📦 Fetching orders for supplier: ${user.name} (ID: ${userId})`);
+    // Get supplier's store (1 fournisseur = 1 store)
+    const supplierStoreId = user.fournisseurStores[0]?.storeId;
+    if (!supplierStoreId) {
+      return NextResponse.json(
+        { success: false, error: "Aucun store assigné à ce fournisseur" },
+        { status: 400 }
+      );
+    }
 
-    // Get all products assigned to this supplier
+    console.log(`📦 Fetching orders for supplier: ${user.name} (ID: ${userId}) - Store: ${supplierStoreId}`);
+
+    // Get all products assigned to this supplier (only from their store)
     const supplierProducts = await prisma.productSupplier.findMany({
       where: {
         supplierId: userId,
         isActive: true,
+        product: {
+          storeId: supplierStoreId, // Filter by supplier's store
+        },
       },
       include: {
         product: {
@@ -65,17 +82,19 @@ export async function GET(request: NextRequest) {
             price: true,
             imageUrl: true,
             category1: true,
+            storeId: true,
           },
         },
       },
     });
 
     const myProductSKUs = new Set(supplierProducts.map((sp) => sp.product.sku));
-    console.log(`👤 Supplier has ${myProductSKUs.size} products`);
+    console.log(`👤 Supplier has ${myProductSKUs.size} products in store ${supplierStoreId}`);
 
-    // Get only ACCEPTED orders (not CREATED - collaborateur must accept first)
+    // Get only ACCEPTED orders from supplier's store (not CREATED - collaborateur must accept first)
     const allOrders = await prisma.order.findMany({
       where: {
+        storeId: supplierStoreId, // Only orders from supplier's store
         status: {
           not: "CREATED", // Exclude orders that haven't been accepted yet
         },
@@ -86,7 +105,7 @@ export async function GET(request: NextRequest) {
       take: 100, // Last 100 orders
     });
 
-    console.log(`📋 Total ACCEPTED orders in system: ${allOrders.length}`);
+    console.log(`📋 Total ACCEPTED orders in store ${supplierStoreId}: ${allOrders.length}`);
 
     // Filter orders that contain at least one of supplier's products
     const relevantOrders = [];

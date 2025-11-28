@@ -3,6 +3,11 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { verifyMobileToken } from "@/lib/auth-mobile";
+import {
+  dispatchToNextPriority,
+  checkAndDispatchCategory,
+  notifyNoSuppliersAvailable,
+} from "@/lib/supplier-dispatch-service";
 
 /**
  * POST /api/supplier/orders/[orderId]/product-unavailable
@@ -283,6 +288,38 @@ export async function POST(
       : `✅ Product marked unavailable - ${unavailableCount}/${totalMyProducts} unavailable, billable: ${billableAmount/100}DH`
     );
 
+    // DISPATCH TO NEXT PRIORITY SUPPLIER
+    console.log(`🔄 [DISPATCH] Attempting to dispatch unavailable product to next priority...`);
+
+    const dispatchResult = await dispatchToNextPriority(
+      orderId,
+      productSku,
+      userId,
+      order.storeId
+    );
+
+    if (dispatchResult.dispatched && dispatchResult.nextSupplier) {
+      console.log(
+        `✅ [DISPATCH] Product ${productSku} dispatched to ${dispatchResult.nextSupplier.name} (priority ${dispatchResult.nextSupplier.priority})`
+      );
+    } else {
+      console.log(`⚠️ [DISPATCH] No next priority supplier available: ${dispatchResult.reason}`);
+
+      // Notify collaborateur that no suppliers are available for this product
+      await notifyNoSuppliersAvailable(
+        orderId,
+        productSku,
+        product.name,
+        order.storeId
+      );
+    }
+
+    // If ALL products unavailable, check if we need to dispatch entire category
+    if (allProductsUnavailable) {
+      console.log(`🔄 [DISPATCH] All products unavailable - checking category dispatch...`);
+      await checkAndDispatchCategory(orderId, userId, order.storeId);
+    }
+
     return NextResponse.json({
       success: true,
       message: allProductsUnavailable
@@ -294,6 +331,16 @@ export async function POST(
       unavailableCount,
       totalProducts: totalMyProducts,
       billableAmount,
+      dispatch: dispatchResult.dispatched
+        ? {
+            dispatched: true,
+            nextSupplier: dispatchResult.nextSupplier?.name,
+            priority: dispatchResult.nextSupplier?.priority,
+          }
+        : {
+            dispatched: false,
+            reason: dispatchResult.reason,
+          },
     });
   } catch (error) {
     console.error("💥 Error marking product unavailable:", error);

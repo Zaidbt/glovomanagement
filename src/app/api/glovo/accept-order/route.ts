@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Notify suppliers via WebSocket about new order
+      // Notify suppliers via WebSocket about new order (filtered by store and priority)
       const orderProducts = Array.isArray(order.products) ? order.products as unknown as Array<{ id?: string; sku?: string; purchased_product_id?: string }> : [];
       const productSKUs = orderProducts.map((p) => p.id || p.sku || p.purchased_product_id).filter(Boolean);
 
@@ -134,6 +134,7 @@ export async function POST(request: NextRequest) {
           where: {
             product: {
               sku: { in: productSKUs as string[] },
+              storeId: order.storeId, // Filter by order's store
             },
             isActive: true,
           },
@@ -144,10 +145,39 @@ export async function POST(request: NextRequest) {
                 name: true,
               },
             },
+            product: {
+              select: {
+                sku: true,
+                category1: true,
+              },
+            },
+          },
+          orderBy: {
+            priority: 'asc', // Order by priority (1 first, then 2, etc.)
           },
         });
 
-        const uniqueSuppliers = new Set(supplierAssignments.map((s) => s.supplierId));
+        // Group suppliers by category and get only priority=1 for each category
+        const categorySuppliers = new Map<string, Set<string>>();
+
+        for (const assignment of supplierAssignments) {
+          const category = assignment.product.category1 || 'UNKNOWN';
+
+          if (!categorySuppliers.has(category)) {
+            categorySuppliers.set(category, new Set());
+          }
+
+          // Only add priority=1 suppliers for initial dispatch
+          if (assignment.priority === 1) {
+            categorySuppliers.get(category)!.add(assignment.supplierId);
+          }
+        }
+
+        // Collect all unique priority=1 suppliers
+        const uniqueSuppliers = new Set<string>();
+        categorySuppliers.forEach((suppliers) => {
+          suppliers.forEach((supplierId) => uniqueSuppliers.add(supplierId));
+        });
 
         uniqueSuppliers.forEach((supplierId) => {
           notifySupplier(supplierId, "new-order", {
@@ -156,10 +186,11 @@ export async function POST(request: NextRequest) {
             orderCode: order.orderCode,
             productCount: orderProducts.length,
             orderTime: order.orderTime,
+            storeId: order.storeId,
           });
         });
 
-        console.log(`📤 Notified ${uniqueSuppliers.size} suppliers via WebSocket`);
+        console.log(`📤 Notified ${uniqueSuppliers.size} priority=1 suppliers via WebSocket for store ${order.storeId}`);
       }
 
       return NextResponse.json({

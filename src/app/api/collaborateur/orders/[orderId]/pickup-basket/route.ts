@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { verifyMobileToken } from "@/lib/auth-mobile";
+import { notifySupplier } from "@/lib/socket";
 
 /**
  * POST /api/collaborateur/orders/[orderId]/pickup-basket
@@ -13,24 +15,53 @@ export async function POST(
 ) {
   try {
     const { orderId } = await params;
-    const session = await getServerSession(authOptions);
 
-    if (!session?.user) {
+    // Try mobile auth first, then web session
+    const mobileUser = await verifyMobileToken(request);
+    const session = !mobileUser ? await getServerSession(authOptions) : null;
+
+    if (!mobileUser && !session?.user) {
       return NextResponse.json(
         { success: false, error: "Non authentifié" },
         { status: 401 }
       );
     }
 
+    const userId = mobileUser?.userId || session?.user?.id;
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: "User ID missing" },
+        { status: 401 }
+      );
+    }
+
     // Verify user is a collaborateur
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        collaborateurStores: {
+          select: {
+            storeId: true,
+          },
+        },
+      },
     });
 
     if (!user || user.role !== "COLLABORATEUR") {
       return NextResponse.json(
         { success: false, error: "Accès refusé - Collaborateur uniquement" },
         { status: 403 }
+      );
+    }
+
+    const collaborateurStoreId = user.collaborateurStores[0]?.storeId;
+    if (!collaborateurStoreId) {
+      return NextResponse.json(
+        { success: false, error: "Aucun store assigné" },
+        { status: 400 }
       );
     }
 
@@ -81,6 +112,27 @@ export async function POST(
     metadata.lastUpdatedBy = user.name;
     metadata.lastUpdatedAt = new Date().toISOString();
 
+    // Verify order belongs to collaborateur's store
+    if (order.storeId !== collaborateurStoreId) {
+      return NextResponse.json(
+        { success: false, error: "Cette commande n'appartient pas à votre store" },
+        { status: 403 }
+      );
+    }
+
+    // Get supplier info
+    const supplier = await prisma.user.findUnique({
+      where: { id: supplierId },
+      select: { id: true, name: true },
+    });
+
+    if (!supplier) {
+      return NextResponse.json(
+        { success: false, error: "Fournisseur non trouvé" },
+        { status: 404 }
+      );
+    }
+
     // Update order
     await prisma.order.update({
       where: { id: orderId },
@@ -97,23 +149,48 @@ export async function POST(
     await prisma.event.create({
       data: {
         type: "BASKET_PICKED_UP",
-        title: "Panier récupéré",
-        description: `Panier ${basketNumber} récupéré pour commande ${order.orderCode || orderId}`,
-        userId: session.user.id,
+        title: "🧺 Panier récupéré",
+        description: `${user.name} a récupéré le panier ${basketNumber || "N/A"} de ${supplier.name}`,
         metadata: {
           orderId: order.id,
           orderCode: order.orderCode,
           supplierId,
+          supplierName: supplier.name,
           basketNumber,
-          pickedUpBy: user.name,
+          collaborateurName: user.name,
+          pickedUpAt: supplierStatus.pickedUpAt,
         },
+        orderId: order.id,
+        storeId: order.storeId,
       },
     });
 
+    // Notify supplier via WebSocket
+    notifySupplier(supplierId, "basket-picked-up", {
+      orderId: order.id,
+      orderCode: order.orderCode,
+      basketNumber: basketNumber,
+      collaborateurName: user.name,
+      pickedUpAt: supplierStatus.pickedUpAt,
+    });
+
+    // Check if all baskets picked up
+    const allSuppliers = Object.values(supplierStatuses);
+    const readySuppliers = allSuppliers.filter((s: unknown) => (s as {status: string}).status === "READY");
+    const pickedUpSuppliers = allSuppliers.filter((s: unknown) => (s as {pickedUp?: boolean}).pickedUp === true);
+    const allPickedUp = readySuppliers.length > 0 && pickedUpSuppliers.length === readySuppliers.length;
+
     return NextResponse.json({
       success: true,
-      message: "Panier marqué comme récupéré",
+      message: `Panier ${basketNumber || "N/A"} récupéré avec succès`,
       basketNumber,
+      supplierName: supplier.name,
+      pickedUpAt: supplierStatus.pickedUpAt,
+      allPickedUp,
+      progress: {
+        pickedUp: pickedUpSuppliers.length,
+        total: readySuppliers.length,
+      },
     });
   } catch (error) {
     console.error("💥 Error picking up basket:", error);
