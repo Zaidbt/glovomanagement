@@ -147,9 +147,33 @@ export async function POST(
         const glovoApiUrl = `${apiUrl}/v2/chains/${chainId}/orders/${order.orderId}`;
         const glovoStatus = mapToGlovoStatus(OrderStatus.READY, "LOGISTICS_DELIVERY");
 
-        // Send only status (like mark-ready does) - items are not required for status update
+        // Build items array with status (required by Glovo API)
+        // Each item must have status: IN_CART (ready), NOT_FOUND, REPLACED, or ADDITION
+        const products = (order.products as Array<{
+          id?: string;
+          sku?: string;
+          purchased_product_id?: string;
+          name?: string;
+          quantity?: number;
+          price?: number;
+        }>) || [];
+
+        const items = products.map((product) => ({
+          id: product.id || product.sku || "",
+          purchased_product_id: product.purchased_product_id || product.id || product.sku || "",
+          sku: product.sku || product.id || "",
+          name: product.name || "",
+          quantity: product.quantity || 1,
+          status: "IN_CART", // All items are ready for pickup
+          pricing: {
+            unit_price: product.price || 0,
+            total_price: (product.price || 0) * (product.quantity || 1),
+          },
+        }));
+
         const requestBody = {
           status: glovoStatus,
+          items: items.length > 0 ? items : [],
         };
 
         console.log(`📡 [READY FOR PICKUP] Calling Glovo API: PUT ${glovoApiUrl}`);
