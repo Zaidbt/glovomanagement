@@ -105,32 +105,29 @@ export async function POST(
     // Detect if this is a test store
     const isTestStore = vendorId === "store-01" || vendorId?.startsWith("store-") || vendorId?.includes("test");
 
-    // Use different credentials based on store type
-    let apiUrl: string;
-    let apiToken: string | undefined;
-    let authHeader: string;
-    const chainId = process.env.GLOVO_CHAIN_ID;
-
+    // Test stores cannot use the catalog sync API - it's not available on staging
     if (isTestStore) {
-      // Test store uses staging API with shared token (no Bearer prefix)
-      apiUrl = process.env.GLOVO_TEST_API_URL || "https://stageapi.glovoapp.com";
-      apiToken = process.env.GLOVO_SHARED_TOKEN || process.env.GLOVO_TEST_TOKEN;
-      authHeader = apiToken || "";
-      console.log("🧪 [TEST STORE] Using staging credentials");
-    } else {
-      // Production store uses production API with Bearer token
-      apiUrl = process.env.GLOVO_API_URL || "https://glovo.partner.deliveryhero.io";
-      apiToken = process.env.GLOVO_API_TOKEN;
-      authHeader = `Bearer ${apiToken}`;
+      console.log("🧪 [TEST STORE] Catalog sync not available for test stores");
+      return NextResponse.json(
+        {
+          success: false,
+          error: "La synchronisation Glovo n'est pas disponible pour les stores de test. L'API catalogue n'existe pas sur l'environnement staging. Veuillez utiliser le bouton 'Importer' avec un fichier Excel pour importer des produits dans le store de test.",
+        },
+        { status: 400 }
+      );
     }
+
+    // Production store uses production API with Bearer token
+    const apiUrl = process.env.GLOVO_API_URL || "https://glovo.partner.deliveryhero.io";
+    const apiToken = process.env.GLOVO_API_TOKEN;
+    const authHeader = `Bearer ${apiToken}`;
+    const chainId = process.env.GLOVO_CHAIN_ID;
 
     if (!chainId || !apiToken) {
       return NextResponse.json(
         {
           success: false,
-          error: isTestStore 
-            ? "Identifiants Glovo test non configurés. Veuillez configurer GLOVO_CHAIN_ID et GLOVO_SHARED_TOKEN."
-            : "Identifiants Glovo API non configurés. Veuillez configurer GLOVO_CHAIN_ID et GLOVO_API_TOKEN.",
+          error: "Identifiants Glovo API non configurés. Veuillez configurer GLOVO_CHAIN_ID et GLOVO_API_TOKEN.",
         },
         { status: 500 }
       );
@@ -140,7 +137,6 @@ export async function POST(
       storeId,
       vendorId,
       chainId,
-      isTestStore,
       apiUrl,
       replaceExisting,
     });
