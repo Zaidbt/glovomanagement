@@ -99,27 +99,49 @@ export async function POST(
     }
 
     // Get Glovo API credentials from environment
+    const vendorId = store.glovoStoreId;
+    const { replaceExisting } = await request.json().catch(() => ({ replaceExisting: false }));
+
+    // Detect if this is a test store
+    const isTestStore = vendorId === "store-01" || vendorId?.startsWith("store-") || vendorId?.includes("test");
+
+    // Use different credentials based on store type
+    let apiUrl: string;
+    let apiToken: string | undefined;
+    let authHeader: string;
     const chainId = process.env.GLOVO_CHAIN_ID;
-    const apiToken = process.env.GLOVO_API_TOKEN;
-    const apiUrl = process.env.GLOVO_API_URL || "https://glovo.partner.deliveryhero.io";
+
+    if (isTestStore) {
+      // Test store uses staging API with shared token (no Bearer prefix)
+      apiUrl = process.env.GLOVO_TEST_API_URL || "https://stageapi.glovoapp.com";
+      apiToken = process.env.GLOVO_SHARED_TOKEN || process.env.GLOVO_TEST_TOKEN;
+      authHeader = apiToken || "";
+      console.log("🧪 [TEST STORE] Using staging credentials");
+    } else {
+      // Production store uses production API with Bearer token
+      apiUrl = process.env.GLOVO_API_URL || "https://glovo.partner.deliveryhero.io";
+      apiToken = process.env.GLOVO_API_TOKEN;
+      authHeader = `Bearer ${apiToken}`;
+    }
 
     if (!chainId || !apiToken) {
       return NextResponse.json(
         {
           success: false,
-          error: "Identifiants Glovo API non configurés. Veuillez configurer GLOVO_CHAIN_ID et GLOVO_API_TOKEN dans les variables d'environnement.",
+          error: isTestStore 
+            ? "Identifiants Glovo test non configurés. Veuillez configurer GLOVO_CHAIN_ID et GLOVO_SHARED_TOKEN."
+            : "Identifiants Glovo API non configurés. Veuillez configurer GLOVO_CHAIN_ID et GLOVO_API_TOKEN.",
         },
         { status: 500 }
       );
     }
 
-    const vendorId = store.glovoStoreId;
-    const { replaceExisting } = await request.json().catch(() => ({ replaceExisting: false }));
-
     console.log("🔄 Starting Glovo product sync:", {
       storeId,
       vendorId,
       chainId,
+      isTestStore,
+      apiUrl,
       replaceExisting,
     });
 
@@ -129,7 +151,7 @@ export async function POST(
 
     const firstPageResponse = await fetch(firstPageUrl, {
       headers: {
-        "Authorization": `Bearer ${apiToken}`,
+        "Authorization": authHeader,
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
@@ -162,7 +184,7 @@ export async function POST(
 
       const pageResponse = await fetch(pageUrl, {
         headers: {
-          "Authorization": `Bearer ${apiToken}`,
+          "Authorization": authHeader,
           "Content-Type": "application/json",
           "Accept": "application/json",
         },
