@@ -35,8 +35,15 @@ app.prepare().then(() => {
   global.io = io;
 
   io.on('connection', (socket) => {
+    console.log(`🔌 [SOCKET.IO] Client connected: ${socket.id}`);
+
     socket.on('join-room', (room) => {
       socket.join(room);
+      console.log(`📍 [SOCKET.IO] Socket ${socket.id} joined room: ${room}`);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log(`❌ [SOCKET.IO] Client disconnected: ${socket.id}, reason: ${reason}`);
     });
   });
 
