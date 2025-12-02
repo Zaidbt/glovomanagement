@@ -156,7 +156,7 @@ export async function POST(
             Authorization: sharedToken, // Secret token directly (no Bearer prefix)
             "Glovo-Store-Address-External-Id": storeExternalId,
           },
-          // No body needed according to curl example in documentation
+          body: JSON.stringify({}), // Empty body - API might require it even if empty
         });
 
         const responseText = await glovoResponse.text();
