@@ -99,41 +99,12 @@ export async function POST(
       );
     }
 
-    const storeExternalId = user.collaborateurStores[0]?.store?.glovoStoreId;
-    if (!storeExternalId) {
-      return NextResponse.json(
-        { success: false, error: "Store external ID non trouvé" },
-        { status: 400 }
-      );
-    }
-
-    // Call Glovo API to cancel order
+    // NOTE: Glovo API does not provide a cancel endpoint
+    // Cancellation must be done manually via Glovo dashboard
+    // This endpoint marks the order as cancelled in our system only
     console.log(
-      `🔴 [CANCEL] Cancelling order ${order.orderCode} via Glovo API`
+      `🔴 [CANCEL] Marking order ${order.orderCode} as cancelled (internal only - manual Glovo dashboard cancellation required)`
     );
-
-    const glovoResponse = await fetch(
-      `${GLOVO_API_BASE_URL}/webhook/stores/${storeExternalId}/orders/${order.orderId}/cancel`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: GLOVO_SHARED_TOKEN,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          cancel_reason: "STORE_CANCEL",
-        }),
-      }
-    );
-
-    if (!glovoResponse.ok) {
-      const errorText = await glovoResponse.text();
-      console.error("❌ [CANCEL] Glovo API error:", errorText);
-      return NextResponse.json(
-        { success: false, error: "Erreur API Glovo: " + errorText },
-        { status: 500 }
-      );
-    }
 
     // Update order in database
     await prisma.order.update({
