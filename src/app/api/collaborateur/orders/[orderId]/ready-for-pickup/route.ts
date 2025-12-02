@@ -136,8 +136,8 @@ export async function POST(
 
     // Call Glovo API to mark ready for pickup (using Integration API v0 as per documentation)
     try {
-      // Force production API - staging doesn't support ready_for_pickup properly
-      const apiBaseUrl = "https://api.glovoapp.com";
+      // Use same API as accept-order (staging works, production gives 401)
+      const apiBaseUrl = process.env.GLOVO_API_BASE_URL || "https://stageapi.glovoapp.com";
       const sharedToken = process.env.GLOVO_SHARED_TOKEN;
       const storeExternalId = order.store.glovoStoreId || process.env.GLOVO_STORE_EXTERNAL_ID;
 
