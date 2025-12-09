@@ -171,7 +171,7 @@ export async function POST(
     });
 
     // Notify supplier via WebSocket
-    notifySupplier(supplierId, "basket-picked-up", {
+    await notifySupplier(supplierId, "basket-picked-up", {
       orderId: order.id,
       orderCode: order.orderCode,
       basketNumber: basketNumber,

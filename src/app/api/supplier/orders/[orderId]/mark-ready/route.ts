@@ -169,15 +169,17 @@ export async function POST(
       select: { id: true },
     });
 
-    collaborateurs.forEach((collab) => {
-      notifyCollaborateur(collab.id, "basket-ready", {
-        orderId: order.id,
-        orderCode: order.orderCode,
-        supplierId: userId,
-        supplierName: user.name,
-        basket: assignedBasket,
-      });
-    });
+    await Promise.all(
+      collaborateurs.map((collab) =>
+        notifyCollaborateur(collab.id, "basket-ready", {
+          orderId: order.id,
+          orderCode: order.orderCode,
+          supplierId: userId,
+          supplierName: user.name,
+          basket: assignedBasket,
+        })
+      )
+    );
 
     return NextResponse.json({
       success: true,

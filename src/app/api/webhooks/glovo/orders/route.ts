@@ -255,17 +255,19 @@ export async function POST(request: NextRequest) {
           });
 
           const { notifyCollaborateur } = await import("@/lib/socket");
-          storeCollaborateurs.forEach((sc) => {
-            notifyCollaborateur(sc.collaborateur.id, "new-order-created", {
-              id: order.id,
-              orderId: order.orderId,
-              orderCode: order.orderCode,
-              customerName: order.customerName,
-              totalAmount: order.estimatedTotalPrice,
-              orderTime: order.orderTime,
-              source: order.source,
-            });
-          });
+          await Promise.all(
+            storeCollaborateurs.map((sc) =>
+              notifyCollaborateur(sc.collaborateur.id, "new-order-created", {
+                id: order.id,
+                orderId: order.orderId,
+                orderCode: order.orderCode,
+                customerName: order.customerName,
+                totalAmount: order.estimatedTotalPrice,
+                orderTime: order.orderTime,
+                source: order.source,
+              })
+            )
+          );
           console.log(`📤 ${storeCollaborateurs.length} collaborateurs notifiés via WebSocket`);
 
           return NextResponse.json({
@@ -557,17 +559,19 @@ export async function POST(request: NextRequest) {
         });
 
         const { notifyCollaborateur } = await import("@/lib/socket");
-        storeCollaborateurs.forEach((sc) => {
-          notifyCollaborateur(sc.collaborateur.id, "new-order-created", {
-            id: order.id,
-            orderId: order.orderId,
-            orderCode: order.orderCode,
-            customerName: order.customerName,
-            totalAmount: order.estimatedTotalPrice,
-            orderTime: order.orderTime,
-            source: order.source,
-          });
-        });
+        await Promise.all(
+          storeCollaborateurs.map((sc) =>
+            notifyCollaborateur(sc.collaborateur.id, "new-order-created", {
+              id: order.id,
+              orderId: order.orderId,
+              orderCode: order.orderCode,
+              customerName: order.customerName,
+              totalAmount: order.estimatedTotalPrice,
+              orderTime: order.orderTime,
+              source: order.source,
+            })
+          )
+        );
         console.log(`📤 [ORDERS WEBHOOK] ${storeCollaborateurs.length} collaborateurs notifiés via WebSocket`);
 
         console.log("╚══════════════════════════════════════════════════════════╝\n");

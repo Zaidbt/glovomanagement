@@ -118,7 +118,7 @@ export async function dispatchToNextPriority(
     }
 
     // Send WebSocket notification to next priority supplier
-    notifySupplier(nextAssignment.supplierId, "new-order", {
+    await notifySupplier(nextAssignment.supplierId, "new-order", {
       id: order.id,
       orderId: order.orderId,
       orderCode: order.orderCode,
@@ -142,16 +142,18 @@ export async function dispatchToNextPriority(
       },
     });
 
-    collaborateurs.forEach((collab) => {
-      notifyCollaborateur(collab.collaborateurId, "backup-supplier-assigned", {
-        orderId: order.id,
-        orderCode: order.orderCode,
-        productSku: productSku,
-        productName: nextAssignment.product.name,
-        supplierName: nextAssignment.supplier.name,
-        priority: nextPriority,
-      });
-    });
+    await Promise.all(
+      collaborateurs.map((collab) =>
+        notifyCollaborateur(collab.collaborateurId, "backup-supplier-assigned", {
+          orderId: order.id,
+          orderCode: order.orderCode,
+          productSku: productSku,
+          productName: nextAssignment.product.name,
+          supplierName: nextAssignment.supplier.name,
+          priority: nextPriority,
+        })
+      )
+    );
 
     console.log(`📢 [DISPATCH] Notified ${collaborateurs.length} collaborateurs about backup dispatch`);
 
@@ -296,15 +298,17 @@ export async function notifyNoSuppliersAvailable(
       },
     });
 
-    collaborateurs.forEach((collab) => {
-      notifyCollaborateur(collab.collaborateurId, "product-unavailable-all-suppliers", {
-        orderId: order.id,
-        orderCode: order.orderCode,
-        productSku: productSku,
-        productName: productName,
-        message: `Produit ${productName} indisponible chez tous les fournisseurs`,
-      });
-    });
+    await Promise.all(
+      collaborateurs.map((collab) =>
+        notifyCollaborateur(collab.collaborateurId, "product-unavailable-all-suppliers", {
+          orderId: order.id,
+          orderCode: order.orderCode,
+          productSku: productSku,
+          productName: productName,
+          message: `Produit ${productName} indisponible chez tous les fournisseurs`,
+        })
+      )
+    );
 
     console.log(
       `📢 [DISPATCH] Notified ${collaborateurs.length} collaborateurs that product ${productSku} is unavailable from all suppliers`

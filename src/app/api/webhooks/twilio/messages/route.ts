@@ -104,15 +104,17 @@ export async function POST(request: NextRequest) {
       });
 
       const { notifyCollaborateur } = await import("@/lib/socket");
-      storeCollaborateurs.forEach((sc) => {
-        notifyCollaborateur(sc.collaborateur.id, "new-message", {
-          conversationId: conversation.id,
-          contactNumber: cleanFrom,
-          message: Body as string,
-          storeId: store.id,
-          storeName: store.name,
-        });
-      });
+      await Promise.all(
+        storeCollaborateurs.map((sc) =>
+          notifyCollaborateur(sc.collaborateur.id, "new-message", {
+            conversationId: conversation.id,
+            contactNumber: cleanFrom,
+            message: Body as string,
+            storeId: store.id,
+            storeName: store.name,
+          })
+        )
+      );
 
       console.log(`📤 ${storeCollaborateurs.length} collaborateurs notifiés du nouveau message`);
     }

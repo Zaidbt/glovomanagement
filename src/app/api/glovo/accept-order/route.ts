@@ -176,16 +176,18 @@ export async function POST(request: NextRequest) {
           suppliers.forEach((supplierId) => uniqueSuppliers.add(supplierId));
         });
 
-        uniqueSuppliers.forEach((supplierId) => {
-          notifySupplier(supplierId, "new-order", {
-            id: order.id,
-            orderId: order.orderId,
-            orderCode: order.orderCode,
-            productCount: orderProducts.length,
-            orderTime: order.orderTime,
-            storeId: order.storeId,
-          });
-        });
+        await Promise.all(
+          Array.from(uniqueSuppliers).map((supplierId) =>
+            notifySupplier(supplierId, "new-order", {
+              id: order.id,
+              orderId: order.orderId,
+              orderCode: order.orderCode,
+              productCount: orderProducts.length,
+              orderTime: order.orderTime,
+              storeId: order.storeId,
+            })
+          )
+        );
       }
 
       return NextResponse.json({
