@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { OrderStatus } from "@/types/order-status";
 import { eventTracker } from "@/lib/event-tracker";
+import { notifyCollaborateur } from "@/lib/socket";
 
 const prisma = new PrismaClient();
 
@@ -382,6 +383,45 @@ async function handleNewOrder(body: Record<string, unknown>) {
         specialRequirements: body.special_requirements,
       },
     });
+
+    // Notify collaborateurs of the new order via WebSocket
+    console.log("\n📤 [DISPATCH > handleNewOrder] Notifying collaborateurs...");
+    const storeCollaborateurs = await prisma.collaborateurStore.findMany({
+      where: { storeId: store.id },
+      include: { collaborateur: { select: { id: true, name: true } } },
+    });
+
+    if (storeCollaborateurs.length > 0) {
+      console.log(`📤 [DISPATCH > handleNewOrder] Found ${storeCollaborateurs.length} collaborateur(s) to notify`);
+
+      // Get products for notification
+      const products = (body.products as Array<{ name: string; quantity: number; price: number }>) || [];
+
+      await Promise.all(
+        storeCollaborateurs.map(async (sc) => {
+          console.log(`📤 [DISPATCH > handleNewOrder] Notifying collaborateur: ${sc.collaborateur.name} (${sc.collaborateur.id})`);
+          await notifyCollaborateur(sc.collaborateur.id, "new-order-created", {
+            id: order.id,
+            orderId: order.orderId,
+            orderCode: order.orderCode,
+            customerName: customer.name,
+            customerPhone: customer.phoneNumber,
+            totalAmount: order.estimatedTotalPrice,
+            status: order.status,
+            source: "GLOVO",
+            createdAt: order.createdAt.toISOString(),
+            products: products.map((p) => ({
+              name: p.name,
+              quantity: p.quantity,
+              price: p.price,
+            })),
+          });
+        })
+      );
+      console.log("✅ [DISPATCH > handleNewOrder] All collaborateurs notified!");
+    } else {
+      console.log("⚠️ [DISPATCH > handleNewOrder] No collaborateurs found for this store");
+    }
 
     console.log("\n✅ [DISPATCH > handleNewOrder] Traitement terminé avec SUCCÈS");
     console.log("═══════════════════════════════════════════════════════════\n");
