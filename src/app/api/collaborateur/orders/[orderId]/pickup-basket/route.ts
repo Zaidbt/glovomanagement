@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { verifyMobileToken } from "@/lib/auth-mobile";
-import { notifySupplier } from "@/lib/socket";
+import { notifySupplier, notifyCollaborateur } from "@/lib/socket";
 
 /**
  * POST /api/collaborateur/orders/[orderId]/pickup-basket
@@ -170,15 +170,6 @@ export async function POST(
       },
     });
 
-    // Notify supplier via WebSocket
-    await notifySupplier(supplierId, "basket-picked-up", {
-      orderId: order.id,
-      orderCode: order.orderCode,
-      basketNumber: basketNumber,
-      collaborateurName: user.name,
-      pickedUpAt,
-    });
-
     // Check if all baskets picked up
     const allSuppliers = Object.values(supplierStatuses);
     const readySuppliers = allSuppliers.filter(
@@ -190,6 +181,36 @@ export async function POST(
     const allPickedUp =
       readySuppliers.length > 0 &&
       pickedUpSuppliers.length === readySuppliers.length;
+
+    // Notify supplier via WebSocket
+    await notifySupplier(supplierId, "basket-picked-up", {
+      orderId: order.id,
+      orderCode: order.orderCode,
+      basketNumber: basketNumber,
+      collaborateurName: user.name,
+      pickedUpAt,
+    });
+
+    // Notify all collaborateurs of the store about basket pickup
+    const storeCollaborateurs = await prisma.collaborateurStore.findMany({
+      where: { storeId: order.storeId },
+      include: { collaborateur: { select: { id: true, name: true } } },
+    });
+
+    await Promise.all(
+      storeCollaborateurs.map(async (sc) => {
+        await notifyCollaborateur(sc.collaborateur.id, "basket-picked-up-update", {
+          orderId: order.id,
+          orderCode: order.orderCode,
+          basketNumber,
+          supplierId,
+          supplierName: supplier.name,
+          collaborateurName: user.name,
+          pickedUpAt,
+          allPickedUp,
+        });
+      })
+    );
 
     return NextResponse.json({
       success: true,
