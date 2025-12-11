@@ -269,8 +269,15 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    // Calculate stats
-    const newOrders = enrichedOrders.filter((o) => o.status === "CREATED").length;
+    // Calculate stats (only recent orders for "new")
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+    const newOrders = enrichedOrders.filter((o) => {
+      if (o.status !== "CREATED") return false;
+      const orderDate = new Date(o.orderTime || new Date());
+      return orderDate >= twoDaysAgo;
+    }).length;
     const inProgressOrders = enrichedOrders.filter(
       (o) => o.status === "ACCEPTED" && !o.summary.allSuppliersReady
     ).length;
